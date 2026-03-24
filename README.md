@@ -1,30 +1,52 @@
-# React + TypeScript + Vite
+# CreaContenu - Authentication (Supabase)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Cette version contient uniquement le module d'authentification:
 
-Currently, two official plugins are available:
+- Connexion
+- Inscription
+- Deconnexion
+- Protection des pages privees
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Le projet respecte une architecture FSD avec les couches:
 
-## Expanding the ESLint configuration
+- app
+- pages
+- widgets
+- features
+- entities
+- shared
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Configuration Supabase
 
-- Configure the top-level `parserOptions` property like this:
+Creez un fichier `.env` a la racine du projet avec:
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```env
+VITE_SUPABASE_URL=https://votre-projet.supabase.co
+VITE_SUPABASE_ANON_KEY=votre-cle-anon
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Commandes
+
+Installation:
+
+```bash
+npm install
+```
+
+Lancer en dev:
+
+```bash
+npm run dev
+```
+
+Build:
+
+```bash
+npm run build
+```
+
+Tests (Vitest + React Testing Library):
+
+```bash
+npm run test
+```
