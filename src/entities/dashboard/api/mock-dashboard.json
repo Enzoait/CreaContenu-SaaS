@@ -1,0 +1,83 @@
+{
+  "stats": {
+    "totalViews": 128400,
+    "engagementRate": 4.8,
+    "publishedThisMonth": 9
+  },
+  "planning": [
+    {
+      "id": "p1",
+      "title": "Short React Query",
+      "platform": "youtube",
+      "publishAt": "2026-03-25",
+      "status": "scheduled"
+    },
+    {
+      "id": "p2",
+      "title": "Carrousel FSD",
+      "platform": "instagram",
+      "publishAt": "2026-03-26",
+      "status": "draft"
+    },
+    {
+      "id": "p3",
+      "title": "Template Notion Planning",
+      "platform": "tiktok",
+      "publishAt": "2026-03-30",
+      "status": "scheduled"
+    },
+    {
+      "id": "p4",
+      "title": "Retour d'experience SaaS",
+      "platform": "youtube",
+      "publishAt": "2026-04-02",
+      "status": "published"
+    }
+  ],
+  "videos": [
+    {
+      "id": "v1",
+      "title": "Tutoriel Zustand",
+      "platform": "youtube",
+      "stage": "editing",
+      "deadline": "2026-03-30"
+    },
+    {
+      "id": "v2",
+      "title": "Setup du projet SaaS",
+      "platform": "instagram",
+      "stage": "scripting",
+      "deadline": "2026-03-26"
+    },
+    {
+      "id": "v3",
+      "title": "Routine createur matinale",
+      "platform": "tiktok",
+      "stage": "recording",
+      "deadline": "2026-03-27"
+    }
+  ],
+  "todos": [
+    {
+      "id": "t1",
+      "label": "Finaliser le script de la video Zustand",
+      "platform": "youtube",
+      "priority": "high",
+      "done": false
+    },
+    {
+      "id": "t2",
+      "label": "Preparer les miniatures de la semaine",
+      "platform": "instagram",
+      "priority": "medium",
+      "done": true
+    },
+    {
+      "id": "t3",
+      "label": "Preparer les hashtags de la campagne",
+      "platform": "tiktok",
+      "priority": "low",
+      "done": false
+    }
+  ]
+}

@@ -1,0 +1,1346 @@
+.feedback {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #2b3442;
+  background: #f6f7fb;
+}
+
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  background: #f7f8fb;
+  color: #111827;
+}
+
+.sidebar {
+  border-right: 1px solid #e6e8ef;
+  background: #fbfcff;
+  padding: 18px 10px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 8px 18px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.brandIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  color: #fff;
+  background: linear-gradient(120deg, #6d28d9, #2563eb);
+}
+
+.menu {
+  display: grid;
+  gap: 4px;
+}
+
+.menuItem {
+  border: 0;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #4b5563;
+  background: transparent;
+  font-size: 0.82rem;
+}
+
+.menuItemActive {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.mobileNavOverlay {
+  display: none;
+}
+
+.mobileNavClose {
+  display: none;
+}
+
+.main {
+  padding: 22px 26px;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.topBar h2 {
+  margin: 0;
+  font-size: 1rem;
+  display: none;
+}
+
+.burger {
+  border: 1px solid #d9deea;
+  background: #ffffff;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: none;
+}
+
+.searchInput {
+  border: 1px solid #d9deea;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 260px;
+}
+
+.searchBox {
+  position: relative;
+}
+
+.topBarRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileButton {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+
+.profileAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(120deg, #7e22ce, #2563eb);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
+}
+
+.searchSuggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #d9deea;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  z-index: 30;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+}
+
+.searchSuggestions button {
+  text-align: left;
+  border: 0;
+  background: #fff;
+  border-radius: 7px;
+  padding: 7px 8px;
+}
+
+.searchSuggestions button:hover {
+  background: #f4f6fb;
+}
+
+.banner {
+  background: linear-gradient(100deg, #7e22ce, #2563eb);
+  border-radius: 10px;
+  color: #fff;
+  padding: 18px 18px 14px;
+  margin-bottom: 16px;
+}
+
+.banner h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.banner p {
+  margin: 8px 0 12px;
+  opacity: 0.95;
+  font-size: 0.9rem;
+}
+
+.bannerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.platformFilterItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.platformChipMain {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 4px 6px;
+  font-size: 0.76rem;
+}
+
+.platformChipMainActive {
+  color: #111827;
+  background: #ffffff;
+  border-radius: 999px;
+}
+
+.platformChipInput {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  min-width: 80px;
+  width: 110px;
+  font-size: 0.76rem;
+  outline: none;
+}
+
+.platformChipInput::placeholder {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.platformChipAction {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.platformChipAction:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.deleteAction {
+  color: #dc2626 !important;
+}
+
+.deleteAction:hover {
+  color: #b91c1c !important;
+}
+
+.filterButton {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+}
+
+.filterButtonActive {
+  background: #ffffff;
+  color: #4f46e5;
+}
+
+.addPlatformButton {
+  border: 1px dashed rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.inlineAddPlatform {
+  display: flex;
+  gap: 6px;
+}
+
+.inlineAddPlatform input {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 5px 8px;
+  width: 130px;
+}
+
+.inlineAddPlatform input::placeholder {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inlineAddPlatform button {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #4f46e5;
+  padding: 5px 9px;
+}
+
+.sectionTitle {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.statCard {
+  background: #fff;
+  border: 1px solid #e8ebf2;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.statCard p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.statCard strong {
+  display: block;
+  margin: 4px 0 2px;
+  font-size: 1.5rem;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.panelCard {
+  border: 1px solid #e8ebf2;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+  will-change: transform, width, height, top, left;
+  align-self: start;
+  height: fit-content;
+}
+
+.panelCardOpen {
+  height: 520px;
+}
+
+.panelCardOpen .panelContent {
+  height: 100%;
+  display: block;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.panelCardCollapsed {
+  min-height: 92px;
+}
+
+.panelCardCollapsed .panelContent {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.panelCardCollapsed .panelHeader {
+  width: 100%;
+  margin: 0;
+}
+
+.panelCardDraggable {
+  cursor: grab;
+}
+
+.panelCardDragging {
+  opacity: 0.72;
+  cursor: grabbing;
+}
+
+.panelCardDropTarget {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+}
+
+.panelFullWidth {
+  grid-column: 1 / -1;
+}
+
+.panelPlanning {
+  background: #dbeeff;
+  border-color: #9fd0ff;
+}
+
+.panelVideos {
+  background: #e7ddff;
+  border-color: #c5adff;
+}
+
+.panelTodo {
+  background: #ffe9d5;
+  border-color: #ffc38c;
+}
+
+.panelChart {
+  background: #dff4ff;
+  border-color: #9fd6f7;
+}
+
+.panelPlatforms {
+  background: #d6faea;
+  border-color: #8de4bf;
+}
+
+.panelPulse {
+  animation: panel-blue-pulse 1.1s ease-out 3;
+}
+
+.itemPulse {
+  animation: panel-blue-pulse 1.1s ease-out 3;
+  border-color: #2563eb !important;
+}
+
+@keyframes panel-blue-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55);
+    border-color: #2563eb;
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
+    border-color: #60a5fa;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+.panelContent {
+  position: relative;
+}
+
+.panelCard h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.panelHeader h3 {
+  margin: 0;
+}
+
+.dropdownRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+.dropdownTrigger {
+  border: 1px solid #c7d2fe;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111827;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.dropdownTrigger:hover {
+  border-color: #818cf8;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.16);
+}
+
+.calendarHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.monthNavigation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.monthLabel {
+  min-width: 120px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-transform: capitalize;
+}
+
+.monthNavButton {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
+.panelExpandButton {
+  border: 1px solid #d9deea;
+  background: #fff;
+  color: #334155;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  font-size: 0.95rem;
+}
+
+.dropdownIcon {
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+.dropdownChevronCollapsed {
+  transform: rotate(-90deg);
+}
+
+.simpleModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.simpleModalCard {
+  width: min(1120px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  min-height: min(80vh, 760px);
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 25px 80px rgba(2, 8, 23, 0.35);
+  padding: 14px;
+}
+
+.modalCardPlanning {
+  background: #dbeeff;
+  border: 1px solid #9fd0ff;
+}
+
+.modalCardVideos {
+  background: #e7ddff;
+  border: 1px solid #c5adff;
+}
+
+.modalCardTodo {
+  background: #ffe9d5;
+  border: 1px solid #ffc38c;
+}
+
+.modalCardChart {
+  background: #dff4ff;
+  border: 1px solid #9fd6f7;
+}
+
+.chartWrap {
+  width: 100%;
+  height: 240px;
+}
+
+.chartCenterArea {
+  min-height: calc(100% - 44px);
+  display: grid;
+  align-items: center;
+}
+
+.chartWrapModal {
+  min-height: 460px;
+  height: min(72vh, 620px);
+}
+
+.userManagementPage {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.userManagementPage h2 {
+  margin: 0;
+}
+
+.userManagementPage p {
+  margin: 0;
+  color: #475569;
+}
+
+.userManagementCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.modalCardPlatforms {
+  background: #d6faea;
+  border: 1px solid #8de4bf;
+}
+
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.confirmCard {
+  width: min(420px, calc(100vw - 40px));
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(2, 8, 23, 0.35);
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.confirmText {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.confirmSubtext {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.agendaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.planningForm {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.videoForm {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.todoForm {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.planningFormFields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.videoFormFields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.todoFormFields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.planningFormActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.videoFormActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.todoFormActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.planningForm input,
+.planningForm select,
+.planningForm button,
+.videoForm input,
+.videoForm select,
+.videoForm button,
+.todoForm input,
+.todoForm select,
+.todoForm button {
+  border: 1px solid #d9deea;
+  border-radius: 7px;
+  padding: 6px 8px;
+  font-size: 0.75rem;
+}
+
+.planningForm button {
+  background: #ffffff;
+}
+
+.videoForm button {
+  background: #ffffff;
+}
+
+.todoForm button {
+  background: #ffffff;
+}
+
+.agendaDay {
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 72px;
+  background: #fcfdff;
+}
+
+.agendaDate {
+  margin: 0 0 6px;
+  font-size: 0.76rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.miniList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.agendaItem {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: #ffffff;
+  border: 1px solid #eef2f8;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.agendaItem > div {
+  min-width: 0;
+}
+
+.agendaItem strong {
+  display: block;
+  font-size: 0.72rem;
+  color: #1e293b;
+}
+
+.agendaItem small {
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
+.planningItemActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.planningItemActions button {
+  border: 1px solid #d9deea;
+  border-radius: 6px;
+  background: #fff;
+  padding: 2px 6px;
+  font-size: 0.68rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.iconActionButton {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  font-size: 0.92rem;
+  line-height: 1;
+  position: relative;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .iconActionButton::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: #fff;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .iconActionButton:hover::after {
+    opacity: 1;
+  }
+}
+
+.agendaDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #6366f1;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.emptyText {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.list li {
+  display: grid;
+  gap: 2px;
+  border-bottom: 1px solid #edf0f5;
+  padding-bottom: 8px;
+}
+
+.list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.list strong {
+  font-size: 0.85rem;
+}
+
+.list span {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.inlineControls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.videoItemActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inlineControls label {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.inlineControls select {
+  border: 1px solid #d9deea;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 0.76rem;
+}
+
+.stageBadge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.stage_idea {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.stage_scripting {
+  color: #7c2d12;
+  background: #ffedd5;
+}
+
+.stage_recording {
+  color: #7e22ce;
+  background: #f3e8ff;
+}
+
+.stage_editing {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.stage_published {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.inlineControls button {
+  border: 1px solid #d9deea;
+  background: #fff;
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.kanbanColumn {
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fcfdff;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.kanbanColumnDropTarget {
+  border-color: #60a5fa;
+  background: #eff6ff;
+}
+
+.columnTitle {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.taskCard {
+  border: 1px solid #e3e9f4;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+  margin-bottom: 8px;
+  display: grid;
+  gap: 6px;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.taskCardDragging {
+  opacity: 0.55;
+  cursor: grabbing;
+}
+
+.taskCard:last-child {
+  margin-bottom: 0;
+}
+
+.taskTitleInput {
+  border: 1px solid #dbe2ee;
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 0.78rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.taskItemActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.taskCard small {
+  font-size: 0.72rem;
+  color: #64748b;
+  word-break: break-word;
+}
+
+.dragHint {
+  color: #3b82f6 !important;
+  font-size: 0.68rem !important;
+  font-weight: 600;
+}
+
+.platformCrud {
+  display: grid;
+  gap: 8px;
+}
+
+.platformCreateRow,
+.platformRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+}
+
+.platformCreateRow input,
+.platformRow input {
+  border: 1px solid #dbe2ee;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.platformCreateRow button,
+.platformRow button {
+  border: 1px solid #d9deea;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.matchPreview {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  grid-column: 1 / -1;
+}
+
+:global(mark) {
+  background: #fff3b0;
+  color: #111827;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+.checklistBox {
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  padding: 6px;
+  display: grid;
+  gap: 6px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #334155;
+}
+
+.checkItemDone {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.checklistInputRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+}
+
+.checklistInputRow input {
+  border: 1px solid #dbe2ee;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 0.74rem;
+  min-width: 0;
+}
+
+.checklistInputRow button {
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: 6px;
+  width: 28px;
+}
+
+.filterButton,
+.addPlatformButton,
+.inlineAddPlatform button,
+.panelExpandButton,
+.monthNavButton,
+.planningForm button,
+.videoForm button,
+.todoForm button,
+.planningItemActions button,
+.inlineControls button,
+.platformCreateRow button,
+.platformRow button,
+.checklistInputRow button,
+.confirmActions button {
+  border: 1px solid #c7d2fe;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111827;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+  font-weight: 600;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.filterButton:hover,
+.addPlatformButton:hover,
+.inlineAddPlatform button:hover,
+.panelExpandButton:hover,
+.monthNavButton:hover,
+.planningForm button:hover,
+.videoForm button:hover,
+.todoForm button:hover,
+.planningItemActions button:hover,
+.inlineControls button:hover,
+.platformCreateRow button:hover,
+.platformRow button:hover,
+.checklistInputRow button:hover,
+.confirmActions button:hover {
+  border-color: #818cf8;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.16);
+}
+
+.filterButtonActive {
+  background: #e0e7ff;
+  color: #111827;
+  border-color: #818cf8;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.18);
+}
+
+.iconActionButton {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  font-size: 0.92rem;
+  line-height: 1;
+  position: relative;
+}
+
+@media (max-width: 1100px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 220px;
+    transform: translateX(-100%);
+    z-index: 120;
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .statsGrid,
+  .contentGrid,
+  .kanban,
+  .agendaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .planningForm {
+    grid-template-columns: 1fr;
+  }
+
+  .videoForm {
+    grid-template-columns: 1fr;
+  }
+
+  .todoForm {
+    grid-template-columns: 1fr;
+  }
+
+  .planningFormFields {
+    grid-template-columns: 1fr;
+  }
+
+  .videoFormFields {
+    grid-template-columns: 1fr;
+  }
+
+  .todoFormFields {
+    grid-template-columns: 1fr;
+  }
+
+  .searchInput {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .topBar {
+    flex-wrap: wrap;
+  }
+
+  .topBarRight {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .calendarHeaderActions {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .monthNavigation {
+    order: 2;
+  }
+
+  .topBar h2,
+  .burger {
+    display: block;
+  }
+
+  .mobileNavOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    border: 0;
+    background: rgba(15, 23, 42, 0.38);
+    z-index: 110;
+  }
+
+  .mobileNavClose {
+    display: inline-grid;
+    place-items: center;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #d9deea;
+    background: #ffffff;
+    border-radius: 8px;
+    color: #334155;
+    font-size: 1rem;
+  }
+
+  .platformRow,
+  .platformCreateRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .panelHeader {
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .panelHeader h3 {
+    font-size: 0.9rem;
+    line-height: 1.25;
+    min-width: 0;
+  }
+
+  .panelExpandButton,
+  .monthNavButton,
+  .iconActionButton,
+  .platformChipAction {
+    width: 26px;
+    height: 26px;
+    font-size: 0.78rem;
+  }
+
+  .searchInput {
+    min-width: 0;
+  }
+
+  .inlineControls {
+    gap: 4px;
+  }
+
+  .inlineControls select {
+    max-width: 100%;
+    min-width: 0;
+    font-size: 0.72rem;
+  }
+
+  .videoItemActions,
+  .planningItemActions,
+  .taskItemActions {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .platformFilterItem {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .platformChipMain {
+    min-width: 0;
+    text-align: left;
+  }
+}

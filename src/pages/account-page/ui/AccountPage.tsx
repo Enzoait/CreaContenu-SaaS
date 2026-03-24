@@ -1,18 +1,21 @@
 import { UserIdentityCard } from "../../../entities/user";
-import { AppHeader } from "../../../widgets/app-header";
+import { ProfileSettingsForm } from "../../../features/account-profile";
+import { CreatorAppShell } from "../../../widgets/creator-app-shell";
 
 export const AccountPage = () => {
   return (
-    <main className="layout stack-lg">
-      <AppHeader />
-      <UserIdentityCard title="Compte" />
-      <section className="surface">
-        <h3>Demonstration du cache</h3>
-        <p>
-          Le timestamp affiche la meme valeur immediate quand la donnee vient du
-          cache.
-        </p>
-      </section>
-    </main>
+    <CreatorAppShell accountTopBar>
+      <div className="layout stack-lg">
+        <UserIdentityCard title="Compte — Session Supabase" />
+        <ProfileSettingsForm />
+        <section className="surface">
+          <h3>Démonstration du cache React Query</h3>
+          <p>
+            L&apos;horodatage dans la carte ci-dessus reste identique quand les
+            données viennent du cache (même requête utilisateur).
+          </p>
+        </section>
+      </div>
+    </CreatorAppShell>
   );
 };
