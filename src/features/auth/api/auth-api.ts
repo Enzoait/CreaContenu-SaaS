@@ -1,4 +1,5 @@
 import { mapSupabaseUserToUserModel } from "../../../entities/user";
+import { upsertUserData } from "../../../entities/user/api";
 import { supabase } from "../../../shared/api/supabase/client";
 import type { AuthSession } from "../../../shared/model";
 import type { SignInFormValues } from "../model/sign-in.schema";
@@ -36,6 +37,40 @@ const toAuthSession = (
   },
 });
 
+const readStringMetadata = (
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): string => {
+  const value = metadata?.[key];
+  return typeof value === "string" ? value.trim() : "";
+};
+
+const syncUserDataFromMetadata = async (
+  userId: string,
+  email: string,
+  metadata: Record<string, unknown> | undefined,
+): Promise<void> => {
+  const firstname = readStringMetadata(metadata, "firstname");
+  const lastname = readStringMetadata(metadata, "lastname");
+  const phoneNumber = readStringMetadata(metadata, "phone_number");
+  const country = readStringMetadata(metadata, "country");
+  const region = readStringMetadata(metadata, "region");
+
+  if (!firstname || !lastname || !phoneNumber || !country || !region) {
+    return;
+  }
+
+  await upsertUserData({
+    userId,
+    firstname,
+    lastname,
+    phoneNumber,
+    country,
+    region,
+    email,
+  });
+};
+
 export const signInWithPassword = async (
   payload: SignInFormValues,
 ): Promise<AuthSession> => {
@@ -50,6 +85,13 @@ export const signInWithPassword = async (
   }
 
   const user = mapSupabaseUserToUserModel(data.user);
+
+  await syncUserDataFromMetadata(
+    user.id,
+    user.email ?? payload.email,
+    data.user.user_metadata as Record<string, unknown> | undefined,
+  );
+
   return toAuthSession(
     data.session.access_token,
     user.id,
@@ -64,6 +106,15 @@ export const signUpWithEmail = async (
   const { data, error } = await supabase.auth.signUp({
     email: payload.email,
     password: payload.password,
+    options: {
+      data: {
+        firstname: payload.firstname,
+        lastname: payload.lastname,
+        phone_number: payload.phoneNumber,
+        country: payload.country,
+        region: payload.region,
+      },
+    },
   });
 
   if (error) {
@@ -82,6 +133,17 @@ export const signUpWithEmail = async (
   }
 
   const user = mapSupabaseUserToUserModel(data.user);
+
+  await upsertUserData({
+    userId: user.id,
+    firstname: payload.firstname,
+    lastname: payload.lastname,
+    phoneNumber: payload.phoneNumber,
+    country: payload.country,
+    region: payload.region,
+    email: payload.email,
+  });
+
   return {
     session: toAuthSession(
       data.session.access_token,

@@ -12,6 +12,9 @@ export const useSignInMutation = () => {
     onSuccess: (session) => {
       setSession(session);
       queryClient.setQueryData(queryKeys.auth.currentUser(), session.user);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.currentUserData(),
+      });
     },
   });
 };
