@@ -27,6 +27,9 @@ import {
 } from 'recharts'
 import { AiOutlineDelete, AiOutlineEdit } from 'react-icons/ai'
 import { HiChevronDown } from 'react-icons/hi2'
+import { useNavigate } from 'react-router-dom'
+import { useProfileTitleSuffix } from '../../../features/account-profile'
+import { CreatorAppShell } from '../../creator-app-shell'
 
 type TodoColumn = 'todo' | 'doing' | 'done'
 type VideoStage = 'idea' | 'scripting' | 'recording' | 'editing' | 'published'
@@ -166,13 +169,13 @@ function isInPeriod(dateString: string, period: '7d' | '30d' | '90d' | 'all'): b
 }
 
 export function DashboardOverview() {
+  const profileTitleSuffix = useProfileTitleSuffix()
   const { data, isLoading, isError } = useDashboardData()
   const period = useDashboardPeriod()
   const platform = useDashboardPlatform()
   const setPeriod = useSetDashboardPeriod()
   const setPlatform = useSetDashboardPlatform()
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [focusedPanel, setFocusedPanel] = useState<null | PanelId>(null)
   const [highlightedPanel, setHighlightedPanel] = useState<null | PanelId>(null)
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
@@ -217,7 +220,7 @@ export function DashboardOverview() {
   const [dragOverColumn, setDragOverColumn] = useState<TodoColumn | null>(null)
   const [touchDragTaskId, setTouchDragTaskId] = useState<string | null>(null)
   const [touchOverColumn, setTouchOverColumn] = useState<TodoColumn | null>(null)
-  const [activeView, setActiveView] = useState<'dashboard' | 'user-management'>('dashboard')
+  const navigate = useNavigate()
   const [panelOrder, setPanelOrder] = useState<PanelId[]>(['planning', 'videos', 'todo', 'chart'])
   const [draggingPanel, setDraggingPanel] = useState<PanelId | null>(null)
   const [dragOverPanel, setDragOverPanel] = useState<PanelId | null>(null)
@@ -823,15 +826,9 @@ export function DashboardOverview() {
     setCollapsedPanels((prev) => ({ ...prev, [panel]: !prev[panel] }))
   }
 
-  const openUserManagement = () => {
+  const goToAccount = () => {
     setFocusedPanel(null)
-    setActiveView('user-management')
-    setIsMenuOpen(false)
-  }
-
-  const openDashboard = () => {
-    setActiveView('dashboard')
-    setIsMenuOpen(false)
+    navigate('/account')
   }
 
   const panelOrderIndex = useMemo(
@@ -933,106 +930,53 @@ export function DashboardOverview() {
     return <div className={styles.feedback}>Une erreur est survenue pendant le chargement.</div>
 
   return (
-    <main className={styles.shell}>
-      {isMenuOpen ? (
-        <button
-          type="button"
-          className={styles.mobileNavOverlay}
-          onClick={() => setIsMenuOpen(false)}
-          aria-label="Fermer le menu"
-        />
-      ) : null}
-      <aside className={`${styles.sidebar} ${isMenuOpen ? styles.sidebarOpen : ''}`}>
-        <button
-          type="button"
-          className={styles.mobileNavClose}
-          onClick={() => setIsMenuOpen(false)}
-          aria-label="Fermer le menu burger"
-        >
-          ×
-        </button>
-        <div className={styles.brand}>
-          <span className={styles.brandIcon}>C</span>
-          creacontenu
-        </div>
-        <nav className={styles.menu}>
+    <CreatorAppShell
+      topBarTrailing={
+        <>
           <button
             type="button"
-            className={`${styles.menuItem} ${activeView === 'dashboard' ? styles.menuItemActive : ''}`}
-            onClick={openDashboard}
+            className={styles.profileButton}
+            onClick={goToAccount}
+            aria-label="Aller à la gestion utilisateur"
           >
-            Dashboard
+            <span className={styles.profileAvatar}>MC</span>
           </button>
-          <button
-            type="button"
-            className={`${styles.menuItem} ${activeView === 'user-management' ? styles.menuItemActive : ''}`}
-            onClick={openUserManagement}
-          >
-            Gestion utilisateur
-          </button>
-          <button type="button" className={styles.menuItem}>
-            Déconnexion
-          </button>
-        </nav>
-      </aside>
-
-      <section className={styles.main}>
-        <header className={styles.topBar}>
-          <button
-            type="button"
-            className={styles.burger}
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label="Ouvrir le menu"
-          >
-            ☰
-          </button>
-          <h2>creacontenu</h2>
-          <div className={styles.topBarRight}>
-            <button
-              type="button"
-              className={styles.profileButton}
-              onClick={openUserManagement}
-              aria-label="Aller à la gestion utilisateur"
-            >
-              <span className={styles.profileAvatar}>MC</span>
-            </button>
-            <div className={styles.searchBox}>
-              <input
-                className={styles.searchInput}
-                placeholder="Rechercher dans planning, vidéos, to-do..."
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value)
-                  setIsSuggestionsOpen(true)
-                }}
-                onFocus={() => setIsSuggestionsOpen(true)}
-                onBlur={() => setTimeout(() => setIsSuggestionsOpen(false), 120)}
-              />
-              {isSuggestionsOpen && searchSuggestions.length > 0 ? (
-                <div className={styles.searchSuggestions}>
-                  {searchSuggestions.map((item) => (
-                    <button
-                      key={`${item.label}-${item.panel}-${item.targetId ?? 'section'}`}
-                      type="button"
-                      onClick={() => {
-                        setSearch(item.label)
-                        focusPanelFromSuggestion(item)
-                        setIsSuggestionsOpen(false)
-                      }}
-                    >
-                      {highlightMatch(item.label, search)}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+          <div className={styles.searchBox}>
+            <input
+              className={styles.searchInput}
+              placeholder="Rechercher dans planning, vidéos, to-do..."
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value)
+                setIsSuggestionsOpen(true)
+              }}
+              onFocus={() => setIsSuggestionsOpen(true)}
+              onBlur={() => setTimeout(() => setIsSuggestionsOpen(false), 120)}
+            />
+            {isSuggestionsOpen && searchSuggestions.length > 0 ? (
+              <div className={styles.searchSuggestions}>
+                {searchSuggestions.map((item) => (
+                  <button
+                    key={`${item.label}-${item.panel}-${item.targetId ?? 'section'}`}
+                    type="button"
+                    onClick={() => {
+                      setSearch(item.label)
+                      focusPanelFromSuggestion(item)
+                      setIsSuggestionsOpen(false)
+                    }}
+                  >
+                    {highlightMatch(item.label, search)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
-        </header>
-
-        {activeView === 'dashboard' ? (
+        </>
+      }
+    >
         <>
         <section className={styles.banner}>
-          <h1>Dashboard créateur - Aurélien</h1>
+          <h1>Dashboard créateur — {profileTitleSuffix}</h1>
           <p>Filtres actifs sur toutes les sections + recherche globale.</p>
           <div className={styles.bannerActions}>
             {(['7d', '30d', '90d', 'all'] as const).map((item) => (
@@ -1841,22 +1785,6 @@ export function DashboardOverview() {
 
         </section>
       </>
-      ) : (
-        <section className={styles.userManagementPage}>
-          <h2>Gestion utilisateur</h2>
-          <p>Page profil et préférences utilisateur (mock front).</p>
-          <div className={styles.userManagementCard}>
-            <p>
-              Tu peux connecter cette vue plus tard à ton module Auth pour modifier le profil,
-              l&apos;avatar, les préférences et la session.
-            </p>
-            <button type="button" onClick={openDashboard}>
-              Retour au dashboard
-            </button>
-          </div>
-        </section>
-      )}
-      </section>
       {focusedPanel ? (
         <div
           className={styles.simpleModalOverlay}
@@ -2402,6 +2330,6 @@ export function DashboardOverview() {
           </div>
         </div>
       ) : null}
-    </main>
+    </CreatorAppShell>
   )
 }

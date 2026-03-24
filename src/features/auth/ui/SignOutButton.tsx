@@ -1,11 +1,20 @@
 import { useSignOutMutation } from "../model/use-sign-out-mutation";
 
-export const SignOutButton = () => {
+type SignOutButtonProps = {
+  className?: string;
+};
+
+export const SignOutButton = ({ className }: SignOutButtonProps) => {
   const { mutate, isPending } = useSignOutMutation();
 
   return (
-    <button type="button" onClick={() => mutate()} disabled={isPending}>
-      {isPending ? "Deconnexion..." : "Se deconnecter"}
+    <button
+      type="button"
+      className={className}
+      onClick={() => mutate()}
+      disabled={isPending}
+    >
+      {isPending ? "Déconnexion…" : "Déconnexion"}
     </button>
   );
 };
