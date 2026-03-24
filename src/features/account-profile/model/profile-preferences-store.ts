@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useCurrentUserDataQuery } from "../../../entities/user";
 import type { ProfileSettingsFormValues } from "./profile-settings.schema";
 
 type ProfilePreferencesState = {
@@ -13,7 +14,7 @@ type ProfilePreferencesState = {
 const useProfilePreferencesStore = create<ProfilePreferencesState>()(
   persist(
     (set) => ({
-      displayName: "Aurélien",
+      displayName: "",
       bio: "",
       phone: "",
       notifyEmail: true,
@@ -29,12 +30,35 @@ const useProfilePreferencesStore = create<ProfilePreferencesState>()(
   ),
 );
 
+const normalizeLegacyDisplayName = (value: string): string => {
+  const trimmed = value.trim();
+  const normalized = trimmed
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (normalized === "aurelien") {
+    return "";
+  }
+
+  return trimmed;
+};
+
 export const useProfileDisplayName = () =>
-  useProfilePreferencesStore((state) => state.displayName);
+  useProfilePreferencesStore((state) =>
+    normalizeLegacyDisplayName(state.displayName),
+  );
 
 /** Texte court pour en-têtes (ex. dashboard) : préférence locale, pas l’email Supabase. */
-export const useProfileTitleSuffix = () =>
-  useProfilePreferencesStore((state) => state.displayName.trim() || "Créateur");
+export const useProfileTitleSuffix = () => {
+  const displayName = useProfilePreferencesStore((state) =>
+    normalizeLegacyDisplayName(state.displayName),
+  );
+  const { data: userData } = useCurrentUserDataQuery();
+  const firstname = userData?.firstname?.trim() ?? "";
+
+  return displayName || firstname || "Créateur";
+};
 
 /** État dérivé : nombre de champs « remplis » côté préférences. */
 export const useProfileCompleteness = () =>
@@ -50,7 +74,9 @@ export const useProfilePreferencesActions = () =>
   useProfilePreferencesStore((state) => state.setFromForm);
 
 export const useProfileSavedDisplayName = () =>
-  useProfilePreferencesStore((state) => state.displayName);
+  useProfilePreferencesStore((state) =>
+    normalizeLegacyDisplayName(state.displayName),
+  );
 
 export const useProfileSavedBio = () =>
   useProfilePreferencesStore((state) => state.bio);

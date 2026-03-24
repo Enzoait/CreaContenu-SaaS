@@ -19,6 +19,9 @@ export const useSignUpMutation = () => {
         queryKeys.auth.currentUser(),
         result.session.user,
       );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.auth.currentUserData(),
+      });
     },
   });
 };

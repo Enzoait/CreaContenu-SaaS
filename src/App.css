@@ -315,6 +315,157 @@ button.active {
   font-size: 0.9rem;
 }
 
+.dropzone {
+  border: 1px dashed #9aa4b2;
+  border-radius: 12px;
+  padding: 0.95rem;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.dropzone.is-dragging {
+  border-color: #4453e7;
+  background: #eef2ff;
+}
+
+.dropzone-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dropzone-subtitle {
+  margin: 0.2rem 0;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.dropzone-file {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.82rem;
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.2rem;
+}
+
+.account-sidebar {
+  border-right: 1px solid #e6e8ef;
+  padding-right: 0.9rem;
+  display: grid;
+  align-content: start;
+  gap: 0.25rem;
+}
+
+.account-tab-item {
+  border: 0;
+  text-align: left;
+  background: transparent;
+  color: #4b5563;
+  padding: 0.58rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.88rem;
+}
+
+.account-tab-item:hover {
+  background: #eef2ff;
+  transform: none;
+  opacity: 1;
+}
+
+.account-tab-item.is-active {
+  background: #e6efff;
+  color: #22509a;
+}
+
+.account-main {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.account-title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.account-content-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.account-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #eceef3;
+  padding: 1.1rem;
+}
+
+.account-user-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.account-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.account-avatar-fallback {
+  display: inline-grid;
+  place-items: center;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.account-name {
+  margin: 0;
+  font-size: 1.28rem;
+}
+
+.account-role {
+  margin: 0.2rem 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.account-location {
+  margin: 0.2rem 0 0;
+  color: #6b7280;
+}
+
+.account-section-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.account-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.account-label {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.84rem;
+}
+
+.account-info-grid p {
+  margin: 0.2rem 0 0;
+}
+
 @media (max-width: 768px) {
   .auth-shell {
     grid-template-columns: 1fr;
@@ -335,6 +486,23 @@ button.active {
   }
 
   .header {
+    grid-template-columns: 1fr;
+  }
+
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .account-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #e6e8ef;
+    padding-right: 0;
+    padding-bottom: 0.8rem;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+
+  .account-info-grid {
     grid-template-columns: 1fr;
   }
 }
