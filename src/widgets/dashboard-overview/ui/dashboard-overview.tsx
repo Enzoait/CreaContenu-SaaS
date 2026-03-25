@@ -974,6 +974,17 @@ export function DashboardOverview() {
       setVideoData((prev) => [...prev, newVideo])
       setVideoStages((prev) => ({ ...prev, [newVideo.id]: newVideo.stage }))
       ensureVisibility(newVideo.platform, newVideo.deadline)
+      try {
+        const newPlanning = await addPlanningItem(user.id, {
+          title: newVideo.title,
+          platform: newVideo.platform,
+          publishAt: newVideo.deadline,
+          status: 'scheduled',
+        })
+        setPlanningData((prev) => [...prev, newPlanning])
+      } catch (planningError) {
+        console.error(planningError)
+      }
     } catch (error) {
       console.error(error)
     }
