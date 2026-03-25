@@ -92,6 +92,7 @@ describe("DashboardOverview", () => {
       platform: "youtube",
       publishAt: "2026-12-15",
       status: "scheduled" as const,
+      videoId: "vid-new",
     }));
     apiMocks.addUserPlatform.mockResolvedValue(undefined);
   });
@@ -224,6 +225,7 @@ describe("DashboardOverview", () => {
           platform: "youtube",
           publishAt: "2026-12-15",
           status: "scheduled",
+          videoId: "vid-new",
         }),
       );
     });

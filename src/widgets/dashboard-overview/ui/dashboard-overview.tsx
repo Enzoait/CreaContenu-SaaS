@@ -85,6 +85,8 @@ type PlanningItem = {
   platform: string
   publishAt: string
   status: 'draft' | 'scheduled' | 'published'
+  /** Présent si l’entrée provient d’un suivi vidéo (sync échéance) */
+  videoId?: string
 }
 
 type PlanningDraft = {
@@ -681,8 +683,27 @@ export function DashboardOverview() {
     )
     setDraggingPlanningId(null)
     setDragOverDateKey(null)
+    const previousPublishAt = item.publishAt
     try {
       await updatePlanningItem(itemId, { publishAt: dateKey })
+      if (item.videoId) {
+        try {
+          await updateVideoItem(item.videoId, { deadline: dateKey })
+          setVideoData((prev) =>
+            prev.map((v) =>
+              v.id === item.videoId ? { ...v, deadline: dateKey } : v,
+            ),
+          )
+        } catch (videoError) {
+          console.error(videoError)
+          await updatePlanningItem(itemId, { publishAt: previousPublishAt })
+          setPlanningData((prev) =>
+            prev.map((p) =>
+              p.id === itemId ? { ...p, publishAt: previousPublishAt } : p,
+            ),
+          )
+        }
+      }
     } catch (error) {
       console.error(t('dashboard.dragEventError'), error)
       setPlanningData((prev) =>
@@ -936,26 +957,52 @@ export function DashboardOverview() {
     }
 
     if (editingVideoId) {
-      setVideoData((prev) =>
-        prev.map((item) =>
-          item.id === editingVideoId
-            ? {
-                ...item,
-                title: videoDraft.title.trim(),
-                platform: videoDraft.platform,
-                deadline: normalizedDate,
-                stage: videoDraft.stage,
-              }
-            : item,
-        ),
-      )
-      setVideoStages((prev) => ({ ...prev, [editingVideoId]: videoDraft.stage }))
-      updateVideoItem(editingVideoId, {
-        title: videoDraft.title.trim(),
-        platform: videoDraft.platform,
-        deadline: normalizedDate,
-        stage: videoDraft.stage,
-      }).catch(console.error)
+      const linkedPlanning = planningData.find((p) => p.videoId === editingVideoId)
+      try {
+        await updateVideoItem(editingVideoId, {
+          title: videoDraft.title.trim(),
+          platform: videoDraft.platform,
+          deadline: normalizedDate,
+          stage: videoDraft.stage,
+        })
+        if (linkedPlanning) {
+          await updatePlanningItem(linkedPlanning.id, {
+            title: videoDraft.title.trim(),
+            platform: videoDraft.platform,
+            publishAt: normalizedDate,
+          })
+        }
+        setVideoData((prev) =>
+          prev.map((item) =>
+            item.id === editingVideoId
+              ? {
+                  ...item,
+                  title: videoDraft.title.trim(),
+                  platform: videoDraft.platform,
+                  deadline: normalizedDate,
+                  stage: videoDraft.stage,
+                }
+              : item,
+          ),
+        )
+        setVideoStages((prev) => ({ ...prev, [editingVideoId]: videoDraft.stage }))
+        if (linkedPlanning) {
+          setPlanningData((prev) =>
+            prev.map((p) =>
+              p.id === linkedPlanning.id
+                ? {
+                    ...p,
+                    title: videoDraft.title.trim(),
+                    platform: videoDraft.platform,
+                    publishAt: normalizedDate,
+                  }
+                : p,
+            ),
+          )
+        }
+      } catch (error) {
+        console.error(error)
+      }
       ensureVisibility(videoDraft.platform, normalizedDate)
       resetVideoDraft()
       setIsVideoFormOpen(false)
@@ -980,6 +1027,7 @@ export function DashboardOverview() {
           platform: newVideo.platform,
           publishAt: newVideo.deadline,
           status: 'scheduled',
+          videoId: newVideo.id,
         })
         setPlanningData((prev) => [...prev, newPlanning])
       } catch (planningError) {
@@ -1147,25 +1195,51 @@ export function DashboardOverview() {
     }
 
     if (editingPlanningId) {
-      setPlanningData((prev) =>
-        prev.map((item) =>
-          item.id === editingPlanningId
-            ? {
-                ...item,
-                title: planningDraft.title.trim(),
-                platform: planningDraft.platform,
-                publishAt: normalizedDate,
-                status: planningDraft.status,
-              }
-            : item,
-        ),
-      )
-      updatePlanningItem(editingPlanningId, {
-        title: planningDraft.title.trim(),
-        platform: planningDraft.platform,
-        publishAt: normalizedDate,
-        status: planningDraft.status,
-      }).catch(console.error)
+      const editingItem = planningData.find((p) => p.id === editingPlanningId)
+      try {
+        await updatePlanningItem(editingPlanningId, {
+          title: planningDraft.title.trim(),
+          platform: planningDraft.platform,
+          publishAt: normalizedDate,
+          status: planningDraft.status,
+        })
+        if (editingItem?.videoId) {
+          await updateVideoItem(editingItem.videoId, {
+            title: planningDraft.title.trim(),
+            platform: planningDraft.platform,
+            deadline: normalizedDate,
+          })
+        }
+        setPlanningData((prev) =>
+          prev.map((item) =>
+            item.id === editingPlanningId
+              ? {
+                  ...item,
+                  title: planningDraft.title.trim(),
+                  platform: planningDraft.platform,
+                  publishAt: normalizedDate,
+                  status: planningDraft.status,
+                }
+              : item,
+          ),
+        )
+        if (editingItem?.videoId) {
+          setVideoData((prev) =>
+            prev.map((v) =>
+              v.id === editingItem.videoId
+                ? {
+                    ...v,
+                    title: planningDraft.title.trim(),
+                    platform: planningDraft.platform,
+                    deadline: normalizedDate,
+                  }
+                : v,
+            ),
+          )
+        }
+      } catch (error) {
+        console.error(error)
+      }
       ensureVisibility(planningDraft.platform, normalizedDate)
       resetPlanningDraft()
       setIsPlanningFormOpen(false)

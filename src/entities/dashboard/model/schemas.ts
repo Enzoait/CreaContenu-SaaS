@@ -12,6 +12,8 @@ export const PlanningItemSchema = z.object({
   platform: z.string().min(1),
   publishAt: z.string().min(1),
   status: z.enum(['draft', 'scheduled', 'published']),
+  /** Si défini, l’entrée planning est liée à un suivi vidéo (sync de date) */
+  videoId: z.string().min(1).optional(),
 })
 
 export const VideoItemSchema = z.object({
