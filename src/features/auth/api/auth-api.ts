@@ -2,6 +2,7 @@ import { mapSupabaseUserToUserModel } from "../../../entities/user";
 import { upsertUserData } from "../../../entities/user/api";
 import { supabase } from "../../../shared/api/supabase/client";
 import type { AuthSession } from "../../../shared/model";
+import type { ChangePasswordFormValues } from "../model/change-password.schema";
 import type { SignInFormValues } from "../model/sign-in.schema";
 import type { SignUpFormValues } from "../model/sign-up.schema";
 
@@ -12,6 +13,14 @@ export type SignUpResult = {
 
 const mapSupabaseAuthErrorMessage = (message: string): string => {
   const normalized = message.toLowerCase();
+
+  if (normalized.includes("invalid login credentials")) {
+    return "Le mot de passe actuel est incorrect.";
+  }
+
+  if (normalized.includes("new password should be different")) {
+    return "Le nouveau mot de passe doit etre different de l'actuel.";
+  }
 
   if (
     normalized.includes("email rate limit exceeded") ||
@@ -160,5 +169,38 @@ export const signOut = async (): Promise<void> => {
 
   if (error) {
     throw new Error(mapSupabaseAuthErrorMessage(error.message));
+  }
+};
+
+export const changePassword = async (
+  payload: ChangePasswordFormValues,
+): Promise<void> => {
+  const { data: currentUserData, error: currentUserError } =
+    await supabase.auth.getUser();
+
+  if (currentUserError) {
+    throw new Error(mapSupabaseAuthErrorMessage(currentUserError.message));
+  }
+
+  const currentEmail = currentUserData.user?.email;
+  if (!currentEmail) {
+    throw new Error("Impossible de verifier l'utilisateur connecte.");
+  }
+
+  const { error: reauthError } = await supabase.auth.signInWithPassword({
+    email: currentEmail,
+    password: payload.currentPassword,
+  });
+
+  if (reauthError) {
+    throw new Error(mapSupabaseAuthErrorMessage(reauthError.message));
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: payload.newPassword,
+  });
+
+  if (updateError) {
+    throw new Error(mapSupabaseAuthErrorMessage(updateError.message));
   }
 };
