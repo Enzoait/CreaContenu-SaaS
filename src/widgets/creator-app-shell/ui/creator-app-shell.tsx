@@ -12,7 +12,7 @@ type CreatorAppShellProps = {
   children: ReactNode;
   /** Contenu à droite dans la barre du haut (recherche, filtres rapides, etc.) */
   topBarTrailing?: ReactNode;
-  /** Barre du haut simplifiée : avatar vers la gestion compte (ex. page /account) */
+  /** Barre du haut simplifiée : avatar vers la gestion compte (ex. page /account) */
   accountTopBar?: boolean;
 };
 

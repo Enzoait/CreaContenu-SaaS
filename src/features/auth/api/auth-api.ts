@@ -2,6 +2,10 @@ import { mapSupabaseUserToUserModel } from "../../../entities/user";
 import { upsertUserData } from "../../../entities/user/api";
 import { supabase } from "../../../shared/api/supabase/client";
 import type { AuthSession } from "../../../shared/model";
+import {
+  userToProfileMetadata,
+  type AuthProfileMetadata,
+} from "../model/auth-profile-metadata";
 import type { ChangePasswordFormValues } from "../model/change-password.schema";
 import type { SignInFormValues } from "../model/sign-in.schema";
 import type { SignUpFormValues } from "../model/sign-up.schema";
@@ -46,26 +50,14 @@ const toAuthSession = (
   },
 });
 
-const readStringMetadata = (
-  metadata: Record<string, unknown> | undefined,
-  key: string,
-): string => {
-  const value = metadata?.[key];
-  return typeof value === "string" ? value.trim() : "";
-};
-
 const syncUserDataFromMetadata = async (
   userId: string,
   email: string,
-  metadata: Record<string, unknown> | undefined,
+  metadata: AuthProfileMetadata,
 ): Promise<void> => {
-  const firstname = readStringMetadata(metadata, "firstname");
-  const lastname = readStringMetadata(metadata, "lastname");
-  const phoneNumber = readStringMetadata(metadata, "phone_number");
-  const country = readStringMetadata(metadata, "country");
-  const region = readStringMetadata(metadata, "region");
+  const { firstname, lastname, phone_number, country, region } = metadata;
 
-  if (!firstname || !lastname || !phoneNumber || !country || !region) {
+  if (!firstname || !lastname || !phone_number || !country || !region) {
     return;
   }
 
@@ -73,7 +65,7 @@ const syncUserDataFromMetadata = async (
     userId,
     firstname,
     lastname,
-    phoneNumber,
+    phoneNumber: phone_number,
     country,
     region,
     email,
@@ -98,7 +90,7 @@ export const signInWithPassword = async (
   await syncUserDataFromMetadata(
     user.id,
     user.email ?? payload.email,
-    data.user.user_metadata as Record<string, unknown> | undefined,
+    userToProfileMetadata(data.user),
   );
 
   return toAuthSession(

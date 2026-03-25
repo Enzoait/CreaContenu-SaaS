@@ -4,6 +4,23 @@ import type { PlanningItemSchema } from '../model/schemas'
 
 type PlanningItem = z.infer<typeof PlanningItemSchema>
 
+type PlanningInsertRow = {
+  user_id: string
+  title: string
+  platform: string
+  publish_at: string
+  status: PlanningItem['status']
+  video_id?: string
+}
+
+type PlanningUpdateRow = {
+  title?: string
+  platform?: string
+  publish_at?: string
+  status?: PlanningItem['status']
+  video_id?: string | null
+}
+
 function mapRow(row: {
   id: string
   title: string
@@ -37,7 +54,7 @@ export async function addPlanningItem(
   userId: string,
   item: Omit<PlanningItem, 'id'>,
 ): Promise<PlanningItem> {
-  const insert: Record<string, unknown> = {
+  const insert: PlanningInsertRow = {
     user_id: userId,
     title: item.title,
     platform: item.platform,
@@ -60,7 +77,7 @@ export async function updatePlanningItem(
   id: string,
   patch: Partial<Omit<PlanningItem, 'id'>>,
 ): Promise<void> {
-  const update: Record<string, unknown> = {}
+  const update: Partial<PlanningUpdateRow> = {}
   if (patch.title !== undefined) update.title = patch.title
   if (patch.platform !== undefined) update.platform = patch.platform
   if (patch.publishAt !== undefined) update.publish_at = patch.publishAt
