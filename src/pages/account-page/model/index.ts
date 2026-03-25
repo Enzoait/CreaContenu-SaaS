@@ -6,3 +6,7 @@ export {
   useSetAccountAvatarDataUrl,
   type AccountTab,
 } from "./account-page-store";
+export {
+  accountProfileFormSchema,
+  type AccountProfileFormValues,
+} from "./account-profile-form.schema";

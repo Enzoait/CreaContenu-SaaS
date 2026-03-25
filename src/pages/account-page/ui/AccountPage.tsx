@@ -1,12 +1,18 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { jsPDF } from "jspdf";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   useCurrentUserDataQuery,
   useCurrentUserQuery,
+  useUpsertUserDataMutation,
 } from "../../../entities/user";
 import {
+  accountProfileFormSchema,
   useAccountActiveTab,
   useAccountAvatarDataUrl,
   useSetAccountActiveTab,
+  type AccountProfileFormValues,
   type AccountTab,
 } from "../model";
 import { CreatorAppShell } from "../../../widgets/creator-app-shell";
@@ -36,6 +42,8 @@ export const AccountPage = () => {
   const activeTab = useAccountActiveTab();
   const avatarDataUrl = useAccountAvatarDataUrl();
   const setActiveTab = useSetAccountActiveTab();
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
   const {
     data: userData,
     isPending: isUserDataPending,
@@ -43,6 +51,8 @@ export const AccountPage = () => {
     error: userDataError,
   } = useCurrentUserDataQuery();
   const { data: currentUser } = useCurrentUserQuery();
+  const { mutateAsync: upsertUserData, isPending: isSavingProfile } =
+    useUpsertUserDataMutation();
 
   const displayFirstname = userData?.firstname || "Prénom";
   const displayLastname = userData?.lastname || "Nom";
@@ -54,6 +64,78 @@ export const AccountPage = () => {
   const displayRegion = userData?.region || "Région indisponible";
   const displayInitials =
     `${displayFirstname.charAt(0)}${displayLastname.charAt(0)}`.toUpperCase();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AccountProfileFormValues>({
+    resolver: zodResolver(accountProfileFormSchema),
+    defaultValues: {
+      firstname: userData?.firstname ?? "",
+      lastname: userData?.lastname ?? "",
+      email: userData?.email ?? currentUser?.email ?? "",
+      phoneNumber: userData?.phoneNumber ?? "",
+      country: userData?.country ?? "",
+      region: userData?.region ?? "",
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      firstname: userData?.firstname ?? "",
+      lastname: userData?.lastname ?? "",
+      email: userData?.email ?? currentUser?.email ?? "",
+      phoneNumber: userData?.phoneNumber ?? "",
+      country: userData?.country ?? "",
+      region: userData?.region ?? "",
+    });
+  }, [
+    currentUser?.email,
+    reset,
+    userData?.country,
+    userData?.email,
+    userData?.firstname,
+    userData?.lastname,
+    userData?.phoneNumber,
+    userData?.region,
+  ]);
+
+  const onSubmit = async (values: AccountProfileFormValues) => {
+    if (!currentUser?.id) {
+      setSaveErrorMessage(
+        "Utilisateur non identifié. Reconnectez-vous puis réessayez.",
+      );
+      return;
+    }
+
+    setSaveErrorMessage(null);
+
+    try {
+      await upsertUserData({
+        userId: currentUser.id,
+        firstname: values.firstname.trim(),
+        lastname: values.lastname.trim(),
+        email: values.email.trim(),
+        phoneNumber: values.phoneNumber.trim(),
+        country: values.country.trim(),
+        region: values.region.trim(),
+      });
+      setSavedAt(
+        new Date().toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    } catch (error) {
+      setSaveErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Erreur pendant la sauvegarde du profil.",
+      );
+    }
+  };
 
   const handleTextExport = () => {
     const payload = [
@@ -137,39 +219,111 @@ export const AccountPage = () => {
         </section>
 
         <section className="account-card">
-          <h3 className="account-section-title">Informations personnelles</h3>
-          <div className="account-info-grid">
-            <div>
-              <p className="account-label">Prénom</p>
-              <p>{displayFirstname}</p>
-            </div>
-            <div>
-              <p className="account-label">Nom</p>
-              <p>{displayLastname}</p>
-            </div>
-            <div>
-              <p className="account-label">Adresse email</p>
-              <p>{displayEmail}</p>
-            </div>
-            <div>
-              <p className="account-label">Téléphone</p>
-              <p>{displayPhone}</p>
-            </div>
-          </div>
-        </section>
+          <h3 className="account-section-title">Modifier mes informations</h3>
+          <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
+            <label className="field-label" htmlFor="account-firstname">
+              Prénom
+            </label>
+            <input
+              id="account-firstname"
+              className="field-input"
+              type="text"
+              autoComplete="given-name"
+              {...register("firstname")}
+            />
+            {errors.firstname ? (
+              <p className="error">{errors.firstname.message}</p>
+            ) : null}
 
-        <section className="account-card">
-          <h3 className="account-section-title">Adresse</h3>
-          <div className="account-info-grid">
-            <div>
-              <p className="account-label">Pays</p>
-              <p>{displayCountry}</p>
+            <label className="field-label" htmlFor="account-lastname">
+              Nom
+            </label>
+            <input
+              id="account-lastname"
+              className="field-input"
+              type="text"
+              autoComplete="family-name"
+              {...register("lastname")}
+            />
+            {errors.lastname ? (
+              <p className="error">{errors.lastname.message}</p>
+            ) : null}
+
+            <label className="field-label" htmlFor="account-email">
+              Adresse email
+            </label>
+            <input
+              id="account-email"
+              className="field-input"
+              type="email"
+              autoComplete="email"
+              {...register("email")}
+            />
+            {errors.email ? (
+              <p className="error">{errors.email.message}</p>
+            ) : null}
+
+            <label className="field-label" htmlFor="account-phone">
+              Téléphone
+            </label>
+            <input
+              id="account-phone"
+              className="field-input"
+              type="tel"
+              autoComplete="tel"
+              {...register("phoneNumber")}
+            />
+            {errors.phoneNumber ? (
+              <p className="error">{errors.phoneNumber.message}</p>
+            ) : null}
+
+            <label className="field-label" htmlFor="account-country">
+              Pays
+            </label>
+            <input
+              id="account-country"
+              className="field-input"
+              type="text"
+              autoComplete="country-name"
+              {...register("country")}
+            />
+            {errors.country ? (
+              <p className="error">{errors.country.message}</p>
+            ) : null}
+
+            <label className="field-label" htmlFor="account-region">
+              Ville / Région
+            </label>
+            <input
+              id="account-region"
+              className="field-input"
+              type="text"
+              autoComplete="address-level2"
+              {...register("region")}
+            />
+            {errors.region ? (
+              <p className="error">{errors.region.message}</p>
+            ) : null}
+
+            {saveErrorMessage ? (
+              <p className="error">{saveErrorMessage}</p>
+            ) : null}
+
+            <div className="row-between" style={{ marginTop: "0.75rem" }}>
+              <button
+                type="submit"
+                className="auth-primary"
+                disabled={isSavingProfile}
+              >
+                {isSavingProfile ? "Enregistrement..." : "Sauvegarder"}
+              </button>
+              {savedAt ? (
+                <span className="muted" style={{ fontSize: "0.9rem" }}>
+                  Enregistré à {savedAt}
+                </span>
+              ) : null}
             </div>
-            <div>
-              <p className="account-label">Ville / Région</p>
-              <p>{displayRegion}</p>
-            </div>
-          </div>
+          </form>
         </section>
       </div>
     );

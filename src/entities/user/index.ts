@@ -13,4 +13,5 @@ export {
 } from "./model/user-data.schema";
 export { useCurrentUserQuery } from "./model/use-current-user-query";
 export { useCurrentUserDataQuery } from "./model/use-current-user-data-query";
+export { useUpsertUserDataMutation } from "./model/use-upsert-user-data-mutation";
 export { UserIdentityCard } from "./ui/UserIdentityCard";

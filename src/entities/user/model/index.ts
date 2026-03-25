@@ -13,3 +13,4 @@ export {
 } from "./user-data.schema";
 export { useCurrentUserQuery } from "./use-current-user-query";
 export { useCurrentUserDataQuery } from "./use-current-user-data-query";
+export { useUpsertUserDataMutation } from "./use-upsert-user-data-mutation";
