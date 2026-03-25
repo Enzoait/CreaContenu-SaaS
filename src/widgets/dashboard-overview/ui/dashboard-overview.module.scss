@@ -138,6 +138,16 @@
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
 }
 
+.profileAvatarImg {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
+}
+
 .searchSuggestions {
   position: absolute;
   top: calc(100% + 6px);
@@ -734,6 +744,18 @@
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.planningFormHint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #b45309;
+}
+
+.planningFormSubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .videoFormActions {
