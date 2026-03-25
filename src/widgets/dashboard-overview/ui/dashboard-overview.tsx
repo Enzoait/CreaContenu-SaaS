@@ -58,6 +58,7 @@ import { useNavigate } from 'react-router-dom'
 import { useProfileTitleSuffix } from '../../../features/account-profile'
 import { useAccountAvatarDataUrl } from '../../../pages/account-page/model'
 import { CreatorAppShell } from '../../creator-app-shell'
+import { useI18n } from '../../../shared/i18n'
 
 /** Contenus sans plateforme utilisateur définie (remplace l’ancien repli « general ») */
 const NO_PLATFORM_LABEL = 'pas de plateforme'
@@ -131,40 +132,13 @@ type TodoDraft = {
   column: TodoColumn
 }
 
-const PANEL_LABEL: Record<PanelId, string> = {
-  planning: 'Planning',
-  videos: 'Vidéos',
-  todo: 'Todo',
-  chart: 'Stats',
+function formatNumber(value: number, localeTag: string): string {
+  return new Intl.NumberFormat(localeTag).format(value)
 }
 
-const COLUMN_LABEL: Record<string, string> = {
-  todo: 'À faire',
-  doing: 'En cours',
-  done: 'Terminé',
-}
-
-const STAGE_LABEL: Record<string, string> = {
-  idea: 'Idée',
-  scripting: 'Script',
-  recording: 'Tournage',
-  editing: 'Montage',
-  published: 'Publié',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: 'Brouillon',
-  scheduled: 'Planifié',
-  published: 'Publié',
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('fr-FR').format(value)
-}
-
-function formatDateLabel(dateString: string): string {
+function formatDateLabel(dateString: string, localeTag: string): string {
   const date = new Date(dateString)
-  return date.toLocaleDateString('fr-FR', {
+  return date.toLocaleDateString(localeTag, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -196,8 +170,8 @@ function toSearchTargetId(prefix: string, value: string): string {
   return `${prefix}-${encodeURIComponent(value)}`
 }
 
-function toMonthLabel(date: Date): string {
-  return date.toLocaleDateString('fr-FR', {
+function toMonthLabel(date: Date, localeTag: string): string {
+  return date.toLocaleDateString(localeTag, {
     month: 'long',
     year: 'numeric',
   })
@@ -311,6 +285,57 @@ export function DashboardOverview() {
     todo: null,
     chart: null,
   })
+
+  const { t, localeTag } = useI18n()
+
+  const panelLabels = useMemo(
+    () =>
+      ({
+        planning: t('dashboard.panelPlanning'),
+        videos: t('dashboard.panelVideos'),
+        todo: t('dashboard.panelTodo'),
+        chart: t('dashboard.panelChart'),
+      }) satisfies Record<PanelId, string>,
+    [t],
+  )
+
+  const columnLabels = useMemo(
+    () => ({
+      todo: t('dashboard.colTodo'),
+      doing: t('dashboard.colDoing'),
+      done: t('dashboard.colDone'),
+    }),
+    [t],
+  )
+
+  const stageLabels = useMemo(
+    () => ({
+      idea: t('dashboard.stageIdea'),
+      scripting: t('dashboard.stageScripting'),
+      recording: t('dashboard.stageRecording'),
+      editing: t('dashboard.stageEditing'),
+      published: t('dashboard.stagePublished'),
+    }),
+    [t],
+  )
+
+  const statusLabels = useMemo(
+    () => ({
+      draft: t('dashboard.statusDraft'),
+      scheduled: t('dashboard.statusScheduled'),
+      published: t('dashboard.statusPublished'),
+    }),
+    [t],
+  )
+
+  const priorityLabels = useMemo(
+    () => ({
+      low: t('dashboard.priorityLow'),
+      medium: t('dashboard.priorityMedium'),
+      high: t('dashboard.priorityHigh'),
+    }),
+    [t],
+  )
 
   useEffect(() => {
     if (!data) return
@@ -446,32 +471,62 @@ export function DashboardOverview() {
 
     const push = (item: SuggestionItem) => candidates.push(item)
 
-    push({ label: 'planning', panel: 'planning', targetId: null })
-    push({ label: 'agenda', panel: 'planning', targetId: null })
-    push({ label: 'suivi des vidéos', panel: 'videos', targetId: null })
-    push({ label: 'vidéos', panel: 'videos', targetId: null })
-    push({ label: 'to-do list', panel: 'todo', targetId: null })
-    push({ label: 'todo list', panel: 'todo', targetId: null })
-    push({ label: 'tâches', panel: 'todo', targetId: null })
-    push({ label: 'plateformes', panel: 'planning', targetId: null })
-    push({ label: 'stats', panel: 'planning', targetId: null })
+    push({ label: t('dashboard.searchKwPlanning'), panel: 'planning', targetId: null })
+    push({ label: t('dashboard.searchKwAgenda'), panel: 'planning', targetId: null })
+    push({ label: t('dashboard.searchKwVideoTracking'), panel: 'videos', targetId: null })
+    push({ label: t('dashboard.searchKwVideosShort'), panel: 'videos', targetId: null })
+    push({ label: t('dashboard.searchKwTodoList'), panel: 'todo', targetId: null })
+    push({ label: t('dashboard.searchKwTodoListAlt'), panel: 'todo', targetId: null })
+    push({ label: t('dashboard.searchKwTasks'), panel: 'todo', targetId: null })
+    push({ label: t('dashboard.searchKwPlatforms'), panel: 'planning', targetId: null })
+    push({ label: t('dashboard.searchKwStats'), panel: 'planning', targetId: null })
 
     for (const item of planningData) {
       const targetId = toSearchTargetId('planning', item.id)
-      push({ label: item.title, panel: 'planning', targetId, detail: STATUS_LABEL[item.status] ?? item.status })
-      push({ label: item.platform, panel: 'planning', targetId, detail: STATUS_LABEL[item.status] ?? item.status })
+      push({
+        label: item.title,
+        panel: 'planning',
+        targetId,
+        detail: statusLabels[item.status] ?? item.status,
+      })
+      push({
+        label: item.platform,
+        panel: 'planning',
+        targetId,
+        detail: statusLabels[item.status] ?? item.status,
+      })
       push({ label: item.status, panel: 'planning', targetId })
     }
     for (const item of videoData) {
       const targetId = toSearchTargetId('video', item.id)
-      push({ label: item.title, panel: 'videos', targetId, detail: STAGE_LABEL[item.stage] ?? item.stage })
-      push({ label: item.platform, panel: 'videos', targetId, detail: STAGE_LABEL[item.stage] ?? item.stage })
+      push({
+        label: item.title,
+        panel: 'videos',
+        targetId,
+        detail: stageLabels[item.stage] ?? item.stage,
+      })
+      push({
+        label: item.platform,
+        panel: 'videos',
+        targetId,
+        detail: stageLabels[item.stage] ?? item.stage,
+      })
       push({ label: item.stage, panel: 'videos', targetId })
     }
     for (const item of todoBoard) {
       const targetId = toSearchTargetId('todo', item.id)
-      push({ label: item.label, panel: 'todo', targetId, detail: COLUMN_LABEL[item.column] ?? item.column })
-      push({ label: item.platform, panel: 'todo', targetId, detail: COLUMN_LABEL[item.column] ?? item.column })
+      push({
+        label: item.label,
+        panel: 'todo',
+        targetId,
+        detail: columnLabels[item.column] ?? item.column,
+      })
+      push({
+        label: item.platform,
+        panel: 'todo',
+        targetId,
+        detail: columnLabels[item.column] ?? item.column,
+      })
       push({ label: item.priority, panel: 'todo', targetId })
     }
     for (const item of platformsForBanner) {
@@ -511,7 +566,7 @@ export function DashboardOverview() {
       }
 
       const panels = labelPanels.get(norm)!
-      const panelLabel = PANEL_LABEL[s.panel]
+      const panelLabel = panelLabels[s.panel]
       const rawLabel = s.label
 
       const enrichedLabel =
@@ -523,10 +578,19 @@ export function DashboardOverview() {
       pool.set(dedupeKey, { ...s, label: enrichedLabel, searchTerm: rawLabel })
     }
 
-    const result = Array.from(pool.values()).slice(0, 8)
-    console.log('[search]', { query, matchingCount: matching.length, labelCount: Object.fromEntries(labelCount), result: result.map(r => ({ label: r.label, searchTerm: r.searchTerm, panel: r.panel })) })
-    return result
-  }, [planningData, videoData, todoBoard, platformsForBanner, search])
+    return Array.from(pool.values()).slice(0, 8)
+  }, [
+    planningData,
+    videoData,
+    todoBoard,
+    platformsForBanner,
+    search,
+    t,
+    panelLabels,
+    columnLabels,
+    stageLabels,
+    statusLabels,
+  ])
 
   const ratio = filteredPlanning.length / Math.max(1, planningData.length)
   const periodWeight = period === '7d' ? 0.35 : period === '30d' ? 1 : period === '90d' ? 1.35 : 1.7
@@ -536,7 +600,10 @@ export function DashboardOverview() {
     (item) => item.status === 'published' || item.status === 'scheduled',
   ).length
 
-  const displayedMonthLabel = toMonthLabel(displayedMonthStart)
+  const displayedMonthLabel = useMemo(
+    () => toMonthLabel(displayedMonthStart, localeTag),
+    [displayedMonthStart, localeTag],
+  )
 
   const goToPreviousMonth = () => {
     setDisplayedMonthStart(
@@ -557,9 +624,9 @@ export function DashboardOverview() {
     return Array.from({ length: daysInMonth }, (_, index) => {
       const slot = new Date(year, month, index + 1)
       const key = toDateKey(slot)
-      return { key, label: formatDateLabel(key) }
+      return { key, label: formatDateLabel(key, localeTag) }
     })
-  }, [displayedMonthStart])
+  }, [displayedMonthStart, localeTag])
 
   const planningByDate = useMemo(() => {
     const map = new Map<string, PlanningItem[]>()
@@ -617,7 +684,7 @@ export function DashboardOverview() {
     try {
       await updatePlanningItem(itemId, { publishAt: dateKey })
     } catch (error) {
-      console.error('Erreur déplacement événement :', error)
+      console.error(t('dashboard.dragEventError'), error)
       setPlanningData((prev) =>
         prev.map((p) => (p.id === itemId ? { ...p, publishAt: item.publishAt } : p)),
       )
@@ -1146,14 +1213,6 @@ export function DashboardOverview() {
     setPlanningToDelete(null)
   }
 
-  const stageLabelMap: Record<VideoStage, string> = {
-    idea: 'Idée',
-    scripting: 'Script',
-    recording: 'Tournage',
-    editing: 'Montage',
-    published: 'Publié',
-  }
-
   const closeFocusedPanel = () => {
     setFocusedPanel(null)
     resetPlanningDraft()
@@ -1215,13 +1274,13 @@ export function DashboardOverview() {
         Math.min(100, Math.max(0, engagement * 0.85 + videosForDay * 1.8 + planningItemsForDay * 0.7)).toFixed(1),
       )
       return {
-        label: formatDateLabel(slot.key),
+        label: formatDateLabel(slot.key, localeTag),
         vues,
         engagement: engagementJour,
         publies: publishedForDay,
       }
     })
-  }, [dateSlots, filteredPlanning, filteredVideos, totalViews, engagement])
+  }, [dateSlots, filteredPlanning, filteredVideos, totalViews, engagement, localeTag])
 
   const handlePanelDragStart = (panel: PanelId) => {
     setDraggingPanel(panel)
@@ -1275,9 +1334,10 @@ export function DashboardOverview() {
     }, 3600)
   }
 
-  if (isLoading) return <div className={styles.feedback}>Chargement du dashboard...</div>
+  if (isLoading)
+    return <div className={styles.feedback}>{t('dashboard.loading')}</div>
   if (isError || !data)
-    return <div className={styles.feedback}>Une erreur est survenue pendant le chargement.</div>
+    return <div className={styles.feedback}>{t('dashboard.loadError')}</div>
 
   return (
     <CreatorAppShell
@@ -1287,7 +1347,7 @@ export function DashboardOverview() {
             type="button"
             className={styles.profileButton}
             onClick={goToAccount}
-            aria-label="Aller à la gestion utilisateur"
+            aria-label={t('shell.goAccount')}
           >
             {avatarDataUrl ? (
               <img
@@ -1304,7 +1364,7 @@ export function DashboardOverview() {
           <div className={styles.searchBox}>
             <input
               className={styles.searchInput}
-              placeholder="Rechercher dans planning, vidéos, to-do..."
+              placeholder={t('dashboard.searchPlaceholder')}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value)
@@ -1336,8 +1396,8 @@ export function DashboardOverview() {
     >
         <>
         <section className={styles.banner}>
-          <h1>Dashboard créateur — {profileTitleSuffix}</h1>
-          <p>Filtres actifs sur toutes les sections + recherche globale.</p>
+          <h1>{t('dashboard.title', { suffix: profileTitleSuffix })}</h1>
+          <p>{t('dashboard.bannerSubtitle')}</p>
           <div className={styles.bannerActions}>
             {(['7d', '30d', '90d', 'all'] as const).map((item) => (
               <button
@@ -1356,7 +1416,7 @@ export function DashboardOverview() {
               onClick={() => setPlatform('all')}
               type="button"
             >
-              Toutes plateformes
+              {t('dashboard.allPlatforms')}
             </button>
             {platformsForBanner
               .filter((p) => p !== NO_PLATFORM_LABEL)
@@ -1383,7 +1443,7 @@ export function DashboardOverview() {
                     <button
                       type="button"
                       className={styles.platformChipAction}
-                      aria-label={`Valider la modification de ${item}`}
+                      aria-label={t('dashboard.validateEdit', { name: item })}
                       onClick={() => renamePlatform(item, editingPlatformValue)}
                     >
                       ✓
@@ -1391,7 +1451,7 @@ export function DashboardOverview() {
                     <button
                       type="button"
                       className={styles.platformChipAction}
-                      aria-label="Annuler la modification"
+                      aria-label={t('dashboard.cancelEdit')}
                       onClick={cancelPlatformEdit}
                     >
                       ×
@@ -1413,8 +1473,8 @@ export function DashboardOverview() {
                         <button
                           type="button"
                           className={styles.platformChipAction}
-                          data-tooltip="Modifier"
-                          aria-label={`Modifier la plateforme ${item}`}
+                          data-tooltip={t('dashboard.edit')}
+                          aria-label={t('dashboard.editPlatformItem', { name: item })}
                           onClick={() => startPlatformEdit(item)}
                         >
                           <AiOutlineEdit aria-hidden="true" />
@@ -1422,8 +1482,8 @@ export function DashboardOverview() {
                         <button
                           type="button"
                           className={`${styles.platformChipAction} ${styles.deleteAction}`}
-                          data-tooltip="Supprimer"
-                          aria-label={`Supprimer la plateforme ${item}`}
+                          data-tooltip={t('dashboard.delete')}
+                          aria-label={t('dashboard.deletePlatformItem', { name: item })}
                           onClick={() => askPlatformDelete(item)}
                         >
                           <AiOutlineDelete aria-hidden="true" />
@@ -1439,17 +1499,17 @@ export function DashboardOverview() {
                 <input
                   value={newPlatformName}
                   onChange={(event) => setNewPlatformName(event.target.value)}
-                  placeholder="plateforme"
+                  placeholder={t('dashboard.platformPlaceholder')}
                 />
                 <button type="button" onClick={createPlatform}>
-                  OK
+                  {t('dashboard.ok')}
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 className={styles.addPlatformButton}
-                aria-label="Ajouter plateforme"
+                aria-label={t('dashboard.addPlatform')}
                 onClick={() => setIsAddingPlatform(true)}
               >
                 +
@@ -1458,18 +1518,18 @@ export function DashboardOverview() {
           </div>
         </section>
 
-        <h2 className={styles.sectionTitle}>Stats</h2>
+        <h2 className={styles.sectionTitle}>{t('dashboard.panelChart')}</h2>
         <section className={styles.statsGrid}>
           <article className={styles.statCard}>
-            <p>Vues totales</p>
-            <strong>{formatNumber(totalViews)}</strong>
+            <p>{t('dashboard.totalViews')}</p>
+            <strong>{formatNumber(totalViews, localeTag)}</strong>
           </article>
           <article className={styles.statCard}>
-            <p>Engagement moyen</p>
+            <p>{t('dashboard.avgEngagement')}</p>
             <strong>{engagement}%</strong>
           </article>
           <article className={styles.statCard}>
-            <p>Publié sur la période</p>
+            <p>{t('dashboard.chartPublishedPeriod')}</p>
             <strong>{publishedCount}</strong>
           </article>
         </section>
@@ -1496,13 +1556,17 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>Planning (agenda)</h3>
+                <h3>{t('dashboard.planningTitle')}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => togglePanelCollapsed('planning')}
-                    aria-label={collapsedPanels.planning ? 'Déplier le planning' : 'Réduire le planning'}
+                    aria-label={
+                      collapsedPanels.planning
+                        ? t('dashboard.expandPlanning')
+                        : t('dashboard.collapsePlanning')
+                    }
                   >
                     <HiChevronDown
                       className={`${styles.dropdownIcon} ${
@@ -1515,7 +1579,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel('planning')}
-                    aria-label="Agrandir le planning"
+                    aria-label={t('dashboard.expandPlanningFull')}
                   >
                     ⤢
                   </button>
@@ -1529,14 +1593,14 @@ export function DashboardOverview() {
                   className={styles.dropdownTrigger}
                   onClick={() => setIsPlanningFormOpen((prev) => !prev)}
                 >
-                  {isPlanningFormOpen ? 'Masquer ajout événement' : 'Ajouter un événement'}
+                  {isPlanningFormOpen ? t('dashboard.hideEventForm') : t('dashboard.addEvent')}
                 </button>
                 <div className={styles.monthNavigation}>
                   <button
                     type="button"
                     className={styles.monthNavButton}
                     onClick={goToPreviousMonth}
-                    aria-label="Mois précédent"
+                    aria-label={t('dashboard.prevMonth')}
                   >
                     ←
                   </button>
@@ -1545,7 +1609,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.monthNavButton}
                     onClick={goToNextMonth}
-                    aria-label="Mois suivant"
+                    aria-label={t('dashboard.nextMonth')}
                   >
                     →
                   </button>
@@ -1555,7 +1619,7 @@ export function DashboardOverview() {
               <div className={styles.planningForm}>
                 <div className={styles.planningFormFields}>
                   <input
-                    placeholder="Titre de l'événement"
+                    placeholder={t('dashboard.eventTitlePlaceholder')}
                     value={planningDraft.title}
                     onChange={(event) => setPlanningDraftField('title', event.target.value)}
                   />
@@ -1568,10 +1632,10 @@ export function DashboardOverview() {
                     value={planningDraft.platform}
                     onChange={(event) => setPlanningDraftField('platform', event.target.value)}
                   >
-                    <option value="">Plateforme</option>
+                    <option value="">{t('dashboard.platformSelect')}</option>
                     {platformChoicesForForms.map((item) => (
                       <option key={`planning-platform-${item}`} value={item}>
-                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
+                        {item === NO_PLATFORM_LABEL ? t('dashboard.noPlatformOption') : item}
                       </option>
                     ))}
                   </select>
@@ -1584,14 +1648,14 @@ export function DashboardOverview() {
                       )
                     }
                   >
-                    <option value="draft">draft</option>
-                    <option value="scheduled">scheduled</option>
-                    <option value="published">published</option>
+                    <option value="draft">{statusLabels.draft}</option>
+                    <option value="scheduled">{statusLabels.scheduled}</option>
+                    <option value="published">{statusLabels.published}</option>
                   </select>
                 </div>
                 {!isPlanningDraftValid ? (
                   <p className={styles.planningFormHint} role="status">
-                    Renseignez le titre, la date et une plateforme pour enregistrer.
+                    {t('dashboard.planningHint')}
                   </p>
                 ) : null}
                 <div className={styles.planningFormActions}>
@@ -1602,11 +1666,11 @@ export function DashboardOverview() {
                     title={
                       isPlanningDraftValid
                         ? undefined
-                        : 'Titre, date et plateforme requis'
+                        : t('dashboard.planningSubmitTitle')
                     }
                     onClick={submitPlanningDraft}
                   >
-                    {editingPlanningId ? "Modifier l'événement" : 'Ajouter un événement'}
+                    {editingPlanningId ? t('dashboard.editEvent') : t('dashboard.addEvent')}
                   </button>
                   {editingPlanningId ? (
                     <button
@@ -1616,7 +1680,7 @@ export function DashboardOverview() {
                         setIsPlanningFormOpen(false)
                       }}
                     >
-                      Annuler
+                      {t('dashboard.cancel')}
                     </button>
                   ) : null}
                 </div>
@@ -1635,7 +1699,7 @@ export function DashboardOverview() {
                     >
                       <p className={styles.agendaDate}>{slot.label}</p>
                       {dayItems.length === 0 ? (
-                        <small className={styles.emptyText}>Aucun contenu</small>
+                        <small className={styles.emptyText}>{t('dashboard.emptyDay')}</small>
                       ) : (
                         <ul className={styles.miniList}>
                           {dayItems.map((item) => (
@@ -1662,8 +1726,8 @@ export function DashboardOverview() {
                                   <button
                                     type="button"
                                     className={styles.iconActionButton}
-                                    data-tooltip="Modifier"
-                                    aria-label="Modifier l'événement"
+                                    data-tooltip={t('dashboard.edit')}
+                                    aria-label={t('dashboard.editEvent')}
                                     onClick={() => startPlanningEdit(item)}
                                   >
                                     <AiOutlineEdit aria-hidden="true" />
@@ -1671,8 +1735,8 @@ export function DashboardOverview() {
                                   <button
                                     type="button"
                                     className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                    data-tooltip="Supprimer"
-                                    aria-label="Supprimer l'événement"
+                                    data-tooltip={t('dashboard.delete')}
+                                    aria-label={t('dashboard.deleteEvent')}
                                     onClick={() => askPlanningDelete(item)}
                                   >
                                     <AiOutlineDelete aria-hidden="true" />
@@ -1713,13 +1777,17 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>Suivi des vidéos</h3>
+                <h3>{t('dashboard.videosTitle')}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => togglePanelCollapsed('videos')}
-                    aria-label={collapsedPanels.videos ? 'Déplier le suivi vidéos' : 'Réduire le suivi vidéos'}
+                    aria-label={
+                      collapsedPanels.videos
+                        ? t('dashboard.expandVideosPanel')
+                        : t('dashboard.collapseVideosPanel')
+                    }
                   >
                     <HiChevronDown
                       className={`${styles.dropdownIcon} ${
@@ -1732,7 +1800,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel('videos')}
-                    aria-label="Agrandir le suivi vidéos"
+                    aria-label={t('dashboard.expandVideosFull')}
                   >
                     ⤢
                   </button>
@@ -1746,14 +1814,14 @@ export function DashboardOverview() {
                   className={styles.dropdownTrigger}
                   onClick={() => setIsVideoFormOpen((prev) => !prev)}
                 >
-                  {isVideoFormOpen ? 'Masquer ajout de suivi vidéo' : 'Ajouter un suivi vidéo'}
+                  {isVideoFormOpen ? t('dashboard.hideVideoForm') : t('dashboard.addVideoTracking')}
                 </button>
               </div>
               {isVideoFormOpen ? (
               <div className={styles.videoForm}>
                 <div className={styles.videoFormFields}>
                   <input
-                    placeholder="Titre de la vidéo"
+                    placeholder={t('dashboard.videoTitlePlaceholder')}
                     value={videoDraft.title}
                     onChange={(event) => setVideoDraftField('title', event.target.value)}
                   />
@@ -1766,10 +1834,10 @@ export function DashboardOverview() {
                     value={videoDraft.platform}
                     onChange={(event) => setVideoDraftField('platform', event.target.value)}
                   >
-                    <option value="">Plateforme</option>
+                    <option value="">{t('dashboard.platformSelect')}</option>
                     {platformChoicesForForms.map((item) => (
                       <option key={`videos-platform-${item}`} value={item}>
-                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
+                        {item === NO_PLATFORM_LABEL ? t('dashboard.noPlatformOption') : item}
                       </option>
                     ))}
                   </select>
@@ -1779,17 +1847,16 @@ export function DashboardOverview() {
                       setVideoDraftField('stage', event.target.value as VideoStage)
                     }
                   >
-                    <option value="idea">Idée</option>
-                    <option value="scripting">Script</option>
-                    <option value="recording">Tournage</option>
-                    <option value="editing">Montage</option>
-                    <option value="published">Publié</option>
+                    <option value="idea">{stageLabels.idea}</option>
+                    <option value="scripting">{stageLabels.scripting}</option>
+                    <option value="recording">{stageLabels.recording}</option>
+                    <option value="editing">{stageLabels.editing}</option>
+                    <option value="published">{stageLabels.published}</option>
                   </select>
                 </div>
                 {!isVideoDraftValid ? (
                   <p className={styles.planningFormHint} role="status">
-                    Indiquez un titre, une date d&apos;échéance et une plateforme réelle (obligatoire —
-                    pas l&apos;option « Pas de plateforme »).
+                    {t('dashboard.videoHint')}
                   </p>
                 ) : null}
                 <div className={styles.videoFormActions}>
@@ -1800,11 +1867,11 @@ export function DashboardOverview() {
                     title={
                       isVideoDraftValid
                         ? undefined
-                        : 'Titre, date et plateforme requis'
+                        : t('dashboard.videoSubmitTitle')
                     }
                     onClick={submitVideoDraft}
                   >
-                    {editingVideoId ? 'Modifier le suivi vidéo' : 'Ajouter un suivi vidéo'}
+                    {editingVideoId ? t('dashboard.editVideo') : t('dashboard.addVideoTracking')}
                   </button>
                   {editingVideoId ? (
                     <button
@@ -1814,7 +1881,7 @@ export function DashboardOverview() {
                         setIsVideoFormOpen(false)
                       }}
                     >
-                      Annuler
+                      {t('dashboard.cancel')}
                     </button>
                   ) : null}
                 </div>
@@ -1833,13 +1900,14 @@ export function DashboardOverview() {
                     >
                       <strong>{video.title}</strong>
                       <span>
-                      Plateforme: {highlightMatch(video.platform, search)} - Deadline:{' '}
+                      {t('dashboard.labelPlatform')}: {highlightMatch(video.platform, search)} —{' '}
+                      {t('dashboard.labelDeadline')}:{' '}
                       {highlightMatch(video.deadline, search)}
                       </span>
                       <div className={styles.inlineControls}>
-                        <label htmlFor={`stage-${video.id}`}>Étape :</label>
+                        <label htmlFor={`stage-${video.id}`}>{t('dashboard.stageLabel')}</label>
                         <span className={`${styles.stageBadge} ${styles[`stage_${currentStage}`]}`}>
-                          {stageLabelMap[currentStage]}
+                          {stageLabels[currentStage]}
                         </span>
                         <select
                           id={`stage-${video.id}`}
@@ -1848,18 +1916,18 @@ export function DashboardOverview() {
                             setVideoStage(video.id, event.target.value as VideoStage)
                           }
                         >
-                          <option value="idea">Idée</option>
-                          <option value="scripting">Script</option>
-                          <option value="recording">Tournage</option>
-                          <option value="editing">Montage</option>
-                          <option value="published">Publié</option>
+                          <option value="idea">{stageLabels.idea}</option>
+                          <option value="scripting">{stageLabels.scripting}</option>
+                          <option value="recording">{stageLabels.recording}</option>
+                          <option value="editing">{stageLabels.editing}</option>
+                          <option value="published">{stageLabels.published}</option>
                         </select>
                         <div className={styles.videoItemActions}>
                           <button
                             type="button"
                             className={styles.iconActionButton}
-                            data-tooltip="Modifier"
-                            aria-label="Modifier la video"
+                            data-tooltip={t('dashboard.edit')}
+                            aria-label={t('dashboard.editVideo')}
                             onClick={() => startVideoEdit(video)}
                           >
                             <AiOutlineEdit aria-hidden="true" />
@@ -1867,8 +1935,8 @@ export function DashboardOverview() {
                           <button
                             type="button"
                             className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                            data-tooltip="Supprimer"
-                            aria-label="Supprimer la video"
+                            data-tooltip={t('dashboard.delete')}
+                            aria-label={t('dashboard.deleteVideoAria')}
                             onClick={() => askVideoDelete(video)}
                           >
                             <AiOutlineDelete aria-hidden="true" />
@@ -1905,13 +1973,17 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>To-do list (Trello)</h3>
+                <h3>{t('dashboard.todoTitle')}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => togglePanelCollapsed('todo')}
-                    aria-label={collapsedPanels.todo ? 'Déplier la to-do list' : 'Réduire la to-do list'}
+                    aria-label={
+                      collapsedPanels.todo
+                        ? t('dashboard.expandTodoPanel')
+                        : t('dashboard.collapseTodoPanel')
+                    }
                   >
                     <HiChevronDown
                       className={`${styles.dropdownIcon} ${
@@ -1924,7 +1996,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel('todo')}
-                    aria-label="Agrandir la todo list"
+                    aria-label={t('dashboard.expandTodoFull')}
                   >
                     ⤢
                   </button>
@@ -1938,14 +2010,14 @@ export function DashboardOverview() {
                   className={styles.dropdownTrigger}
                   onClick={() => setIsTodoFormOpen((prev) => !prev)}
                 >
-                  {isTodoFormOpen ? 'Masquer ajout tâche' : 'Ajouter une tâche'}
+                  {isTodoFormOpen ? t('dashboard.hideTaskForm') : t('dashboard.addTask')}
                 </button>
               </div>
               {isTodoFormOpen ? (
               <div className={styles.todoForm}>
                 <div className={styles.todoFormFields}>
                   <input
-                    placeholder="Titre de la tâche"
+                    placeholder={t('dashboard.taskTitlePlaceholder')}
                     value={todoDraft.label}
                     onChange={(event) => setTodoDraftField('label', event.target.value)}
                   />
@@ -1953,10 +2025,10 @@ export function DashboardOverview() {
                     value={todoDraft.platform}
                     onChange={(event) => setTodoDraftField('platform', event.target.value)}
                   >
-                    <option value="">Plateforme</option>
+                    <option value="">{t('dashboard.platformSelect')}</option>
                     {platformChoicesForForms.map((item) => (
                       <option key={`todo-platform-${item}`} value={item}>
-                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
+                        {item === NO_PLATFORM_LABEL ? t('dashboard.noPlatformOption') : item}
                       </option>
                     ))}
                   </select>
@@ -1966,9 +2038,9 @@ export function DashboardOverview() {
                       setTodoDraftField('priority', event.target.value as 'low' | 'medium' | 'high')
                     }
                   >
-                    <option value="low">low</option>
-                    <option value="medium">medium</option>
-                    <option value="high">high</option>
+                    <option value="low">{priorityLabels.low}</option>
+                    <option value="medium">{priorityLabels.medium}</option>
+                    <option value="high">{priorityLabels.high}</option>
                   </select>
                   <select
                     value={todoDraft.column}
@@ -1976,14 +2048,14 @@ export function DashboardOverview() {
                       setTodoDraftField('column', event.target.value as TodoColumn)
                     }
                   >
-                    <option value="todo">A faire</option>
-                    <option value="doing">En cours</option>
-                    <option value="done">Termine</option>
+                    <option value="todo">{columnLabels.todo}</option>
+                    <option value="doing">{columnLabels.doing}</option>
+                    <option value="done">{columnLabels.done}</option>
                   </select>
                 </div>
                 {!isTodoDraftValid ? (
                   <p className={styles.planningFormHint} role="status">
-                    Indiquez un libellé et une plateforme réelle (obligatoire — pas « Pas de plateforme »).
+                    {t('dashboard.todoHint')}
                   </p>
                 ) : null}
                 <div className={styles.todoFormActions}>
@@ -1994,11 +2066,11 @@ export function DashboardOverview() {
                     title={
                       isTodoDraftValid
                         ? undefined
-                        : 'Libellé et plateforme requis'
+                        : t('dashboard.todoSubmitTitle')
                     }
                     onClick={submitTodoDraft}
                   >
-                    {editingTodoId ? 'Modifier tâche' : 'Ajouter une tâche'}
+                    {editingTodoId ? t('dashboard.editTask') : t('dashboard.addTask')}
                   </button>
                   {editingTodoId ? (
                     <button
@@ -2008,7 +2080,7 @@ export function DashboardOverview() {
                         setIsTodoFormOpen(false)
                       }}
                     >
-                      Annuler
+                      {t('dashboard.cancel')}
                     </button>
                   ) : null}
                 </div>
@@ -2029,7 +2101,7 @@ export function DashboardOverview() {
                     onDrop={() => handleColumnDrop(column)}
                   >
                     <p className={styles.columnTitle}>
-                      {column === 'todo' ? 'A faire' : column === 'doing' ? 'En cours' : 'Termine'}
+                      {columnLabels[column]}
                     </p>
                     {filteredBoard
                       .filter((task) => task.column === column)
@@ -2059,8 +2131,8 @@ export function DashboardOverview() {
                             <button
                               type="button"
                               className={styles.iconActionButton}
-                              data-tooltip="Modifier"
-                              aria-label="Modifier la tâche"
+                              data-tooltip={t('dashboard.edit')}
+                              aria-label={t('dashboard.editTask')}
                               onClick={() => startTodoEdit(task)}
                             >
                               <AiOutlineEdit aria-hidden="true" />
@@ -2068,8 +2140,8 @@ export function DashboardOverview() {
                             <button
                               type="button"
                               className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                              data-tooltip="Supprimer"
-                              aria-label="Supprimer la tâche"
+                              data-tooltip={t('dashboard.delete')}
+                              aria-label={t('dashboard.deleteTaskAria')}
                               onClick={() => askTodoDelete(task)}
                             >
                               <AiOutlineDelete aria-hidden="true" />
@@ -2093,7 +2165,7 @@ export function DashboardOverview() {
                             ))}
                             <div className={styles.checklistInputRow}>
                               <input
-                                placeholder="Ajouter une checklist..."
+                                placeholder={t('dashboard.addChecklistPlaceholder')}
                                 value={task.newChecklistText}
                                 onChange={(event) =>
                                   setTaskDraftChecklist(task.id, event.target.value)
@@ -2104,7 +2176,7 @@ export function DashboardOverview() {
                               </button>
                             </div>
                           </div>
-                          <small className={styles.dragHint}>Glisser pour déplacer la carte</small>
+                          <small className={styles.dragHint}>{t('dashboard.dragCardHint')}</small>
                         </div>
                       ))}
                   </div>
@@ -2136,13 +2208,17 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>Tendances des stats</h3>
+                <h3>{t('dashboard.statsTitle')}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => togglePanelCollapsed('chart')}
-                    aria-label={collapsedPanels.chart ? 'Déplier le graphique' : 'Réduire le graphique'}
+                    aria-label={
+                      collapsedPanels.chart
+                        ? t('dashboard.expandChartPanel')
+                        : t('dashboard.collapseChartPanel')
+                    }
                   >
                     <HiChevronDown
                       className={`${styles.dropdownIcon} ${
@@ -2155,7 +2231,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel('chart')}
-                    aria-label="Agrandir le graphique"
+                    aria-label={t('dashboard.expandChartFull')}
                   >
                     ⤢
                   </button>
@@ -2175,7 +2251,7 @@ export function DashboardOverview() {
                         yAxisId="left"
                         type="monotone"
                         dataKey="vues"
-                        name="Vues totales"
+                        name={t('dashboard.totalViews')}
                         stroke="#2563eb"
                         strokeWidth={2}
                         dot={false}
@@ -2184,7 +2260,7 @@ export function DashboardOverview() {
                         yAxisId="right"
                         type="monotone"
                         dataKey="engagement"
-                        name="Engagement moyen"
+                        name={t('dashboard.avgEngagement')}
                         stroke="#7c3aed"
                         strokeWidth={2}
                         dot={false}
@@ -2192,7 +2268,7 @@ export function DashboardOverview() {
                       <Bar
                         yAxisId="left"
                         dataKey="publies"
-                        name="Publié sur la période"
+                        name={t('dashboard.chartPublishedPeriod')}
                         fill="#14b8a6"
                         radius={[4, 4, 0, 0]}
                       />
@@ -2229,19 +2305,19 @@ export function DashboardOverview() {
             <div className={styles.panelHeader}>
               <h3>
                 {focusedPanel === 'planning'
-                  ? 'Planning (agenda)'
+                  ? t('dashboard.planningTitle')
                   : focusedPanel === 'videos'
-                    ? 'Suivi des vidéos'
+                    ? t('dashboard.videosTitle')
                     : focusedPanel === 'todo'
-                      ? 'To-do list (Trello)'
-                      : 'Tendances des stats'}
+                      ? t('dashboard.todoTitle')
+                      : t('dashboard.statsTitle')}
               </h3>
               <div className={styles.calendarHeaderActions}>
                 <button
                   type="button"
                   className={styles.panelExpandButton}
                   onClick={closeFocusedPanel}
-                  aria-label="Fermer la modale"
+                  aria-label={t('dashboard.closeModal')}
                 >
                   ×
                 </button>
@@ -2256,14 +2332,14 @@ export function DashboardOverview() {
                     className={styles.dropdownTrigger}
                     onClick={() => setIsPlanningFormOpen((prev) => !prev)}
                   >
-                    {isPlanningFormOpen ? 'Masquer ajout événement' : 'Ajouter un événement'}
+                    {isPlanningFormOpen ? t('dashboard.hideEventForm') : t('dashboard.addEvent')}
                   </button>
                   <div className={styles.monthNavigation}>
                     <button
                       type="button"
                       className={styles.monthNavButton}
                       onClick={goToPreviousMonth}
-                      aria-label="Mois précédent"
+                      aria-label={t('dashboard.prevMonth')}
                     >
                       ←
                     </button>
@@ -2272,7 +2348,7 @@ export function DashboardOverview() {
                       type="button"
                       className={styles.monthNavButton}
                       onClick={goToNextMonth}
-                      aria-label="Mois suivant"
+                      aria-label={t('dashboard.nextMonth')}
                     >
                       →
                     </button>
@@ -2282,7 +2358,7 @@ export function DashboardOverview() {
                 <div className={styles.planningForm}>
                   <div className={styles.planningFormFields}>
                     <input
-                      placeholder="Titre de l'événement"
+                      placeholder={t('dashboard.eventTitlePlaceholder')}
                       value={planningDraft.title}
                       onChange={(event) => setPlanningDraftField('title', event.target.value)}
                     />
@@ -2295,10 +2371,10 @@ export function DashboardOverview() {
                       value={planningDraft.platform}
                       onChange={(event) => setPlanningDraftField('platform', event.target.value)}
                     >
-                      <option value="">Plateforme</option>
+                      <option value="">{t('dashboard.platformSelect')}</option>
                       {platformChoicesForForms.map((item) => (
                         <option key={`modal-planning-platform-${item}`} value={item}>
-                          {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
+                          {item === NO_PLATFORM_LABEL ? t('dashboard.noPlatformOption') : item}
                         </option>
                       ))}
                     </select>
@@ -2311,14 +2387,14 @@ export function DashboardOverview() {
                         )
                       }
                     >
-                      <option value="draft">draft</option>
-                      <option value="scheduled">scheduled</option>
-                      <option value="published">published</option>
+                      <option value="draft">{statusLabels.draft}</option>
+                      <option value="scheduled">{statusLabels.scheduled}</option>
+                      <option value="published">{statusLabels.published}</option>
                     </select>
                   </div>
                   {!isPlanningDraftValid ? (
                     <p className={styles.planningFormHint} role="status">
-                      Renseignez le titre, la date et une plateforme pour enregistrer.
+                      {t('dashboard.planningHint')}
                     </p>
                   ) : null}
                   <div className={styles.planningFormActions}>
@@ -2329,11 +2405,11 @@ export function DashboardOverview() {
                       title={
                         isPlanningDraftValid
                           ? undefined
-                          : 'Titre, date et plateforme requis'
+                          : t('dashboard.planningSubmitTitle')
                       }
                       onClick={submitPlanningDraft}
                     >
-                      {editingPlanningId ? "Modifier l'événement" : 'Ajouter un événement'}
+                      {editingPlanningId ? t('dashboard.editEvent') : t('dashboard.addEvent')}
                     </button>
                     {editingPlanningId ? (
                       <button
@@ -2343,7 +2419,7 @@ export function DashboardOverview() {
                           setIsPlanningFormOpen(false)
                         }}
                       >
-                        Annuler
+                        {t('dashboard.cancel')}
                       </button>
                     ) : null}
                   </div>
@@ -2362,7 +2438,7 @@ export function DashboardOverview() {
                       >
                         <p className={styles.agendaDate}>{slot.label}</p>
                         {dayItems.length === 0 ? (
-                          <small className={styles.emptyText}>Aucun contenu</small>
+                          <small className={styles.emptyText}>{t('dashboard.emptyDay')}</small>
                         ) : (
                           <ul className={styles.miniList}>
                             {dayItems.map((item) => (
@@ -2389,8 +2465,8 @@ export function DashboardOverview() {
                                     <button
                                       type="button"
                                       className={styles.iconActionButton}
-                                      data-tooltip="Modifier"
-                                      aria-label="Modifier l'événement"
+                                      data-tooltip={t('dashboard.edit')}
+                                      aria-label={t('dashboard.editEvent')}
                                       onClick={() => startPlanningEdit(item)}
                                     >
                                       <AiOutlineEdit aria-hidden="true" />
@@ -2398,8 +2474,8 @@ export function DashboardOverview() {
                                     <button
                                       type="button"
                                       className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                      data-tooltip="Supprimer"
-                                      aria-label="Supprimer l'événement"
+                                      data-tooltip={t('dashboard.delete')}
+                                      aria-label={t('dashboard.deleteEvent')}
                                       onClick={() => askPlanningDelete(item)}
                                     >
                                       <AiOutlineDelete aria-hidden="true" />
@@ -2425,14 +2501,14 @@ export function DashboardOverview() {
                   className={styles.dropdownTrigger}
                   onClick={() => setIsVideoFormOpen((prev) => !prev)}
                 >
-                  {isVideoFormOpen ? 'Masquer ajout de suivi vidéo' : 'Ajouter un suivi vidéo'}
+                  {isVideoFormOpen ? t('dashboard.hideVideoForm') : t('dashboard.addVideoTracking')}
                 </button>
               </div>
               {isVideoFormOpen ? (
               <div className={styles.videoForm}>
                 <div className={styles.videoFormFields}>
                   <input
-                    placeholder="Titre de la vidéo"
+                    placeholder={t('dashboard.videoTitlePlaceholder')}
                     value={videoDraft.title}
                     onChange={(event) => setVideoDraftField('title', event.target.value)}
                   />
@@ -2445,10 +2521,10 @@ export function DashboardOverview() {
                     value={videoDraft.platform}
                     onChange={(event) => setVideoDraftField('platform', event.target.value)}
                   >
-                    <option value="">Plateforme</option>
+                    <option value="">{t('dashboard.platformSelect')}</option>
                     {platformChoicesForForms.map((item) => (
                       <option key={`modal-videos-platform-${item}`} value={item}>
-                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
+                        {item === NO_PLATFORM_LABEL ? t('dashboard.noPlatformOption') : item}
                       </option>
                     ))}
                   </select>
@@ -2458,17 +2534,16 @@ export function DashboardOverview() {
                       setVideoDraftField('stage', event.target.value as VideoStage)
                     }
                   >
-                    <option value="idea">Idée</option>
-                    <option value="scripting">Script</option>
-                    <option value="recording">Tournage</option>
-                    <option value="editing">Montage</option>
-                    <option value="published">Publié</option>
+                    <option value="idea">{stageLabels.idea}</option>
+                    <option value="scripting">{stageLabels.scripting}</option>
+                    <option value="recording">{stageLabels.recording}</option>
+                    <option value="editing">{stageLabels.editing}</option>
+                    <option value="published">{stageLabels.published}</option>
                   </select>
                 </div>
                 {!isVideoDraftValid ? (
                   <p className={styles.planningFormHint} role="status">
-                    Indiquez un titre, une date d&apos;échéance et une plateforme réelle (obligatoire —
-                    pas l&apos;option « Pas de plateforme »).
+                    {t('dashboard.videoHint')}
                   </p>
                 ) : null}
                 <div className={styles.videoFormActions}>
@@ -2479,11 +2554,11 @@ export function DashboardOverview() {
                     title={
                       isVideoDraftValid
                         ? undefined
-                        : 'Titre, date et plateforme requis'
+                        : t('dashboard.videoSubmitTitle')
                     }
                     onClick={submitVideoDraft}
                   >
-                    {editingVideoId ? 'Modifier le suivi vidéo' : 'Ajouter un suivi vidéo'}
+                    {editingVideoId ? t('dashboard.editVideo') : t('dashboard.addVideoTracking')}
                   </button>
                   {editingVideoId ? (
                     <button
@@ -2493,7 +2568,7 @@ export function DashboardOverview() {
                         setIsVideoFormOpen(false)
                       }}
                     >
-                      Annuler
+                      {t('dashboard.cancel')}
                     </button>
                   ) : null}
                 </div>
@@ -2512,13 +2587,14 @@ export function DashboardOverview() {
                     >
                       <strong>{video.title}</strong>
                       <span>
-                        Plateforme: {highlightMatch(video.platform, search)} - Deadline:{' '}
+                        {t('dashboard.labelPlatform')}: {highlightMatch(video.platform, search)} —{' '}
+                      {t('dashboard.labelDeadline')}:{' '}
                         {highlightMatch(video.deadline, search)}
                       </span>
                       <div className={styles.inlineControls}>
-                        <label htmlFor={`modal-stage-${video.id}`}>Étape :</label>
+                        <label htmlFor={`modal-stage-${video.id}`}>{t('dashboard.stageLabel')}</label>
                         <span className={`${styles.stageBadge} ${styles[`stage_${currentStage}`]}`}>
-                          {stageLabelMap[currentStage]}
+                          {stageLabels[currentStage]}
                         </span>
                         <select
                           id={`modal-stage-${video.id}`}
@@ -2527,18 +2603,18 @@ export function DashboardOverview() {
                             setVideoStage(video.id, event.target.value as VideoStage)
                           }
                         >
-                          <option value="idea">Idée</option>
-                          <option value="scripting">Script</option>
-                          <option value="recording">Tournage</option>
-                          <option value="editing">Montage</option>
-                          <option value="published">Publié</option>
+                          <option value="idea">{stageLabels.idea}</option>
+                          <option value="scripting">{stageLabels.scripting}</option>
+                          <option value="recording">{stageLabels.recording}</option>
+                          <option value="editing">{stageLabels.editing}</option>
+                          <option value="published">{stageLabels.published}</option>
                         </select>
                         <div className={styles.videoItemActions}>
                           <button
                             type="button"
                             className={styles.iconActionButton}
-                            data-tooltip="Modifier"
-                            aria-label="Modifier la vidéo"
+                            data-tooltip={t('dashboard.edit')}
+                            aria-label={t('dashboard.editVideo')}
                             onClick={() => startVideoEdit(video)}
                           >
                             <AiOutlineEdit aria-hidden="true" />
@@ -2546,8 +2622,8 @@ export function DashboardOverview() {
                           <button
                             type="button"
                             className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                            data-tooltip="Supprimer"
-                            aria-label="Supprimer la vidéo"
+                            data-tooltip={t('dashboard.delete')}
+                            aria-label={t('dashboard.deleteVideoAria')}
                             onClick={() => askVideoDelete(video)}
                           >
                             <AiOutlineDelete aria-hidden="true" />
@@ -2569,14 +2645,14 @@ export function DashboardOverview() {
                   className={styles.dropdownTrigger}
                   onClick={() => setIsTodoFormOpen((prev) => !prev)}
                 >
-                  {isTodoFormOpen ? 'Masquer ajout tâche' : 'Ajouter une tâche'}
+                  {isTodoFormOpen ? t('dashboard.hideTaskForm') : t('dashboard.addTask')}
                 </button>
               </div>
               {isTodoFormOpen ? (
               <div className={styles.todoForm}>
                 <div className={styles.todoFormFields}>
                   <input
-                    placeholder="Titre de la tâche"
+                    placeholder={t('dashboard.taskTitlePlaceholder')}
                     value={todoDraft.label}
                     onChange={(event) => setTodoDraftField('label', event.target.value)}
                   />
@@ -2584,10 +2660,10 @@ export function DashboardOverview() {
                     value={todoDraft.platform}
                     onChange={(event) => setTodoDraftField('platform', event.target.value)}
                   >
-                    <option value="">Plateforme</option>
+                    <option value="">{t('dashboard.platformSelect')}</option>
                     {platformChoicesForForms.map((item) => (
                       <option key={`modal-todo-platform-${item}`} value={item}>
-                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
+                        {item === NO_PLATFORM_LABEL ? t('dashboard.noPlatformOption') : item}
                       </option>
                     ))}
                   </select>
@@ -2597,9 +2673,9 @@ export function DashboardOverview() {
                       setTodoDraftField('priority', event.target.value as 'low' | 'medium' | 'high')
                     }
                   >
-                    <option value="low">low</option>
-                    <option value="medium">medium</option>
-                    <option value="high">high</option>
+                    <option value="low">{priorityLabels.low}</option>
+                    <option value="medium">{priorityLabels.medium}</option>
+                    <option value="high">{priorityLabels.high}</option>
                   </select>
                   <select
                     value={todoDraft.column}
@@ -2607,14 +2683,14 @@ export function DashboardOverview() {
                       setTodoDraftField('column', event.target.value as TodoColumn)
                     }
                   >
-                    <option value="todo">A faire</option>
-                    <option value="doing">En cours</option>
-                    <option value="done">Termine</option>
+                    <option value="todo">{columnLabels.todo}</option>
+                    <option value="doing">{columnLabels.doing}</option>
+                    <option value="done">{columnLabels.done}</option>
                   </select>
                 </div>
                 {!isTodoDraftValid ? (
                   <p className={styles.planningFormHint} role="status">
-                    Indiquez un libellé et une plateforme réelle (obligatoire — pas « Pas de plateforme »).
+                    {t('dashboard.todoHint')}
                   </p>
                 ) : null}
                 <div className={styles.todoFormActions}>
@@ -2625,11 +2701,11 @@ export function DashboardOverview() {
                     title={
                       isTodoDraftValid
                         ? undefined
-                        : 'Libellé et plateforme requis'
+                        : t('dashboard.todoSubmitTitle')
                     }
                     onClick={submitTodoDraft}
                   >
-                    {editingTodoId ? 'Modifier tâche' : 'Ajouter une tâche'}
+                    {editingTodoId ? t('dashboard.editTask') : t('dashboard.addTask')}
                   </button>
                   {editingTodoId ? (
                     <button
@@ -2639,7 +2715,7 @@ export function DashboardOverview() {
                         setIsTodoFormOpen(false)
                       }}
                     >
-                      Annuler
+                      {t('dashboard.cancel')}
                     </button>
                   ) : null}
                 </div>
@@ -2660,7 +2736,7 @@ export function DashboardOverview() {
                     onDrop={() => handleColumnDrop(column)}
                   >
                     <p className={styles.columnTitle}>
-                      {column === 'todo' ? 'A faire' : column === 'doing' ? 'En cours' : 'Termine'}
+                      {columnLabels[column]}
                     </p>
                     {filteredBoard
                       .filter((task) => task.column === column)
@@ -2690,8 +2766,8 @@ export function DashboardOverview() {
                             <button
                               type="button"
                               className={styles.iconActionButton}
-                              data-tooltip="Modifier"
-                              aria-label="Modifier la tâche"
+                              data-tooltip={t('dashboard.edit')}
+                              aria-label={t('dashboard.editTask')}
                               onClick={() => startTodoEdit(task)}
                             >
                               <AiOutlineEdit aria-hidden="true" />
@@ -2699,8 +2775,8 @@ export function DashboardOverview() {
                             <button
                               type="button"
                               className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                              data-tooltip="Supprimer"
-                              aria-label="Supprimer la tâche"
+                              data-tooltip={t('dashboard.delete')}
+                              aria-label={t('dashboard.deleteTaskAria')}
                               onClick={() => askTodoDelete(task)}
                             >
                               <AiOutlineDelete aria-hidden="true" />
@@ -2710,7 +2786,7 @@ export function DashboardOverview() {
                             {highlightMatch(task.platform, search)} -{' '}
                             {highlightMatch(task.priority, search)}
                           </small>
-                          <small className={styles.dragHint}>Glisser pour déplacer la carte</small>
+                          <small className={styles.dragHint}>{t('dashboard.dragCardHint')}</small>
                         </div>
                       ))}
                   </div>
@@ -2731,7 +2807,7 @@ export function DashboardOverview() {
                       yAxisId="left"
                       type="monotone"
                       dataKey="vues"
-                      name="Vues totales"
+                      name={t('dashboard.totalViews')}
                       stroke="#2563eb"
                       strokeWidth={2}
                       dot={false}
@@ -2740,7 +2816,7 @@ export function DashboardOverview() {
                       yAxisId="right"
                       type="monotone"
                       dataKey="engagement"
-                      name="Engagement moyen"
+                      name={t('dashboard.avgEngagement')}
                       stroke="#7c3aed"
                       strokeWidth={2}
                       dot={false}
@@ -2748,7 +2824,7 @@ export function DashboardOverview() {
                     <Bar
                       yAxisId="left"
                       dataKey="publies"
-                      name="Publié sur la période"
+                      name={t('dashboard.chartPublishedPeriod')}
                       fill="#14b8a6"
                       radius={[4, 4, 0, 0]}
                     />
@@ -2767,16 +2843,16 @@ export function DashboardOverview() {
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="Confirmation de suppression"
+            aria-label={t('dashboard.confirmDeleteEvent')}
           >
-            <p className={styles.confirmText}>Êtes-vous sûr de vouloir supprimer ?</p>
+            <p className={styles.confirmText}>{t('dashboard.confirmDelete')}</p>
             <p className={styles.confirmSubtext}>{planningToDelete.title}</p>
             <div className={styles.confirmActions}>
               <button type="button" onClick={cancelPlanningDelete}>
-                Annuler
+                {t('dashboard.cancel')}
               </button>
               <button type="button" onClick={confirmPlanningDelete}>
-                Supprimer
+                {t('dashboard.delete')}
               </button>
             </div>
           </div>
@@ -2789,16 +2865,16 @@ export function DashboardOverview() {
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="Confirmation de suppression de plateforme"
+            aria-label={t('dashboard.confirmDeletePlatform')}
           >
-            <p className={styles.confirmText}>Êtes-vous sûr de vouloir supprimer ?</p>
+            <p className={styles.confirmText}>{t('dashboard.confirmDelete')}</p>
             <p className={styles.confirmSubtext}>{platformToDelete}</p>
             <div className={styles.confirmActions}>
               <button type="button" onClick={cancelPlatformDelete}>
-                Annuler
+                {t('dashboard.cancel')}
               </button>
               <button type="button" onClick={confirmPlatformDelete}>
-                Supprimer
+                {t('dashboard.delete')}
               </button>
             </div>
           </div>
@@ -2811,16 +2887,16 @@ export function DashboardOverview() {
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="Confirmation de suppression de vidéo"
+            aria-label={t('dashboard.confirmDeleteVideoLabel')}
           >
-            <p className={styles.confirmText}>Êtes-vous sûr de vouloir supprimer ce suivi vidéo ?</p>
+            <p className={styles.confirmText}>{t('dashboard.confirmDeleteVideo')}</p>
             <p className={styles.confirmSubtext}>{videoToDelete.title}</p>
             <div className={styles.confirmActions}>
               <button type="button" onClick={cancelVideoDelete}>
-                Annuler
+                {t('dashboard.cancel')}
               </button>
               <button type="button" onClick={confirmVideoDelete}>
-                Supprimer
+                {t('dashboard.delete')}
               </button>
             </div>
           </div>
@@ -2833,16 +2909,16 @@ export function DashboardOverview() {
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="Confirmation de suppression de tâche"
+            aria-label={t('dashboard.confirmDeleteTaskLabel')}
           >
-            <p className={styles.confirmText}>Êtes-vous sûr de vouloir supprimer cette tâche ?</p>
+            <p className={styles.confirmText}>{t('dashboard.confirmDeleteTask')}</p>
             <p className={styles.confirmSubtext}>{todoToDelete.label}</p>
             <div className={styles.confirmActions}>
               <button type="button" onClick={cancelTodoDelete}>
-                Annuler
+                {t('dashboard.cancel')}
               </button>
               <button type="button" onClick={confirmTodoDelete}>
-                Supprimer
+                {t('dashboard.delete')}
               </button>
             </div>
           </div>
