@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dégradé du fond -->
+    <radialGradient id="bgGradient" cx="30%" cy="30%" r="100%">
+      <stop offset="0%" stop-color="#6a3df0"></stop>
+      <stop offset="100%" stop-color="#2f6df6"></stop>
+    </radialGradient>
+  </defs>
+
+  <!-- Cercle de fond -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)"></circle>
+
+  <!-- Lettre C stylisée en blanc -->
+  <path d="M 340 170 
+       A 120 120 0 1 0 340 342" fill="none" stroke="#FFFFFF" stroke-width="60" stroke-linecap="round"></path>
+</svg>
