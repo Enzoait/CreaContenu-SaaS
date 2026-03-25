@@ -56,7 +56,16 @@ import { AiOutlineDelete, AiOutlineEdit } from 'react-icons/ai'
 import { HiChevronDown } from 'react-icons/hi2'
 import { useNavigate } from 'react-router-dom'
 import { useProfileTitleSuffix } from '../../../features/account-profile'
+import { useAccountAvatarDataUrl } from '../../../pages/account-page/model'
 import { CreatorAppShell } from '../../creator-app-shell'
+
+/** Contenus sans plateforme utilisateur définie (remplace l’ancien repli « general ») */
+const NO_PLATFORM_LABEL = 'pas de plateforme'
+
+function normalizePlatformLabel(name: string): string {
+  if (name === 'general') return NO_PLATFORM_LABEL
+  return name
+}
 
 type TodoColumn = 'todo' | 'doing' | 'done'
 type VideoStage = 'idea' | 'scripting' | 'recording' | 'editing' | 'published'
@@ -227,6 +236,7 @@ function isInPeriod(dateString: string, period: '7d' | '30d' | '90d' | 'all'): b
 export function DashboardOverview() {
   const profileTitleSuffix = useProfileTitleSuffix()
   const user = useAuthStore(selectAuthUser)
+  const avatarDataUrl = useAccountAvatarDataUrl()
   const { data, isLoading, isError } = useDashboardData()
   const period = useDashboardPeriod()
   const platform = useDashboardPlatform()
@@ -253,6 +263,8 @@ export function DashboardOverview() {
   const [editingPlanningId, setEditingPlanningId] = useState<string | null>(null)
   const [isPlanningFormOpen, setIsPlanningFormOpen] = useState(false)
   const [planningToDelete, setPlanningToDelete] = useState<PlanningItem | null>(null)
+  const [videoToDelete, setVideoToDelete] = useState<VideoItem | null>(null)
+  const [todoToDelete, setTodoToDelete] = useState<BoardTask | null>(null)
   const [draggingPlanningId, setDraggingPlanningId] = useState<string | null>(null)
   const [dragOverDateKey, setDragOverDateKey] = useState<string | null>(null)
   const [videoData, setVideoData] = useState<VideoItem[]>([])
@@ -302,13 +314,23 @@ export function DashboardOverview() {
 
   useEffect(() => {
     if (!data) return
-    setPlanningData(data.planning as PlanningItem[])
-    setVideoData(data.videos as VideoItem[])
+    setPlanningData(
+      (data.planning as PlanningItem[]).map((item) => ({
+        ...item,
+        platform: normalizePlatformLabel(item.platform),
+      })),
+    )
+    setVideoData(
+      (data.videos as VideoItem[]).map((item) => ({
+        ...item,
+        platform: normalizePlatformLabel(item.platform),
+      })),
+    )
     setTodoBoard(
       data.todos.map((todo) => ({
         id: todo.id,
         label: todo.label,
-        platform: todo.platform,
+        platform: normalizePlatformLabel(todo.platform),
         priority: todo.priority,
         column: todo.column ?? (todo.done ? 'done' : 'todo'),
         checklist: [],
@@ -322,38 +344,42 @@ export function DashboardOverview() {
       >,
     )
 
-    const uniquePlatforms = data.platforms && data.platforms.length > 0
-      ? data.platforms
-      : Array.from(
-          new Set([
+    const rawList =
+      data.platforms && data.platforms.length > 0
+        ? data.platforms
+        : [
             ...data.planning.map((item) => item.platform),
             ...data.videos.map((item) => item.platform),
             ...data.todos.map((item) => item.platform),
-          ]),
-        )
+          ]
+    const uniquePlatforms = Array.from(
+      new Set(rawList.map(normalizePlatformLabel)),
+    )
     setPlatforms(uniquePlatforms)
+    const defaultDraftPlatform = uniquePlatforms[0] ?? NO_PLATFORM_LABEL
     setPlanningDraft((prev) => ({
       ...prev,
-      platform: prev.platform || uniquePlatforms[0] || '',
+      platform: prev.platform || defaultDraftPlatform,
     }))
     setVideoDraft((prev) => ({
       ...prev,
-      platform: prev.platform || uniquePlatforms[0] || '',
+      platform: prev.platform || defaultDraftPlatform,
     }))
     setTodoDraft((prev) => ({
       ...prev,
-      platform: prev.platform || uniquePlatforms[0] || '',
+      platform: prev.platform || defaultDraftPlatform,
     }))
   }, [data])
 
   useEffect(() => {
-    if (!focusedPanel && !planningToDelete && !platformToDelete) return
+    if (!focusedPanel && !planningToDelete && !platformToDelete && !videoToDelete && !todoToDelete)
+      return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [focusedPanel, planningToDelete, platformToDelete])
+  }, [focusedPanel, planningToDelete, platformToDelete, videoToDelete, todoToDelete])
 
   const filteredPlanning = planningData
     .filter((item) => platform === 'all' || item.platform === platform)
@@ -365,6 +391,51 @@ export function DashboardOverview() {
 
   const filteredBoard = todoBoard
     .filter((item) => platform === 'all' || item.platform === platform)
+
+  const platformChoicesForForms = useMemo(
+    () => (platforms.length > 0 ? platforms : [NO_PLATFORM_LABEL]),
+    [platforms],
+  )
+
+  const platformsForBanner = useMemo(() => {
+    const fromItems = [
+      ...planningData.map((i) => i.platform),
+      ...videoData.map((i) => i.platform),
+      ...todoBoard.map((t) => t.platform),
+    ]
+    return Array.from(new Set([...platforms, ...fromItems]))
+  }, [platforms, planningData, videoData, todoBoard])
+
+  const isPlanningDraftValid = useMemo(
+    () =>
+      Boolean(
+        planningDraft.title.trim() &&
+          planningDraft.platform &&
+          planningDraft.publishAt,
+      ),
+    [planningDraft.title, planningDraft.platform, planningDraft.publishAt],
+  )
+
+  const isVideoDraftValid = useMemo(
+    () =>
+      Boolean(
+        videoDraft.title.trim() &&
+          videoDraft.deadline &&
+          videoDraft.platform &&
+          videoDraft.platform !== NO_PLATFORM_LABEL,
+      ),
+    [videoDraft.title, videoDraft.deadline, videoDraft.platform],
+  )
+
+  const isTodoDraftValid = useMemo(
+    () =>
+      Boolean(
+        todoDraft.label.trim() &&
+          todoDraft.platform &&
+          todoDraft.platform !== NO_PLATFORM_LABEL,
+      ),
+    [todoDraft.label, todoDraft.platform],
+  )
 
   const searchSuggestions = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -403,7 +474,7 @@ export function DashboardOverview() {
       push({ label: item.platform, panel: 'todo', targetId, detail: COLUMN_LABEL[item.column] ?? item.column })
       push({ label: item.priority, panel: 'todo', targetId })
     }
-    for (const item of platforms) {
+    for (const item of platformsForBanner) {
       push({ label: item, panel: 'planning', targetId: toSearchTargetId('platform', item) })
     }
 
@@ -455,7 +526,7 @@ export function DashboardOverview() {
     const result = Array.from(pool.values()).slice(0, 8)
     console.log('[search]', { query, matchingCount: matching.length, labelCount: Object.fromEntries(labelCount), result: result.map(r => ({ label: r.label, searchTerm: r.searchTerm, panel: r.panel })) })
     return result
-  }, [planningData, videoData, todoBoard, platforms, search])
+  }, [planningData, videoData, todoBoard, platformsForBanner, search])
 
   const ratio = filteredPlanning.length / Math.max(1, planningData.length)
   const periodWeight = period === '7d' ? 0.35 : period === '30d' ? 1 : period === '90d' ? 1.35 : 1.7
@@ -607,7 +678,7 @@ export function DashboardOverview() {
   const resetTodoDraft = () => {
     setTodoDraft({
       label: '',
-      platform: platforms[0] ?? '',
+      platform: platforms[0] ?? NO_PLATFORM_LABEL,
       priority: 'medium',
       column: 'todo',
     })
@@ -615,7 +686,12 @@ export function DashboardOverview() {
   }
 
   const submitTodoDraft = async () => {
-    if (!todoDraft.label.trim() || !todoDraft.platform) return
+    if (
+      !todoDraft.label.trim() ||
+      !todoDraft.platform ||
+      todoDraft.platform === NO_PLATFORM_LABEL
+    )
+      return
     setSearch('')
     if (platform !== 'all' && platform !== todoDraft.platform) {
       setPlatform(todoDraft.platform)
@@ -692,6 +768,20 @@ export function DashboardOverview() {
     deleteTodoItemApi(id).catch(console.error)
   }
 
+  const askTodoDelete = (task: BoardTask) => {
+    setTodoToDelete(task)
+  }
+
+  const cancelTodoDelete = () => {
+    setTodoToDelete(null)
+  }
+
+  const confirmTodoDelete = () => {
+    if (!todoToDelete) return
+    deleteTodoItem(todoToDelete.id)
+    setTodoToDelete(null)
+  }
+
   const handleTaskDragStart = (taskId: string) => {
     setDraggingTaskId(taskId)
   }
@@ -752,7 +842,7 @@ export function DashboardOverview() {
   const resetVideoDraft = () => {
     setVideoDraft({
       title: '',
-      platform: platforms[0] ?? '',
+      platform: platforms[0] ?? NO_PLATFORM_LABEL,
       deadline: '',
       stage: 'idea',
     })
@@ -760,7 +850,13 @@ export function DashboardOverview() {
   }
 
   const submitVideoDraft = async () => {
-    if (!videoDraft.title.trim() || !videoDraft.platform || !videoDraft.deadline) return
+    if (
+      !videoDraft.title.trim() ||
+      !videoDraft.platform ||
+      videoDraft.platform === NO_PLATFORM_LABEL ||
+      !videoDraft.deadline
+    )
+      return
     const normalizedDate = toDateKey(videoDraft.deadline)
     const ensureVisibility = (eventPlatform: string, eventDate: string) => {
       setSearch('')
@@ -843,9 +939,23 @@ export function DashboardOverview() {
     deleteVideoItemApi(id).catch(console.error)
   }
 
+  const askVideoDelete = (item: VideoItem) => {
+    setVideoToDelete(item)
+  }
+
+  const cancelVideoDelete = () => {
+    setVideoToDelete(null)
+  }
+
+  const confirmVideoDelete = () => {
+    if (!videoToDelete) return
+    deleteVideoItem(videoToDelete.id)
+    setVideoToDelete(null)
+  }
+
   const createPlatform = () => {
     const next = newPlatformName.trim().toLowerCase()
-    if (!next || platforms.includes(next)) return
+    if (!next || platforms.includes(next) || next === NO_PLATFORM_LABEL) return
     setPlatforms((prev) => [...prev, next])
     setNewPlatformName('')
     setIsAddingPlatform(false)
@@ -853,8 +963,9 @@ export function DashboardOverview() {
   }
 
   const renamePlatform = (from: string, draftName: string) => {
+    if (from === NO_PLATFORM_LABEL) return
     const to = draftName.trim().toLowerCase()
-    if (!to || to === from || platforms.includes(to)) return
+    if (!to || to === from || platforms.includes(to) || to === NO_PLATFORM_LABEL) return
     setPlatforms((prev) => prev.map((item) => (item === from ? to : item)))
     setPlanningData((prev) => prev.map((item) => (item.platform === from ? { ...item, platform: to } : item)))
     setVideoData((prev) => prev.map((item) => (item.platform === from ? { ...item, platform: to } : item)))
@@ -873,11 +984,10 @@ export function DashboardOverview() {
   }
 
   const deletePlatform = (name: string) => {
-    if (!platforms.includes(name)) return
+    if (!platforms.includes(name) || name === NO_PLATFORM_LABEL) return
     const remaining = platforms.filter((item) => item !== name)
-    const fallback = remaining[0] ?? 'general'
-    const nextPlatforms = remaining.length === 0 ? [fallback] : remaining
-    setPlatforms(nextPlatforms)
+    const fallback = remaining[0] ?? NO_PLATFORM_LABEL
+    setPlatforms(remaining)
     setPlanningData((prev) =>
       prev.map((item) => (item.platform === name ? { ...item, platform: fallback } : item)),
     )
@@ -936,7 +1046,7 @@ export function DashboardOverview() {
   const resetPlanningDraft = () => {
     setPlanningDraft({
       title: '',
-      platform: platforms[0] ?? '',
+      platform: platforms[0] ?? NO_PLATFORM_LABEL,
       publishAt: '',
       status: 'draft',
     })
@@ -1179,7 +1289,17 @@ export function DashboardOverview() {
             onClick={goToAccount}
             aria-label="Aller à la gestion utilisateur"
           >
-            <span className={styles.profileAvatar}>{user?.email?.[0]?.toUpperCase() ?? '?'}</span>
+            {avatarDataUrl ? (
+              <img
+                className={styles.profileAvatarImg}
+                src={avatarDataUrl}
+                alt=""
+              />
+            ) : (
+              <span className={styles.profileAvatar}>
+                {user?.email?.[0]?.toUpperCase() ?? '?'}
+              </span>
+            )}
           </button>
           <div className={styles.searchBox}>
             <input
@@ -1238,7 +1358,9 @@ export function DashboardOverview() {
             >
               Toutes plateformes
             </button>
-            {platforms.map((item) => (
+            {platformsForBanner
+              .filter((p) => p !== NO_PLATFORM_LABEL)
+              .map((item) => (
               <div
                 key={item}
                 data-search-id={toSearchTargetId('platform', item)}
@@ -1286,24 +1408,28 @@ export function DashboardOverview() {
                     >
                       {item}
                     </button>
-                    <button
-                      type="button"
-                      className={styles.platformChipAction}
-                      data-tooltip="Modifier"
-                      aria-label={`Modifier la plateforme ${item}`}
-                      onClick={() => startPlatformEdit(item)}
-                    >
-                      <AiOutlineEdit aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.platformChipAction} ${styles.deleteAction}`}
-                      data-tooltip="Supprimer"
-                      aria-label={`Supprimer la plateforme ${item}`}
-                      onClick={() => askPlatformDelete(item)}
-                    >
-                      <AiOutlineDelete aria-hidden="true" />
-                    </button>
+                    {!platforms.includes(item) ? null : (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.platformChipAction}
+                          data-tooltip="Modifier"
+                          aria-label={`Modifier la plateforme ${item}`}
+                          onClick={() => startPlatformEdit(item)}
+                        >
+                          <AiOutlineEdit aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.platformChipAction} ${styles.deleteAction}`}
+                          data-tooltip="Supprimer"
+                          aria-label={`Supprimer la plateforme ${item}`}
+                          onClick={() => askPlatformDelete(item)}
+                        >
+                          <AiOutlineDelete aria-hidden="true" />
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -1443,9 +1569,9 @@ export function DashboardOverview() {
                     onChange={(event) => setPlanningDraftField('platform', event.target.value)}
                   >
                     <option value="">Plateforme</option>
-                    {platforms.map((item) => (
+                    {platformChoicesForForms.map((item) => (
                       <option key={`planning-platform-${item}`} value={item}>
-                        {item}
+                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
                       </option>
                     ))}
                   </select>
@@ -1463,8 +1589,23 @@ export function DashboardOverview() {
                     <option value="published">published</option>
                   </select>
                 </div>
+                {!isPlanningDraftValid ? (
+                  <p className={styles.planningFormHint} role="status">
+                    Renseignez le titre, la date et une plateforme pour enregistrer.
+                  </p>
+                ) : null}
                 <div className={styles.planningFormActions}>
-                  <button type="button" onClick={submitPlanningDraft}>
+                  <button
+                    type="button"
+                    className={styles.planningFormSubmit}
+                    disabled={!isPlanningDraftValid}
+                    title={
+                      isPlanningDraftValid
+                        ? undefined
+                        : 'Titre, date et plateforme requis'
+                    }
+                    onClick={submitPlanningDraft}
+                  >
                     {editingPlanningId ? "Modifier l'événement" : 'Ajouter un événement'}
                   </button>
                   {editingPlanningId ? (
@@ -1626,9 +1767,9 @@ export function DashboardOverview() {
                     onChange={(event) => setVideoDraftField('platform', event.target.value)}
                   >
                     <option value="">Plateforme</option>
-                    {platforms.map((item) => (
+                    {platformChoicesForForms.map((item) => (
                       <option key={`videos-platform-${item}`} value={item}>
-                        {item}
+                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
                       </option>
                     ))}
                   </select>
@@ -1645,8 +1786,24 @@ export function DashboardOverview() {
                     <option value="published">Publié</option>
                   </select>
                 </div>
+                {!isVideoDraftValid ? (
+                  <p className={styles.planningFormHint} role="status">
+                    Indiquez un titre, une date d&apos;échéance et une plateforme réelle (obligatoire —
+                    pas l&apos;option « Pas de plateforme »).
+                  </p>
+                ) : null}
                 <div className={styles.videoFormActions}>
-                  <button type="button" onClick={submitVideoDraft}>
+                  <button
+                    type="button"
+                    className={styles.planningFormSubmit}
+                    disabled={!isVideoDraftValid}
+                    title={
+                      isVideoDraftValid
+                        ? undefined
+                        : 'Titre, date et plateforme requis'
+                    }
+                    onClick={submitVideoDraft}
+                  >
                     {editingVideoId ? 'Modifier le suivi vidéo' : 'Ajouter un suivi vidéo'}
                   </button>
                   {editingVideoId ? (
@@ -1712,7 +1869,7 @@ export function DashboardOverview() {
                             className={`${styles.iconActionButton} ${styles.deleteAction}`}
                             data-tooltip="Supprimer"
                             aria-label="Supprimer la video"
-                            onClick={() => deleteVideoItem(video.id)}
+                            onClick={() => askVideoDelete(video)}
                           >
                             <AiOutlineDelete aria-hidden="true" />
                           </button>
@@ -1797,9 +1954,9 @@ export function DashboardOverview() {
                     onChange={(event) => setTodoDraftField('platform', event.target.value)}
                   >
                     <option value="">Plateforme</option>
-                    {platforms.map((item) => (
+                    {platformChoicesForForms.map((item) => (
                       <option key={`todo-platform-${item}`} value={item}>
-                        {item}
+                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
                       </option>
                     ))}
                   </select>
@@ -1824,8 +1981,23 @@ export function DashboardOverview() {
                     <option value="done">Termine</option>
                   </select>
                 </div>
+                {!isTodoDraftValid ? (
+                  <p className={styles.planningFormHint} role="status">
+                    Indiquez un libellé et une plateforme réelle (obligatoire — pas « Pas de plateforme »).
+                  </p>
+                ) : null}
                 <div className={styles.todoFormActions}>
-                  <button type="button" onClick={submitTodoDraft}>
+                  <button
+                    type="button"
+                    className={styles.planningFormSubmit}
+                    disabled={!isTodoDraftValid}
+                    title={
+                      isTodoDraftValid
+                        ? undefined
+                        : 'Libellé et plateforme requis'
+                    }
+                    onClick={submitTodoDraft}
+                  >
                     {editingTodoId ? 'Modifier tâche' : 'Ajouter une tâche'}
                   </button>
                   {editingTodoId ? (
@@ -1898,7 +2070,7 @@ export function DashboardOverview() {
                               className={`${styles.iconActionButton} ${styles.deleteAction}`}
                               data-tooltip="Supprimer"
                               aria-label="Supprimer la tâche"
-                              onClick={() => deleteTodoItem(task.id)}
+                              onClick={() => askTodoDelete(task)}
                             >
                               <AiOutlineDelete aria-hidden="true" />
                             </button>
@@ -2124,9 +2296,9 @@ export function DashboardOverview() {
                       onChange={(event) => setPlanningDraftField('platform', event.target.value)}
                     >
                       <option value="">Plateforme</option>
-                      {platforms.map((item) => (
+                      {platformChoicesForForms.map((item) => (
                         <option key={`modal-planning-platform-${item}`} value={item}>
-                          {item}
+                          {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
                         </option>
                       ))}
                     </select>
@@ -2144,8 +2316,23 @@ export function DashboardOverview() {
                       <option value="published">published</option>
                     </select>
                   </div>
+                  {!isPlanningDraftValid ? (
+                    <p className={styles.planningFormHint} role="status">
+                      Renseignez le titre, la date et une plateforme pour enregistrer.
+                    </p>
+                  ) : null}
                   <div className={styles.planningFormActions}>
-                    <button type="button" onClick={submitPlanningDraft}>
+                    <button
+                      type="button"
+                      className={styles.planningFormSubmit}
+                      disabled={!isPlanningDraftValid}
+                      title={
+                        isPlanningDraftValid
+                          ? undefined
+                          : 'Titre, date et plateforme requis'
+                      }
+                      onClick={submitPlanningDraft}
+                    >
                       {editingPlanningId ? "Modifier l'événement" : 'Ajouter un événement'}
                     </button>
                     {editingPlanningId ? (
@@ -2259,9 +2446,9 @@ export function DashboardOverview() {
                     onChange={(event) => setVideoDraftField('platform', event.target.value)}
                   >
                     <option value="">Plateforme</option>
-                    {platforms.map((item) => (
+                    {platformChoicesForForms.map((item) => (
                       <option key={`modal-videos-platform-${item}`} value={item}>
-                        {item}
+                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
                       </option>
                     ))}
                   </select>
@@ -2278,8 +2465,24 @@ export function DashboardOverview() {
                     <option value="published">Publié</option>
                   </select>
                 </div>
+                {!isVideoDraftValid ? (
+                  <p className={styles.planningFormHint} role="status">
+                    Indiquez un titre, une date d&apos;échéance et une plateforme réelle (obligatoire —
+                    pas l&apos;option « Pas de plateforme »).
+                  </p>
+                ) : null}
                 <div className={styles.videoFormActions}>
-                  <button type="button" onClick={submitVideoDraft}>
+                  <button
+                    type="button"
+                    className={styles.planningFormSubmit}
+                    disabled={!isVideoDraftValid}
+                    title={
+                      isVideoDraftValid
+                        ? undefined
+                        : 'Titre, date et plateforme requis'
+                    }
+                    onClick={submitVideoDraft}
+                  >
                     {editingVideoId ? 'Modifier le suivi vidéo' : 'Ajouter un suivi vidéo'}
                   </button>
                   {editingVideoId ? (
@@ -2345,7 +2548,7 @@ export function DashboardOverview() {
                             className={`${styles.iconActionButton} ${styles.deleteAction}`}
                             data-tooltip="Supprimer"
                             aria-label="Supprimer la vidéo"
-                            onClick={() => deleteVideoItem(video.id)}
+                            onClick={() => askVideoDelete(video)}
                           >
                             <AiOutlineDelete aria-hidden="true" />
                           </button>
@@ -2382,9 +2585,9 @@ export function DashboardOverview() {
                     onChange={(event) => setTodoDraftField('platform', event.target.value)}
                   >
                     <option value="">Plateforme</option>
-                    {platforms.map((item) => (
+                    {platformChoicesForForms.map((item) => (
                       <option key={`modal-todo-platform-${item}`} value={item}>
-                        {item}
+                        {item === NO_PLATFORM_LABEL ? 'Pas de plateforme' : item}
                       </option>
                     ))}
                   </select>
@@ -2409,8 +2612,23 @@ export function DashboardOverview() {
                     <option value="done">Termine</option>
                   </select>
                 </div>
+                {!isTodoDraftValid ? (
+                  <p className={styles.planningFormHint} role="status">
+                    Indiquez un libellé et une plateforme réelle (obligatoire — pas « Pas de plateforme »).
+                  </p>
+                ) : null}
                 <div className={styles.todoFormActions}>
-                  <button type="button" onClick={submitTodoDraft}>
+                  <button
+                    type="button"
+                    className={styles.planningFormSubmit}
+                    disabled={!isTodoDraftValid}
+                    title={
+                      isTodoDraftValid
+                        ? undefined
+                        : 'Libellé et plateforme requis'
+                    }
+                    onClick={submitTodoDraft}
+                  >
                     {editingTodoId ? 'Modifier tâche' : 'Ajouter une tâche'}
                   </button>
                   {editingTodoId ? (
@@ -2483,7 +2701,7 @@ export function DashboardOverview() {
                               className={`${styles.iconActionButton} ${styles.deleteAction}`}
                               data-tooltip="Supprimer"
                               aria-label="Supprimer la tâche"
-                              onClick={() => deleteTodoItem(task.id)}
+                              onClick={() => askTodoDelete(task)}
                             >
                               <AiOutlineDelete aria-hidden="true" />
                             </button>
@@ -2580,6 +2798,50 @@ export function DashboardOverview() {
                 Annuler
               </button>
               <button type="button" onClick={confirmPlatformDelete}>
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {videoToDelete ? (
+        <div className={styles.confirmOverlay} onClick={cancelVideoDelete} role="presentation">
+          <div
+            className={styles.confirmCard}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirmation de suppression de vidéo"
+          >
+            <p className={styles.confirmText}>Êtes-vous sûr de vouloir supprimer ce suivi vidéo ?</p>
+            <p className={styles.confirmSubtext}>{videoToDelete.title}</p>
+            <div className={styles.confirmActions}>
+              <button type="button" onClick={cancelVideoDelete}>
+                Annuler
+              </button>
+              <button type="button" onClick={confirmVideoDelete}>
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {todoToDelete ? (
+        <div className={styles.confirmOverlay} onClick={cancelTodoDelete} role="presentation">
+          <div
+            className={styles.confirmCard}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirmation de suppression de tâche"
+          >
+            <p className={styles.confirmText}>Êtes-vous sûr de vouloir supprimer cette tâche ?</p>
+            <p className={styles.confirmSubtext}>{todoToDelete.label}</p>
+            <div className={styles.confirmActions}>
+              <button type="button" onClick={cancelTodoDelete}>
+                Annuler
+              </button>
+              <button type="button" onClick={confirmTodoDelete}>
                 Supprimer
               </button>
             </div>

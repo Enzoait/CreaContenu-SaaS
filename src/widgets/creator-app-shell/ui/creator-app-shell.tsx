@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineMenu, HiX } from "react-icons/hi";
 import { useAuthStore, selectAuthUser } from "../../../shared/model";
+import { useAccountAvatarDataUrl } from "../../../pages/account-page/model";
 import styles from "./creator-app-shell.module.scss";
 
 type CreatorAppShellProps = {
@@ -22,6 +23,7 @@ export function CreatorAppShell({
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore(selectAuthUser);
+  const avatarDataUrl = useAccountAvatarDataUrl();
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
 
   const goToDashboard = () => {
@@ -41,7 +43,15 @@ export function CreatorAppShell({
       onClick={goToAccount}
       aria-label="Gestion utilisateur"
     >
-      <span className={styles.profileAvatar}>{initial}</span>
+      {avatarDataUrl ? (
+        <img
+          className={styles.profileAvatarImg}
+          src={avatarDataUrl}
+          alt=""
+        />
+      ) : (
+        <span className={styles.profileAvatar}>{initial}</span>
+      )}
     </button>
   ) : (
     topBarTrailing
