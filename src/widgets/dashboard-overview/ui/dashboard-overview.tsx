@@ -472,9 +472,9 @@ export function DashboardOverview() {
       ...planningData.map((i) => i.platform),
       ...videoData.map((i) => i.platform),
       ...todoBoard.map((t) => t.platform),
-    ]
-    return Array.from(new Set([...platforms, ...fromItems]))
-  }, [platforms, planningData, videoData, todoBoard])
+    ];
+    return Array.from(new Set([...platforms, ...fromItems]));
+  }, [platforms, planningData, videoData, todoBoard]);
 
   const searchSuggestions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1530,7 +1530,7 @@ export function DashboardOverview() {
           <div className={styles.searchBox}>
             <input
               className={styles.searchInput}
-              placeholder={t('dashboard.searchPlaceholder')}
+              placeholder={t("dashboard.searchPlaceholder")}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -1586,105 +1586,111 @@ export function DashboardOverview() {
               onClick={() => setPlatform("all")}
               type="button"
             >
-              {t('dashboard.allPlatforms')}
+              {t("dashboard.allPlatforms")}
             </button>
             {platformsForBanner
               .filter((p) => p !== NO_PLATFORM_LABEL)
               .map((item) => (
-              <div
-                key={item}
-                data-search-id={toSearchTargetId("platform", item)}
-                className={`${styles.platformFilterItem} ${
-                  highlightedItemId === toSearchTargetId("platform", item)
-                    ? styles.itemPulse
-                    : ""
-                }`}
-              >
-                {editingPlatformName === item ? (
-                  <>
-                    <input
-                      className={styles.platformChipInput}
-                      value={editingPlatformValue}
-                      onChange={(event) =>
-                        setEditingPlatformValue(event.target.value)
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter")
-                          renamePlatform(item, editingPlatformValue);
-                        if (event.key === "Escape") cancelPlatformEdit();
-                      }}
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      className={styles.platformChipAction}
-                      aria-label={t('dashboard.validateEdit', { name: item })}
-                      onClick={() => renamePlatform(item, editingPlatformValue)}
-                    >
-                      ✓
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.platformChipAction}
-                      aria-label={t('dashboard.cancelEdit')}
-                      onClick={cancelPlatformEdit}
-                    >
-                      ×
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      className={`${styles.platformChipMain} ${
-                        platform === item ? styles.platformChipMainActive : ""
-                      }`}
-                      onClick={() => setPlatform(item)}
-                      type="button"
-                    >
-                      {item}
-                    </button>
-                    {!platforms.includes(item) ? null : (
-                      <>
-                        <button
-                          type="button"
-                          className={styles.platformChipAction}
-                          data-tooltip={t('dashboard.edit')}
-                          aria-label={t('dashboard.editPlatformItem', { name: item })}
-                          onClick={() => startPlatformEdit(item)}
-                        >
-                          <AiOutlineEdit aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          className={`${styles.platformChipAction} ${styles.deleteAction}`}
-                          data-tooltip={t('dashboard.delete')}
-                          aria-label={t('dashboard.deletePlatformItem', { name: item })}
-                          onClick={() => askPlatformDelete(item)}
-                        >
-                          <AiOutlineDelete aria-hidden="true" />
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
+                <div
+                  key={item}
+                  data-search-id={toSearchTargetId("platform", item)}
+                  className={`${styles.platformFilterItem} ${
+                    highlightedItemId === toSearchTargetId("platform", item)
+                      ? styles.itemPulse
+                      : ""
+                  }`}
+                >
+                  {editingPlatformName === item ? (
+                    <>
+                      <input
+                        className={styles.platformChipInput}
+                        value={editingPlatformValue}
+                        onChange={(event) =>
+                          setEditingPlatformValue(event.target.value)
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter")
+                            renamePlatform(item, editingPlatformValue);
+                          if (event.key === "Escape") cancelPlatformEdit();
+                        }}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        className={styles.platformChipAction}
+                        aria-label={t("dashboard.validateEdit", { name: item })}
+                        onClick={() =>
+                          renamePlatform(item, editingPlatformValue)
+                        }
+                      >
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.platformChipAction}
+                        aria-label={t("dashboard.cancelEdit")}
+                        onClick={cancelPlatformEdit}
+                      >
+                        ×
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className={`${styles.platformChipMain} ${
+                          platform === item ? styles.platformChipMainActive : ""
+                        }`}
+                        onClick={() => setPlatform(item)}
+                        type="button"
+                      >
+                        {item}
+                      </button>
+                      {!platforms.includes(item) ? null : (
+                        <>
+                          <button
+                            type="button"
+                            className={styles.platformChipAction}
+                            data-tooltip={t("dashboard.edit")}
+                            aria-label={t("dashboard.editPlatformItem", {
+                              name: item,
+                            })}
+                            onClick={() => startPlatformEdit(item)}
+                          >
+                            <AiOutlineEdit aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.platformChipAction} ${styles.deleteAction}`}
+                            data-tooltip={t("dashboard.delete")}
+                            aria-label={t("dashboard.deletePlatformItem", {
+                              name: item,
+                            })}
+                            onClick={() => askPlatformDelete(item)}
+                          >
+                            <AiOutlineDelete aria-hidden="true" />
+                          </button>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
             {isAddingPlatform ? (
               <div className={styles.inlineAddPlatform}>
                 <input
                   value={newPlatformName}
                   onChange={(event) => setNewPlatformName(event.target.value)}
-                  placeholder={t('dashboard.platformPlaceholder')}
+                  placeholder={t("dashboard.platformPlaceholder")}
                 />
                 <button type="button" onClick={createPlatform}>
-                  {t('dashboard.ok')}
+                  {t("dashboard.ok")}
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 className={styles.addPlatformButton}
-                aria-label={t('dashboard.addPlatform')}
+                aria-label={t("dashboard.addPlatform")}
                 onClick={() => setIsAddingPlatform(true)}
               >
                 +
@@ -1693,7 +1699,7 @@ export function DashboardOverview() {
           </div>
         </section>
 
-        <h2 className={styles.sectionTitle}>{t('dashboard.panelChart')}</h2>
+        <h2 className={styles.sectionTitle}>{t("dashboard.panelChart")}</h2>
         <section className={styles.statsGrid}>
           <article className={styles.statCard}>
             <span className={`${styles.statIcon} ${styles.statIconPurple}`}>
@@ -1773,7 +1779,7 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>{t('dashboard.planningTitle')}</h3>
+                <h3>{t("dashboard.planningTitle")}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
@@ -2111,7 +2117,7 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>{t('dashboard.todoTitle')}</h3>
+                <h3>{t("dashboard.todoTitle")}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
@@ -2384,7 +2390,7 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>{t('dashboard.statsTitle')}</h3>
+                <h3>{t("dashboard.statsTitle")}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
