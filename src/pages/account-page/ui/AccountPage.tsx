@@ -8,6 +8,11 @@ import {
   useUpsertUserDataMutation,
 } from "../../../entities/user";
 import {
+  changePasswordSchema,
+  useChangePasswordMutation,
+  type ChangePasswordFormValues,
+} from "../../../features/auth";
+import {
   accountProfileFormSchema,
   useAccountActiveTab,
   useAccountAvatarDataUrl,
@@ -67,8 +72,8 @@ export const AccountPage = () => {
 
   const {
     register,
-    handleSubmit,
-    reset,
+    handleSubmit: handleProfileSubmit,
+    reset: resetProfileForm,
     formState: { errors },
   } = useForm<AccountProfileFormValues>({
     resolver: zodResolver(accountProfileFormSchema),
@@ -83,7 +88,7 @@ export const AccountPage = () => {
   });
 
   useEffect(() => {
-    reset({
+    resetProfileForm({
       firstname: userData?.firstname ?? "",
       lastname: userData?.lastname ?? "",
       email: userData?.email ?? currentUser?.email ?? "",
@@ -93,7 +98,7 @@ export const AccountPage = () => {
     });
   }, [
     currentUser?.email,
-    reset,
+    resetProfileForm,
     userData?.country,
     userData?.email,
     userData?.firstname,
@@ -101,6 +106,30 @@ export const AccountPage = () => {
     userData?.phoneNumber,
     userData?.region,
   ]);
+
+  const {
+    register: registerSecurity,
+    handleSubmit: handleSecuritySubmit,
+    reset: resetSecurityForm,
+    formState: { errors: securityErrors },
+  } = useForm<ChangePasswordFormValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const {
+    mutateAsync: changePassword,
+    isPending: isChangingPassword,
+    isError: isPasswordChangeError,
+    error: passwordChangeError,
+  } = useChangePasswordMutation();
+  const [passwordUpdatedAt, setPasswordUpdatedAt] = useState<string | null>(
+    null,
+  );
 
   const onSubmit = async (values: AccountProfileFormValues) => {
     if (!currentUser?.id) {
@@ -135,6 +164,21 @@ export const AccountPage = () => {
           : "Erreur pendant la sauvegarde du profil.",
       );
     }
+  };
+
+  const onPasswordSubmit = async (values: ChangePasswordFormValues) => {
+    await changePassword(values);
+    resetSecurityForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setPasswordUpdatedAt(
+      new Date().toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    );
   };
 
   const handleTextExport = () => {
@@ -220,7 +264,7 @@ export const AccountPage = () => {
 
         <section className="account-card">
           <h3 className="account-section-title">Modifier mes informations</h3>
-          <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
+          <form className="auth-form" onSubmit={handleProfileSubmit(onSubmit)}>
             <label className="field-label" htmlFor="account-firstname">
               Prénom
             </label>
@@ -332,10 +376,80 @@ export const AccountPage = () => {
   const renderSecurityPanel = () => (
     <section className="account-card">
       <h3 className="account-section-title">Sécurité</h3>
-      <p className="muted">
-        Cette section sera étendue pour la gestion du mot de passe et de la
-        double authentification.
+      <p className="muted" style={{ marginBottom: "1rem" }}>
+        Mettez a jour votre mot de passe en confirmant d'abord le mot de passe
+        actuel.
       </p>
+      <form
+        className="auth-form"
+        onSubmit={handleSecuritySubmit(onPasswordSubmit)}
+      >
+        <label className="field-label" htmlFor="account-current-password">
+          Mot de passe actuel
+        </label>
+        <input
+          id="account-current-password"
+          className="field-input"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Votre mot de passe actuel"
+          {...registerSecurity("currentPassword")}
+        />
+        {securityErrors.currentPassword ? (
+          <p className="error">{securityErrors.currentPassword.message}</p>
+        ) : null}
+
+        <label className="field-label" htmlFor="account-new-password">
+          Nouveau mot de passe
+        </label>
+        <input
+          id="account-new-password"
+          className="field-input"
+          type="password"
+          autoComplete="new-password"
+          placeholder="Minimum 8 caracteres"
+          {...registerSecurity("newPassword")}
+        />
+        {securityErrors.newPassword ? (
+          <p className="error">{securityErrors.newPassword.message}</p>
+        ) : null}
+
+        <label className="field-label" htmlFor="account-confirm-password">
+          Confirmer le nouveau mot de passe
+        </label>
+        <input
+          id="account-confirm-password"
+          className="field-input"
+          type="password"
+          autoComplete="new-password"
+          placeholder="Repetez le nouveau mot de passe"
+          {...registerSecurity("confirmPassword")}
+        />
+        {securityErrors.confirmPassword ? (
+          <p className="error">{securityErrors.confirmPassword.message}</p>
+        ) : null}
+
+        {isPasswordChangeError ? (
+          <p className="error">{passwordChangeError.message}</p>
+        ) : null}
+
+        <div className="row-between" style={{ marginTop: "0.75rem" }}>
+          <button
+            type="submit"
+            className="auth-primary"
+            disabled={isChangingPassword}
+          >
+            {isChangingPassword
+              ? "Mise a jour en cours..."
+              : "Mettre a jour le mot de passe"}
+          </button>
+          {passwordUpdatedAt ? (
+            <span className="success" style={{ fontSize: "0.9rem" }}>
+              Mot de passe mis a jour a {passwordUpdatedAt}
+            </span>
+          ) : null}
+        </div>
+      </form>
     </section>
   );
 
