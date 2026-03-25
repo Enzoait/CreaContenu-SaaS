@@ -1,6 +1,8 @@
 import { SignOutButton } from "../../../features/auth";
 import { useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { HiOutlineMenu, HiX } from "react-icons/hi";
+import { useAuthStore, selectAuthUser } from "../../../shared/model";
 import styles from "./creator-app-shell.module.scss";
 
 type CreatorAppShellProps = {
@@ -19,6 +21,8 @@ export function CreatorAppShell({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const user = useAuthStore(selectAuthUser);
+  const initial = user?.email?.[0]?.toUpperCase() ?? '?';
 
   const goToDashboard = () => {
     setIsMenuOpen(false);
@@ -37,7 +41,7 @@ export function CreatorAppShell({
       onClick={goToAccount}
       aria-label="Gestion utilisateur"
     >
-      <span className={styles.profileAvatar}>MC</span>
+      <span className={styles.profileAvatar}>{initial}</span>
     </button>
   ) : (
     topBarTrailing
@@ -62,7 +66,7 @@ export function CreatorAppShell({
           onClick={() => setIsMenuOpen(false)}
           aria-label="Fermer le menu burger"
         >
-          ×
+          <HiX aria-hidden="true" />
         </button>
         <div className={styles.brand}>
           <span className={styles.brandIcon}>C</span>
@@ -95,7 +99,7 @@ export function CreatorAppShell({
             onClick={() => setIsMenuOpen((prev) => !prev)}
             aria-label="Ouvrir le menu"
           >
-            ☰
+            <HiOutlineMenu aria-hidden="true" />
           </button>
           <h2>creacontenu</h2>
           {resolvedTrailing ? (

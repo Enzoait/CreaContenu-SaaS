@@ -144,6 +144,7 @@
   left: 0;
   right: 0;
   background: #ffffff;
+  color: #111827;
   border: 1px solid #d9deea;
   border-radius: 10px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
@@ -159,6 +160,10 @@
   background: #fff;
   border-radius: 7px;
   padding: 7px 8px;
+  color: #111827;
+  font-size: 0.82rem;
+  cursor: pointer;
+  width: 100%;
 }
 
 .searchSuggestions button:hover {
@@ -276,6 +281,11 @@
   height: 30px;
   font-size: 1rem;
   line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .inlineAddPlatform {
@@ -472,6 +482,14 @@
   margin-bottom: 8px;
 }
 
+.planningToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .dropdownTrigger {
   border: 1px solid #c7d2fe;
   background: rgba(255, 255, 255, 0.92);
@@ -526,6 +544,12 @@
   width: 30px;
   height: 30px;
   font-size: 0.95rem;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .dropdownIcon {
@@ -774,6 +798,12 @@
   gap: 6px;
 }
 
+.agendaDay.agendaDayDropOver {
+  border-color: #818cf8;
+  background: #f0f4ff;
+  box-shadow: 0 0 0 2px #c7d2fe;
+}
+
 .agendaItem {
   display: flex;
   gap: 8px;
@@ -782,6 +812,16 @@
   border: 1px solid #eef2f8;
   border-radius: 8px;
   padding: 6px;
+  cursor: grab;
+}
+
+.agendaItem:active {
+  cursor: grabbing;
+}
+
+.agendaItemDragging {
+  opacity: 0.45;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.18);
 }
 
 .agendaItem > div {

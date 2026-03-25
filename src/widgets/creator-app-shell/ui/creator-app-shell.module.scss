@@ -94,6 +94,13 @@
   width: 34px;
   height: 34px;
   display: none;
+  place-items: center;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #334155;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .topBarRight {
@@ -154,9 +161,12 @@
     justify-content: flex-end;
   }
 
-  .topBar h2,
-  .burger {
+  .topBar h2 {
     display: block;
+  }
+
+  .burger {
+    display: inline-grid;
   }
 
   .mobileNavOverlay {
@@ -176,6 +186,8 @@
     right: 10px;
     width: 30px;
     height: 30px;
+    padding: 0;
+    line-height: 1;
     border: 1px solid #d9deea;
     background: #ffffff;
     border-radius: 8px;

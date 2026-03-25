@@ -5,6 +5,33 @@ import {
   useSetDashboardPeriod,
   useSetDashboardPlatform,
 } from '../../../features/dashboard-filters/model/dashboard-filters-store'
+import {
+  addPlanningItem,
+  updatePlanningItem,
+  deletePlanningItem as deletePlanningItemApi,
+  renamePlatformInPlanning,
+  deletePlatformInPlanning,
+} from '../../../entities/dashboard/api/planning-api'
+import {
+  addVideoItem,
+  updateVideoItem,
+  deleteVideoItem as deleteVideoItemApi,
+  renamePlatformInVideos,
+  deletePlatformInVideos,
+} from '../../../entities/dashboard/api/videos-api'
+import {
+  addTodoItem,
+  updateTodoItem,
+  deleteTodoItem as deleteTodoItemApi,
+  renamePlatformInTodos,
+  deletePlatformInTodos,
+} from '../../../entities/dashboard/api/todos-api'
+import { useAuthStore, selectAuthUser } from '../../../shared/model/auth-store'
+import {
+  addUserPlatform,
+  renameUserPlatform,
+  deleteUserPlatform,
+} from '../../../entities/dashboard/api/platforms-api'
 import styles from './dashboard-overview.module.scss'
 import {
   useEffect,
@@ -35,9 +62,11 @@ type TodoColumn = 'todo' | 'doing' | 'done'
 type VideoStage = 'idea' | 'scripting' | 'recording' | 'editing' | 'published'
 type PanelId = 'planning' | 'videos' | 'todo' | 'chart'
 type SuggestionItem = {
-  label: string
+  label: string        // texte affiché dans le dropdown (enrichi si ambigu)
   panel: PanelId
   targetId: string | null
+  detail?: string
+  searchTerm?: string  // terme brut pour setSearch + highlight (= label original)
 }
 
 type PlanningItem = {
@@ -91,6 +120,33 @@ type TodoDraft = {
   platform: string
   priority: 'low' | 'medium' | 'high'
   column: TodoColumn
+}
+
+const PANEL_LABEL: Record<PanelId, string> = {
+  planning: 'Planning',
+  videos: 'Vidéos',
+  todo: 'Todo',
+  chart: 'Stats',
+}
+
+const COLUMN_LABEL: Record<string, string> = {
+  todo: 'À faire',
+  doing: 'En cours',
+  done: 'Terminé',
+}
+
+const STAGE_LABEL: Record<string, string> = {
+  idea: 'Idée',
+  scripting: 'Script',
+  recording: 'Tournage',
+  editing: 'Montage',
+  published: 'Publié',
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  draft: 'Brouillon',
+  scheduled: 'Planifié',
+  published: 'Publié',
 }
 
 function formatNumber(value: number): string {
@@ -170,6 +226,7 @@ function isInPeriod(dateString: string, period: '7d' | '30d' | '90d' | 'all'): b
 
 export function DashboardOverview() {
   const profileTitleSuffix = useProfileTitleSuffix()
+  const user = useAuthStore(selectAuthUser)
   const { data, isLoading, isError } = useDashboardData()
   const period = useDashboardPeriod()
   const platform = useDashboardPlatform()
@@ -196,6 +253,8 @@ export function DashboardOverview() {
   const [editingPlanningId, setEditingPlanningId] = useState<string | null>(null)
   const [isPlanningFormOpen, setIsPlanningFormOpen] = useState(false)
   const [planningToDelete, setPlanningToDelete] = useState<PlanningItem | null>(null)
+  const [draggingPlanningId, setDraggingPlanningId] = useState<string | null>(null)
+  const [dragOverDateKey, setDragOverDateKey] = useState<string | null>(null)
   const [videoData, setVideoData] = useState<VideoItem[]>([])
   const [videoDraft, setVideoDraft] = useState<VideoDraft>({
     title: '',
@@ -251,7 +310,7 @@ export function DashboardOverview() {
         label: todo.label,
         platform: todo.platform,
         priority: todo.priority,
-        column: todo.done ? 'done' : 'todo',
+        column: todo.column ?? (todo.done ? 'done' : 'todo'),
         checklist: [],
         newChecklistText: '',
       })),
@@ -263,13 +322,15 @@ export function DashboardOverview() {
       >,
     )
 
-    const uniquePlatforms = Array.from(
-      new Set([
-        ...data.planning.map((item) => item.platform),
-        ...data.videos.map((item) => item.platform),
-        ...data.todos.map((item) => item.platform),
-      ]),
-    )
+    const uniquePlatforms = data.platforms && data.platforms.length > 0
+      ? data.platforms
+      : Array.from(
+          new Set([
+            ...data.planning.map((item) => item.platform),
+            ...data.videos.map((item) => item.platform),
+            ...data.todos.map((item) => item.platform),
+          ]),
+        )
     setPlatforms(uniquePlatforms)
     setPlanningDraft((prev) => ({
       ...prev,
@@ -306,50 +367,94 @@ export function DashboardOverview() {
     .filter((item) => platform === 'all' || item.platform === platform)
 
   const searchSuggestions = useMemo(() => {
-    const pool = new Map<string, SuggestionItem>()
-    const addSuggestion = (item: SuggestionItem) => {
-      const key = `${normalizeText(item.label)}|${item.panel}|${item.targetId ?? 'section'}`
-      if (!pool.has(key)) pool.set(key, item)
-    }
+    const query = search.trim().toLowerCase()
+    if (!query) return []
 
-    addSuggestion({ label: 'planning', panel: 'planning', targetId: null })
-    addSuggestion({ label: 'agenda', panel: 'planning', targetId: null })
-    addSuggestion({ label: 'suivi des vidéos', panel: 'videos', targetId: null })
-    addSuggestion({ label: 'vidéos', panel: 'videos', targetId: null })
-    addSuggestion({ label: 'to-do list', panel: 'todo', targetId: null })
-    addSuggestion({ label: 'todo list', panel: 'todo', targetId: null })
-    addSuggestion({ label: 'tâches', panel: 'todo', targetId: null })
-    addSuggestion({ label: 'plateformes', panel: 'planning', targetId: null })
-    addSuggestion({ label: 'stats', panel: 'planning', targetId: null })
+    // 1. Collecter tous les candidats bruts (sans dédup)
+    const candidates: SuggestionItem[] = []
+
+    const push = (item: SuggestionItem) => candidates.push(item)
+
+    push({ label: 'planning', panel: 'planning', targetId: null })
+    push({ label: 'agenda', panel: 'planning', targetId: null })
+    push({ label: 'suivi des vidéos', panel: 'videos', targetId: null })
+    push({ label: 'vidéos', panel: 'videos', targetId: null })
+    push({ label: 'to-do list', panel: 'todo', targetId: null })
+    push({ label: 'todo list', panel: 'todo', targetId: null })
+    push({ label: 'tâches', panel: 'todo', targetId: null })
+    push({ label: 'plateformes', panel: 'planning', targetId: null })
+    push({ label: 'stats', panel: 'planning', targetId: null })
 
     for (const item of planningData) {
       const targetId = toSearchTargetId('planning', item.id)
-      addSuggestion({ label: item.title, panel: 'planning', targetId })
-      addSuggestion({ label: item.platform, panel: 'planning', targetId })
-      addSuggestion({ label: item.status, panel: 'planning', targetId })
+      push({ label: item.title, panel: 'planning', targetId, detail: STATUS_LABEL[item.status] ?? item.status })
+      push({ label: item.platform, panel: 'planning', targetId, detail: STATUS_LABEL[item.status] ?? item.status })
+      push({ label: item.status, panel: 'planning', targetId })
     }
     for (const item of videoData) {
       const targetId = toSearchTargetId('video', item.id)
-      addSuggestion({ label: item.title, panel: 'videos', targetId })
-      addSuggestion({ label: item.platform, panel: 'videos', targetId })
-      addSuggestion({ label: item.stage, panel: 'videos', targetId })
+      push({ label: item.title, panel: 'videos', targetId, detail: STAGE_LABEL[item.stage] ?? item.stage })
+      push({ label: item.platform, panel: 'videos', targetId, detail: STAGE_LABEL[item.stage] ?? item.stage })
+      push({ label: item.stage, panel: 'videos', targetId })
     }
     for (const item of todoBoard) {
       const targetId = toSearchTargetId('todo', item.id)
-      addSuggestion({ label: item.label, panel: 'todo', targetId })
-      addSuggestion({ label: item.platform, panel: 'todo', targetId })
-      addSuggestion({ label: item.priority, panel: 'todo', targetId })
+      push({ label: item.label, panel: 'todo', targetId, detail: COLUMN_LABEL[item.column] ?? item.column })
+      push({ label: item.platform, panel: 'todo', targetId, detail: COLUMN_LABEL[item.column] ?? item.column })
+      push({ label: item.priority, panel: 'todo', targetId })
     }
     for (const item of platforms) {
-      const targetId = toSearchTargetId('platform', item)
-      addSuggestion({ label: item, panel: 'planning', targetId })
+      push({ label: item, panel: 'planning', targetId: toSearchTargetId('platform', item) })
     }
 
-    const query = search.trim().toLowerCase()
-    if (!query) return []
-    return Array.from(pool.values())
-      .filter((item) => normalizeText(item.label).includes(normalizeText(query)))
-      .slice(0, 8)
+    // 2. Filtrer par query sur les candidats bruts (avant dédup)
+    const normQuery = normalizeText(query)
+    const matching = candidates.filter((s) => normalizeText(s.label).includes(normQuery))
+
+    // 3. Calculer doublons sur les candidats filtrés (tous, avant dédup)
+    const labelPanels = new Map<string, Set<PanelId>>()
+    const labelCount = new Map<string, number>()
+    const seen = new Set<string>() // clé unique par (label, panel, targetId)
+    for (const s of matching) {
+      const dedupeKey = `${normalizeText(s.label)}|${s.panel}|${s.targetId ?? 'section'}`
+      if (seen.has(dedupeKey)) continue
+      seen.add(dedupeKey)
+      const norm = normalizeText(s.label)
+      labelCount.set(norm, (labelCount.get(norm) ?? 0) + 1)
+      if (!labelPanels.has(norm)) labelPanels.set(norm, new Set())
+      labelPanels.get(norm)!.add(s.panel)
+    }
+
+    // 4. Dédupliquer et enrichir le label si ambigu
+    const pool = new Map<string, SuggestionItem>()
+    for (const s of matching) {
+      const dedupeKey = `${normalizeText(s.label)}|${s.panel}|${s.targetId ?? 'section'}`
+      if (pool.has(dedupeKey)) continue
+
+      const norm = normalizeText(s.label)
+      const count = labelCount.get(norm) ?? 1
+
+      if (count <= 1) {
+        pool.set(dedupeKey, s)
+        continue
+      }
+
+      const panels = labelPanels.get(norm)!
+      const panelLabel = PANEL_LABEL[s.panel]
+      const rawLabel = s.label
+
+      const enrichedLabel =
+        panels.size > 1
+          ? `${rawLabel} — ${panelLabel}`
+          : `${rawLabel} — ${panelLabel}${s.detail ? ` — ${s.detail}` : ''}`
+
+      // On remplace label par le texte enrichi et on garde searchTerm pour setSearch
+      pool.set(dedupeKey, { ...s, label: enrichedLabel, searchTerm: rawLabel })
+    }
+
+    const result = Array.from(pool.values()).slice(0, 8)
+    console.log('[search]', { query, matchingCount: matching.length, labelCount: Object.fromEntries(labelCount), result: result.map(r => ({ label: r.label, searchTerm: r.searchTerm, panel: r.panel })) })
+    return result
   }, [planningData, videoData, todoBoard, platforms, search])
 
   const ratio = filteredPlanning.length / Math.max(1, planningData.length)
@@ -388,10 +493,65 @@ export function DashboardOverview() {
   const planningByDate = useMemo(() => {
     const map = new Map<string, PlanningItem[]>()
     for (const slot of dateSlots) {
-      map.set(slot.key, filteredPlanning.filter((item) => toDateKey(item.publishAt) === slot.key))
+      map.set(slot.key, planningData.filter((item) => toDateKey(item.publishAt) === slot.key))
     }
     return map
-  }, [dateSlots, filteredPlanning])
+  }, [dateSlots, planningData])
+
+  const handlePlanningDragStart = (event: React.DragEvent, itemId: string) => {
+    event.stopPropagation()
+    event.dataTransfer.setData('planningItemId', itemId)
+    event.dataTransfer.effectAllowed = 'move'
+    setDraggingPlanningId(itemId)
+  }
+
+  const handlePlanningDragEnd = () => {
+    setDraggingPlanningId(null)
+    setDragOverDateKey(null)
+  }
+
+  const handleDateDragOver = (event: React.DragEvent, dateKey: string) => {
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'move'
+    setDragOverDateKey(dateKey)
+  }
+
+  const handleDateDragLeave = (event: React.DragEvent) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+      setDragOverDateKey(null)
+    }
+  }
+
+  const handleDateDrop = async (event: React.DragEvent, dateKey: string) => {
+    event.preventDefault()
+    event.stopPropagation()
+    const itemId = event.dataTransfer.getData('planningItemId')
+    if (!itemId || !user) {
+      setDraggingPlanningId(null)
+      setDragOverDateKey(null)
+      return
+    }
+    const item = planningData.find((p) => p.id === itemId)
+    if (!item || toDateKey(item.publishAt) === dateKey) {
+      setDraggingPlanningId(null)
+      setDragOverDateKey(null)
+      return
+    }
+    setPlanningData((prev) =>
+      prev.map((p) => (p.id === itemId ? { ...p, publishAt: dateKey } : p)),
+    )
+    setDraggingPlanningId(null)
+    setDragOverDateKey(null)
+    try {
+      await updatePlanningItem(itemId, { publishAt: dateKey })
+    } catch (error) {
+      console.error('Erreur déplacement événement :', error)
+      setPlanningData((prev) =>
+        prev.map((p) => (p.id === itemId ? { ...p, publishAt: item.publishAt } : p)),
+      )
+    }
+  }
 
   const setTaskLabel = (id: string, label: string) => {
     setTodoBoard((prev) => prev.map((task) => (task.id === id ? { ...task, label } : task)))
@@ -437,6 +597,7 @@ export function DashboardOverview() {
     setTodoBoard((prev) =>
       prev.map((task) => (task.id === id ? { ...task, column: target } : task)),
     )
+    updateTodoItem(id, { column: target }).catch(console.error)
   }
 
   const setTodoDraftField = <K extends keyof TodoDraft>(key: K, value: TodoDraft[K]) => {
@@ -453,7 +614,7 @@ export function DashboardOverview() {
     setEditingTodoId(null)
   }
 
-  const submitTodoDraft = () => {
+  const submitTodoDraft = async () => {
     if (!todoDraft.label.trim() || !todoDraft.platform) return
     setSearch('')
     if (platform !== 'all' && platform !== todoDraft.platform) {
@@ -474,26 +635,45 @@ export function DashboardOverview() {
             : task,
         ),
       )
+      updateTodoItem(editingTodoId, {
+        label: todoDraft.label.trim(),
+        platform: todoDraft.platform,
+        priority: todoDraft.priority,
+        column: todoDraft.column,
+      }).catch(console.error)
       resetTodoDraft()
       setIsTodoFormOpen(false)
       return
     }
 
-    const newTask: BoardTask = {
-      id: `t-${Date.now()}`,
-      label: todoDraft.label.trim(),
-      platform: todoDraft.platform,
-      priority: todoDraft.priority,
-      column: todoDraft.column,
-      checklist: [],
-      newChecklistText: '',
+    if (!user?.id) return
+    try {
+      const created = await addTodoItem(user.id, {
+        label: todoDraft.label.trim(),
+        platform: todoDraft.platform,
+        priority: todoDraft.priority,
+        column: todoDraft.column,
+      })
+      addUserPlatform(user.id, created.platform).catch(console.error)
+      const newTask: BoardTask = {
+        id: created.id,
+        label: created.label,
+        platform: created.platform,
+        priority: created.priority,
+        column: created.column,
+        checklist: [],
+        newChecklistText: '',
+      }
+      setTodoBoard((prev) => [...prev, newTask])
+    } catch (error) {
+      console.error(error)
     }
-    setTodoBoard((prev) => [...prev, newTask])
     resetTodoDraft()
     setIsTodoFormOpen(false)
   }
 
   const startTodoEdit = (task: BoardTask) => {
+    setFocusedPanel('todo')
     setIsTodoFormOpen(true)
     setEditingTodoId(task.id)
     setTodoDraft({
@@ -509,6 +689,7 @@ export function DashboardOverview() {
     if (editingTodoId === id) {
       resetTodoDraft()
     }
+    deleteTodoItemApi(id).catch(console.error)
   }
 
   const handleTaskDragStart = (taskId: string) => {
@@ -561,6 +742,7 @@ export function DashboardOverview() {
   const setVideoStage = (id: string, nextStage: VideoStage) => {
     setVideoStages((prev) => ({ ...prev, [id]: nextStage }))
     setVideoData((prev) => prev.map((item) => (item.id === id ? { ...item, stage: nextStage } : item)))
+    updateVideoItem(id, { stage: nextStage }).catch(console.error)
   }
 
   const setVideoDraftField = <K extends keyof VideoDraft>(key: K, value: VideoDraft[K]) => {
@@ -577,7 +759,7 @@ export function DashboardOverview() {
     setEditingVideoId(null)
   }
 
-  const submitVideoDraft = () => {
+  const submitVideoDraft = async () => {
     if (!videoDraft.title.trim() || !videoDraft.platform || !videoDraft.deadline) return
     const normalizedDate = toDateKey(videoDraft.deadline)
     const ensureVisibility = (eventPlatform: string, eventDate: string) => {
@@ -605,27 +787,39 @@ export function DashboardOverview() {
         ),
       )
       setVideoStages((prev) => ({ ...prev, [editingVideoId]: videoDraft.stage }))
+      updateVideoItem(editingVideoId, {
+        title: videoDraft.title.trim(),
+        platform: videoDraft.platform,
+        deadline: normalizedDate,
+        stage: videoDraft.stage,
+      }).catch(console.error)
       ensureVisibility(videoDraft.platform, normalizedDate)
       resetVideoDraft()
       setIsVideoFormOpen(false)
       return
     }
 
-    const newVideo: VideoItem = {
-      id: `v-${Date.now()}`,
-      title: videoDraft.title.trim(),
-      platform: videoDraft.platform,
-      deadline: normalizedDate,
-      stage: videoDraft.stage,
+    if (!user?.id) return
+    try {
+      const newVideo = await addVideoItem(user.id, {
+        title: videoDraft.title.trim(),
+        platform: videoDraft.platform,
+        deadline: normalizedDate,
+        stage: videoDraft.stage,
+      })
+      addUserPlatform(user.id, newVideo.platform).catch(console.error)
+      setVideoData((prev) => [...prev, newVideo])
+      setVideoStages((prev) => ({ ...prev, [newVideo.id]: newVideo.stage }))
+      ensureVisibility(newVideo.platform, newVideo.deadline)
+    } catch (error) {
+      console.error(error)
     }
-    setVideoData((prev) => [...prev, newVideo])
-    setVideoStages((prev) => ({ ...prev, [newVideo.id]: newVideo.stage }))
-    ensureVisibility(newVideo.platform, newVideo.deadline)
     resetVideoDraft()
     setIsVideoFormOpen(false)
   }
 
   const startVideoEdit = (item: VideoItem) => {
+    setFocusedPanel('videos')
     setIsVideoFormOpen(true)
     setEditingVideoId(item.id)
     setVideoDraft({
@@ -646,6 +840,7 @@ export function DashboardOverview() {
     if (editingVideoId === id) {
       resetVideoDraft()
     }
+    deleteVideoItemApi(id).catch(console.error)
   }
 
   const createPlatform = () => {
@@ -654,6 +849,7 @@ export function DashboardOverview() {
     setPlatforms((prev) => [...prev, next])
     setNewPlatformName('')
     setIsAddingPlatform(false)
+    if (user?.id) addUserPlatform(user.id, next).catch(console.error)
   }
 
   const renamePlatform = (from: string, draftName: string) => {
@@ -666,6 +862,14 @@ export function DashboardOverview() {
     if (platform === from) setPlatform(to)
     setEditingPlatformName(null)
     setEditingPlatformValue('')
+    if (user?.id) {
+      Promise.all([
+        renameUserPlatform(user.id, from, to),
+        renamePlatformInPlanning(user.id, from, to),
+        renamePlatformInVideos(user.id, from, to),
+        renamePlatformInTodos(user.id, from, to),
+      ]).catch(console.error)
+    }
   }
 
   const deletePlatform = (name: string) => {
@@ -687,6 +891,14 @@ export function DashboardOverview() {
     if (editingPlatformName === name) {
       setEditingPlatformName(null)
       setEditingPlatformValue('')
+    }
+    if (user?.id) {
+      Promise.all([
+        deleteUserPlatform(user.id, name),
+        deletePlatformInPlanning(user.id, name, fallback),
+        deletePlatformInVideos(user.id, name, fallback),
+        deletePlatformInTodos(user.id, name, fallback),
+      ]).catch(console.error)
     }
   }
 
@@ -731,7 +943,7 @@ export function DashboardOverview() {
     setEditingPlanningId(null)
   }
 
-  const submitPlanningDraft = () => {
+  const submitPlanningDraft = async () => {
     if (!planningDraft.title.trim() || !planningDraft.platform || !planningDraft.publishAt) return
     const normalizedDate = toDateKey(planningDraft.publishAt)
     const ensureVisibility = (eventPlatform: string, eventDate: string) => {
@@ -760,25 +972,38 @@ export function DashboardOverview() {
             : item,
         ),
       )
+      updatePlanningItem(editingPlanningId, {
+        title: planningDraft.title.trim(),
+        platform: planningDraft.platform,
+        publishAt: normalizedDate,
+        status: planningDraft.status,
+      }).catch(console.error)
       ensureVisibility(planningDraft.platform, normalizedDate)
       resetPlanningDraft()
       setIsPlanningFormOpen(false)
       return
     }
-    const newItem: PlanningItem = {
-      id: `p-${Date.now()}`,
-      title: planningDraft.title.trim(),
-      platform: planningDraft.platform,
-      publishAt: normalizedDate,
-      status: planningDraft.status,
+
+    if (!user?.id) return
+    try {
+      const newItem = await addPlanningItem(user.id, {
+        title: planningDraft.title.trim(),
+        platform: planningDraft.platform,
+        publishAt: normalizedDate,
+        status: planningDraft.status,
+      })
+      addUserPlatform(user.id, newItem.platform).catch(console.error)
+      setPlanningData((prev) => [...prev, newItem])
+      ensureVisibility(newItem.platform, newItem.publishAt)
+    } catch (error) {
+      console.error(error)
     }
-    setPlanningData((prev) => [...prev, newItem])
-    ensureVisibility(newItem.platform, newItem.publishAt)
     resetPlanningDraft()
     setIsPlanningFormOpen(false)
   }
 
   const startPlanningEdit = (item: PlanningItem) => {
+    setFocusedPanel('planning')
     setIsPlanningFormOpen(true)
     setEditingPlanningId(item.id)
     setPlanningDraft({
@@ -794,6 +1019,7 @@ export function DashboardOverview() {
     if (editingPlanningId === id) {
       resetPlanningDraft()
     }
+    deletePlanningItemApi(id).catch(console.error)
   }
 
   const askPlanningDelete = (item: PlanningItem) => {
@@ -818,8 +1044,22 @@ export function DashboardOverview() {
     published: 'Publié',
   }
 
+  const closeFocusedPanel = () => {
+    setFocusedPanel(null)
+    resetPlanningDraft()
+    setIsPlanningFormOpen(false)
+    resetVideoDraft()
+    setIsVideoFormOpen(false)
+    resetTodoDraft()
+    setIsTodoFormOpen(false)
+  }
+
   const toggleFocusedPanel = (panel: PanelId) => {
-    setFocusedPanel((prev) => (prev === panel ? null : panel))
+    if (focusedPanel === panel) {
+      closeFocusedPanel()
+    } else {
+      setFocusedPanel(panel)
+    }
   }
 
   const togglePanelCollapsed = (panel: PanelId) => {
@@ -939,7 +1179,7 @@ export function DashboardOverview() {
             onClick={goToAccount}
             aria-label="Aller à la gestion utilisateur"
           >
-            <span className={styles.profileAvatar}>MC</span>
+            <span className={styles.profileAvatar}>{user?.email?.[0]?.toUpperCase() ?? '?'}</span>
           </button>
           <div className={styles.searchBox}>
             <input
@@ -957,15 +1197,15 @@ export function DashboardOverview() {
               <div className={styles.searchSuggestions}>
                 {searchSuggestions.map((item) => (
                   <button
-                    key={`${item.label}-${item.panel}-${item.targetId ?? 'section'}`}
+                    key={`${item.searchTerm ?? item.label}-${item.panel}-${item.targetId ?? 'section'}`}
                     type="button"
                     onClick={() => {
-                      setSearch(item.label)
+                      setSearch(item.searchTerm ?? item.label)
                       focusPanelFromSuggestion(item)
                       setIsSuggestionsOpen(false)
                     }}
                   >
-                    {highlightMatch(item.label, search)}
+                    {highlightMatch(item.label, item.searchTerm ?? search)}
                   </button>
                 ))}
               </div>
@@ -1132,25 +1372,6 @@ export function DashboardOverview() {
               <div className={styles.panelHeader}>
                 <h3>Planning (agenda)</h3>
                 <div className={styles.calendarHeaderActions}>
-                  <div className={styles.monthNavigation}>
-                    <button
-                      type="button"
-                      className={styles.monthNavButton}
-                      onClick={goToPreviousMonth}
-                      aria-label="Mois précédent"
-                    >
-                      ←
-                    </button>
-                    <span className={styles.monthLabel}>{displayedMonthLabel}</span>
-                    <button
-                      type="button"
-                      className={styles.monthNavButton}
-                      onClick={goToNextMonth}
-                      aria-label="Mois suivant"
-                    >
-                      →
-                    </button>
-                  </div>
                   <button
                     type="button"
                     className={styles.panelExpandButton}
@@ -1176,7 +1397,7 @@ export function DashboardOverview() {
               </div>
               {!collapsedPanels.planning ? (
               <>
-              <div className={styles.dropdownRow}>
+              <div className={styles.planningToolbar}>
                 <button
                   type="button"
                   className={styles.dropdownTrigger}
@@ -1184,6 +1405,25 @@ export function DashboardOverview() {
                 >
                   {isPlanningFormOpen ? 'Masquer ajout événement' : 'Ajouter un événement'}
                 </button>
+                <div className={styles.monthNavigation}>
+                  <button
+                    type="button"
+                    className={styles.monthNavButton}
+                    onClick={goToPreviousMonth}
+                    aria-label="Mois précédent"
+                  >
+                    ←
+                  </button>
+                  <span className={styles.monthLabel}>{displayedMonthLabel}</span>
+                  <button
+                    type="button"
+                    className={styles.monthNavButton}
+                    onClick={goToNextMonth}
+                    aria-label="Mois suivant"
+                  >
+                    →
+                  </button>
+                </div>
               </div>
               {isPlanningFormOpen ? (
               <div className={styles.planningForm}>
@@ -1245,7 +1485,13 @@ export function DashboardOverview() {
                 {dateSlots.map((slot) => {
                   const dayItems = planningByDate.get(slot.key) ?? []
                   return (
-                    <div key={slot.key} className={styles.agendaDay}>
+                    <div
+                      key={slot.key}
+                      className={`${styles.agendaDay} ${dragOverDateKey === slot.key ? styles.agendaDayDropOver : ''}`}
+                      onDragOver={(event) => handleDateDragOver(event, slot.key)}
+                      onDragLeave={handleDateDragLeave}
+                      onDrop={(event) => handleDateDrop(event, slot.key)}
+                    >
                       <p className={styles.agendaDate}>{slot.label}</p>
                       {dayItems.length === 0 ? (
                         <small className={styles.emptyText}>Aucun contenu</small>
@@ -1254,12 +1500,15 @@ export function DashboardOverview() {
                           {dayItems.map((item) => (
                             <li
                               key={item.id}
+                              draggable
                               data-search-id={toSearchTargetId('planning', item.id)}
                               className={`${styles.agendaItem} ${
                                 highlightedItemId === toSearchTargetId('planning', item.id)
                                   ? styles.itemPulse
                                   : ''
-                              }`}
+                              } ${draggingPlanningId === item.id ? styles.agendaItemDragging : ''}`}
+                              onDragStart={(event) => handlePlanningDragStart(event, item.id)}
+                              onDragEnd={handlePlanningDragEnd}
                             >
                               <span className={styles.agendaDot} />
                               <div>
@@ -1788,7 +2037,7 @@ export function DashboardOverview() {
       {focusedPanel ? (
         <div
           className={styles.simpleModalOverlay}
-          onClick={() => setFocusedPanel(null)}
+          onClick={closeFocusedPanel}
           role="presentation"
         >
           <div
@@ -1816,7 +2065,27 @@ export function DashboardOverview() {
                       : 'Tendances des stats'}
               </h3>
               <div className={styles.calendarHeaderActions}>
-                {focusedPanel === 'planning' ? (
+                <button
+                  type="button"
+                  className={styles.panelExpandButton}
+                  onClick={closeFocusedPanel}
+                  aria-label="Fermer la modale"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {focusedPanel === 'planning' ? (
+              <>
+                <div className={styles.planningToolbar}>
+                  <button
+                    type="button"
+                    className={styles.dropdownTrigger}
+                    onClick={() => setIsPlanningFormOpen((prev) => !prev)}
+                  >
+                    {isPlanningFormOpen ? 'Masquer ajout événement' : 'Ajouter un événement'}
+                  </button>
                   <div className={styles.monthNavigation}>
                     <button
                       type="button"
@@ -1836,28 +2105,6 @@ export function DashboardOverview() {
                       →
                     </button>
                   </div>
-                ) : null}
-                <button
-                  type="button"
-                  className={styles.panelExpandButton}
-                  onClick={() => setFocusedPanel(null)}
-                  aria-label="Fermer la modale"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-
-            {focusedPanel === 'planning' ? (
-              <>
-                <div className={styles.dropdownRow}>
-                  <button
-                    type="button"
-                    className={styles.dropdownTrigger}
-                    onClick={() => setIsPlanningFormOpen((prev) => !prev)}
-                  >
-                    {isPlanningFormOpen ? 'Masquer ajout événement' : 'Ajouter un événement'}
-                  </button>
                 </div>
                 {isPlanningFormOpen ? (
                 <div className={styles.planningForm}>
@@ -1919,7 +2166,13 @@ export function DashboardOverview() {
                   {dateSlots.map((slot) => {
                     const dayItems = planningByDate.get(slot.key) ?? []
                     return (
-                      <div key={slot.key} className={styles.agendaDay}>
+                      <div
+                        key={slot.key}
+                        className={`${styles.agendaDay} ${dragOverDateKey === slot.key ? styles.agendaDayDropOver : ''}`}
+                        onDragOver={(event) => handleDateDragOver(event, slot.key)}
+                        onDragLeave={handleDateDragLeave}
+                        onDrop={(event) => handleDateDrop(event, slot.key)}
+                      >
                         <p className={styles.agendaDate}>{slot.label}</p>
                         {dayItems.length === 0 ? (
                           <small className={styles.emptyText}>Aucun contenu</small>
@@ -1928,12 +2181,15 @@ export function DashboardOverview() {
                             {dayItems.map((item) => (
                               <li
                                 key={item.id}
+                                draggable
                                 data-search-id={toSearchTargetId('planning', item.id)}
                                 className={`${styles.agendaItem} ${
                                   highlightedItemId === toSearchTargetId('planning', item.id)
                                     ? styles.itemPulse
                                     : ''
-                                }`}
+                                } ${draggingPlanningId === item.id ? styles.agendaItemDragging : ''}`}
+                                onDragStart={(event) => handlePlanningDragStart(event, item.id)}
+                                onDragEnd={handlePlanningDragEnd}
                               >
                                 <span className={styles.agendaDot} />
                                 <div>
