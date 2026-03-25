@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineMenu, HiX } from "react-icons/hi";
 import { useAuthStore, selectAuthUser } from "../../../shared/model";
 import { useAccountAvatarDataUrl } from "../../../pages/account-page/model";
+import { useI18n } from "../../../shared/i18n";
+import { LanguageSwitcher } from "../../language-switcher";
 import styles from "./creator-app-shell.module.scss";
 
 type CreatorAppShellProps = {
@@ -22,6 +24,7 @@ export function CreatorAppShell({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const user = useAuthStore(selectAuthUser);
   const avatarDataUrl = useAccountAvatarDataUrl();
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
@@ -41,7 +44,7 @@ export function CreatorAppShell({
       type="button"
       className={styles.profileButton}
       onClick={goToAccount}
-      aria-label="Gestion utilisateur"
+      aria-label={t("shell.goAccount")}
     >
       {avatarDataUrl ? (
         <img
@@ -64,7 +67,7 @@ export function CreatorAppShell({
           type="button"
           className={styles.mobileNavOverlay}
           onClick={() => setIsMenuOpen(false)}
-          aria-label="Fermer le menu"
+          aria-label={t("shell.closeMenu")}
         />
       ) : null}
       <aside
@@ -74,7 +77,7 @@ export function CreatorAppShell({
           type="button"
           className={styles.mobileNavClose}
           onClick={() => setIsMenuOpen(false)}
-          aria-label="Fermer le menu burger"
+          aria-label={t("shell.closeMenuBurger")}
         >
           <HiX aria-hidden="true" />
         </button>
@@ -82,20 +85,20 @@ export function CreatorAppShell({
           <span className={styles.brandIcon}>C</span>
           creacontenu
         </div>
-        <nav className={styles.menu} aria-label="Navigation principale">
+        <nav className={styles.menu} aria-label={t("shell.mainNav")}>
           <button
             type="button"
             className={`${styles.menuItem} ${location.pathname === "/dashboard" ? styles.menuItemActive : ""}`}
             onClick={goToDashboard}
           >
-            Tableau de bord
+            {t("shell.dashboard")}
           </button>
           <button
             type="button"
             className={`${styles.menuItem} ${location.pathname === "/account" ? styles.menuItemActive : ""}`}
             onClick={goToAccount}
           >
-            Gestion utilisateur
+            {t("shell.account")}
           </button>
           <SignOutButton className={styles.menuItem} />
         </nav>
@@ -107,14 +110,15 @@ export function CreatorAppShell({
             type="button"
             className={styles.burger}
             onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label="Ouvrir le menu"
+            aria-label={t("shell.openMenu")}
           >
             <HiOutlineMenu aria-hidden="true" />
           </button>
           <h2>creacontenu</h2>
-          {resolvedTrailing ? (
-            <div className={styles.topBarRight}>{resolvedTrailing}</div>
-          ) : null}
+          <div className={styles.topBarRight}>
+            <LanguageSwitcher />
+            {resolvedTrailing}
+          </div>
         </header>
         {children}
       </section>
