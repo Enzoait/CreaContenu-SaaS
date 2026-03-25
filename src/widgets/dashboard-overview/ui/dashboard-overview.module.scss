@@ -956,6 +956,100 @@
   font-size: 0.78rem;
 }
 
+.videoListRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.videoListRow .videoDetails {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.videoDragHandle {
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  margin: -4px -2px -4px 0;
+  color: #94a3b8;
+  flex-shrink: 0;
+  border-radius: 6px;
+  line-height: 1;
+  user-select: none;
+  touch-action: none;
+}
+
+.videoDragHandle:hover {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.videoDragHandle:active {
+  cursor: grabbing;
+}
+
+.videoRowDragging {
+  opacity: 0.65;
+}
+
+.videoRowDropTarget {
+  border-radius: 8px;
+  outline: 2px dashed #818cf8;
+  outline-offset: 2px;
+  background: #f5f7ff;
+}
+
+.videoDetails {
+  width: 100%;
+}
+
+.videoSummary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  color: #0f172a;
+}
+
+.videoSummary::-webkit-details-marker {
+  display: none;
+}
+
+.videoSummaryTitle {
+  flex: 1;
+  min-width: 0;
+}
+
+.videoSummaryChevron {
+  transform: rotate(-90deg);
+}
+
+.videoDetails[open] .videoSummaryChevron {
+  transform: rotate(0deg);
+}
+
+.videoDetailsBody {
+  padding: 8px 0 0 2px;
+  display: grid;
+  gap: 8px;
+}
+
+.videoMetaLine {
+  color: #64748b;
+  font-size: 0.78rem;
+  display: block;
+}
+
 .inlineControls {
   display: flex;
   gap: 6px;

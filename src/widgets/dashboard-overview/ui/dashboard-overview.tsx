@@ -53,7 +53,7 @@ import {
   YAxis,
 } from 'recharts'
 import { AiOutlineDelete, AiOutlineEdit } from 'react-icons/ai'
-import { HiChevronDown } from 'react-icons/hi2'
+import { HiBars3, HiChevronDown } from 'react-icons/hi2'
 import { useNavigate } from 'react-router-dom'
 import { useProfileTitleSuffix } from '../../../features/account-profile'
 import { useAccountAvatarDataUrl } from '../../../pages/account-page/model'
@@ -63,6 +63,12 @@ import { useI18n } from '../../../shared/i18n'
 /** Contenus sans plateforme utilisateur définie (remplace l’ancien repli « general ») */
 const NO_PLATFORM_LABEL = 'pas de plateforme'
 
+/** Préfixes `text/plain` pour le DnD — certains navigateurs ne relisent pas les types MIME personnalisés au drop */
+const DND_VIDEO_PLAIN_PREFIX = 'creacontent-video:'
+const DND_PLANNING_PLAIN_PREFIX = 'creacontent-planning:'
+const DND_PANEL_PLAIN_PREFIX = 'creacontent-panel:'
+const DND_TASK_PLAIN_PREFIX = 'creacontent-task:'
+
 function normalizePlatformLabel(name: string): string {
   if (name === 'general') return NO_PLATFORM_LABEL
   return name
@@ -71,6 +77,13 @@ function normalizePlatformLabel(name: string): string {
 type TodoColumn = 'todo' | 'doing' | 'done'
 type VideoStage = 'idea' | 'scripting' | 'recording' | 'editing' | 'published'
 type PanelId = 'planning' | 'videos' | 'todo' | 'chart'
+
+function isPanelId(value: string): value is PanelId {
+  return (
+    value === 'planning' || value === 'videos' || value === 'todo' || value === 'chart'
+  )
+}
+
 type SuggestionItem = {
   label: string        // texte affiché dans le dropdown (enrichi si ambigu)
   panel: PanelId
@@ -102,6 +115,33 @@ type VideoItem = {
   platform: string
   stage: VideoStage
   deadline: string
+  createdAt?: string
+  /** Ordre manuel (liste suivi vidéo) */
+  sortOrder?: number
+}
+
+function compareVideosBySort(a: VideoItem, b: VideoItem): number {
+  const so = (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+  if (so !== 0) return so
+  const byDeadline = b.deadline.localeCompare(a.deadline)
+  if (byDeadline !== 0) return byDeadline
+  const ac = a.createdAt ?? ''
+  const bc = b.createdAt ?? ''
+  const byCreated = bc.localeCompare(ac)
+  if (byCreated !== 0) return byCreated
+  return b.id.localeCompare(a.id)
+}
+
+function mergeFilteredReorderIntoGlobal(
+  globalIds: string[],
+  filteredSet: Set<string>,
+  newFilteredOrder: string[],
+): string[] {
+  const firstIdx = globalIds.findIndex((id) => filteredSet.has(id))
+  if (firstIdx === -1) return globalIds
+  const tail = globalIds.slice(firstIdx).filter((id) => !filteredSet.has(id))
+  const head = globalIds.slice(0, firstIdx)
+  return [...head, ...newFilteredOrder, ...tail]
 }
 
 type VideoDraft = {
@@ -242,6 +282,8 @@ export function DashboardOverview() {
   const [videoToDelete, setVideoToDelete] = useState<VideoItem | null>(null)
   const [todoToDelete, setTodoToDelete] = useState<BoardTask | null>(null)
   const [draggingPlanningId, setDraggingPlanningId] = useState<string | null>(null)
+  const [draggingVideoId, setDraggingVideoId] = useState<string | null>(null)
+  const [dragOverVideoId, setDragOverVideoId] = useState<string | null>(null)
   const [dragOverDateKey, setDragOverDateKey] = useState<string | null>(null)
   const [videoData, setVideoData] = useState<VideoItem[]>([])
   const [videoDraft, setVideoDraft] = useState<VideoDraft>({
@@ -287,6 +329,10 @@ export function DashboardOverview() {
     todo: null,
     chart: null,
   })
+  /** Synchrone au dragstart — le state React peut ne pas être à jour au moment du drop */
+  const draggingPanelRef = useRef<PanelId | null>(null)
+  const draggingTaskIdRef = useRef<string | null>(null)
+  const draggingVideoIdRef = useRef<string | null>(null)
 
   const { t, localeTag } = useI18n()
 
@@ -412,9 +458,52 @@ export function DashboardOverview() {
     .filter((item) => platform === 'all' || item.platform === platform)
     .filter((item) => isInPeriod(item.publishAt, period))
 
-  const filteredVideos = videoData
-    .filter((item) => platform === 'all' || item.platform === platform)
-    .filter((item) => isInPeriod(item.deadline, period))
+  const filteredVideos = useMemo(() => {
+    const filtered = videoData
+      .filter((item) => platform === 'all' || item.platform === platform)
+      .filter((item) => isInPeriod(item.deadline, period))
+    const globalOrder = [...videoData].sort(compareVideosBySort).map((v) => v.id)
+    const index = new Map(globalOrder.map((id, i) => [id, i]))
+    return filtered.sort((a, b) => (index.get(a.id) ?? 0) - (index.get(b.id) ?? 0))
+  }, [videoData, platform, period])
+
+  const handleVideoReorderDrop = async (event: React.DragEvent, targetVideoId: string) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setDragOverVideoId(null)
+    const plain = event.dataTransfer.getData('text/plain')
+    let draggedId = event.dataTransfer.getData('videoItemId')
+    if (!draggedId && plain.startsWith(DND_VIDEO_PLAIN_PREFIX)) {
+      draggedId = plain.slice(DND_VIDEO_PLAIN_PREFIX.length)
+    }
+    if (!draggedId && draggingVideoIdRef.current) {
+      draggedId = draggingVideoIdRef.current
+    }
+    if (!draggedId || draggedId === targetVideoId || !user) return
+    const filteredIds = filteredVideos.map((v) => v.id)
+    const filteredSet = new Set(filteredIds)
+    if (!filteredSet.has(draggedId) || !filteredSet.has(targetVideoId)) return
+    const globalIds = [...videoData].sort(compareVideosBySort).map((v) => v.id)
+    const without = filteredIds.filter((id) => id !== draggedId)
+    const insertAt = without.indexOf(targetVideoId)
+    if (insertAt === -1) return
+    const newFilteredOrder = [...without.slice(0, insertAt), draggedId, ...without.slice(insertAt)]
+    const merged = mergeFilteredReorderIntoGlobal(globalIds, filteredSet, newFilteredOrder)
+    const snapshot = videoData.map((v) => ({ ...v }))
+    const sortUpdates = new Map(merged.map((id, i) => [id, i]))
+    setVideoData((prev) =>
+      prev.map((v) => {
+        const idx = sortUpdates.get(v.id)
+        return idx !== undefined ? { ...v, sortOrder: idx } : v
+      }),
+    )
+    try {
+      await Promise.all(merged.map((id, i) => updateVideoItem(id, { sortOrder: i })))
+    } catch (error) {
+      console.error(error)
+      setVideoData(snapshot)
+    }
+  }
 
   const filteredBoard = todoBoard
     .filter((item) => platform === 'all' || item.platform === platform)
@@ -640,6 +729,7 @@ export function DashboardOverview() {
 
   const handlePlanningDragStart = (event: React.DragEvent, itemId: string) => {
     event.stopPropagation()
+    event.dataTransfer.setData('text/plain', `${DND_PLANNING_PLAIN_PREFIX}${itemId}`)
     event.dataTransfer.setData('planningItemId', itemId)
     event.dataTransfer.effectAllowed = 'move'
     setDraggingPlanningId(itemId)
@@ -647,6 +737,22 @@ export function DashboardOverview() {
 
   const handlePlanningDragEnd = () => {
     setDraggingPlanningId(null)
+    setDragOverDateKey(null)
+  }
+
+  const handleVideoDragStart = (event: React.DragEvent, itemId: string) => {
+    event.stopPropagation()
+    event.dataTransfer.setData('text/plain', `${DND_VIDEO_PLAIN_PREFIX}${itemId}`)
+    event.dataTransfer.setData('videoItemId', itemId)
+    event.dataTransfer.effectAllowed = 'move'
+    draggingVideoIdRef.current = itemId
+    setDraggingVideoId(itemId)
+  }
+
+  const handleVideoDragEnd = () => {
+    draggingVideoIdRef.current = null
+    setDraggingVideoId(null)
+    setDragOverVideoId(null)
     setDragOverDateKey(null)
   }
 
@@ -666,9 +772,80 @@ export function DashboardOverview() {
   const handleDateDrop = async (event: React.DragEvent, dateKey: string) => {
     event.preventDefault()
     event.stopPropagation()
-    const itemId = event.dataTransfer.getData('planningItemId')
-    if (!itemId || !user) {
+    const plain = event.dataTransfer.getData('text/plain')
+    let videoId = event.dataTransfer.getData('videoItemId')
+    if (!videoId && plain.startsWith(DND_VIDEO_PLAIN_PREFIX)) {
+      videoId = plain.slice(DND_VIDEO_PLAIN_PREFIX.length)
+    }
+    if (!videoId && draggingVideoIdRef.current) {
+      videoId = draggingVideoIdRef.current
+    }
+    draggingVideoIdRef.current = null
+    let planningItemId = event.dataTransfer.getData('planningItemId')
+    if (!planningItemId && plain.startsWith(DND_PLANNING_PLAIN_PREFIX)) {
+      planningItemId = plain.slice(DND_PLANNING_PLAIN_PREFIX.length)
+    }
+
+    if (!user) {
       setDraggingPlanningId(null)
+      setDraggingVideoId(null)
+      setDragOverDateKey(null)
+      return
+    }
+
+    if (videoId) {
+      const video = videoData.find((v) => v.id === videoId)
+      if (!video || toDateKey(video.deadline) === dateKey) {
+        setDraggingVideoId(null)
+        setDragOverDateKey(null)
+        return
+      }
+      const previousDeadline = video.deadline
+      const linkedPlanning = planningData.find((p) => p.videoId === videoId)
+      const previousPublishAt = linkedPlanning?.publishAt
+
+      setVideoData((prev) =>
+        prev.map((v) => (v.id === videoId ? { ...v, deadline: dateKey } : v)),
+      )
+      if (linkedPlanning) {
+        setPlanningData((prev) =>
+          prev.map((p) =>
+            p.id === linkedPlanning.id ? { ...p, publishAt: dateKey } : p,
+          ),
+        )
+      }
+      setDraggingVideoId(null)
+      setDragOverDateKey(null)
+
+      try {
+        await updateVideoItem(videoId, { deadline: dateKey })
+        if (linkedPlanning) {
+          await updatePlanningItem(linkedPlanning.id, { publishAt: dateKey })
+        }
+      } catch (error) {
+        console.error(t('dashboard.dragEventError'), error)
+        setVideoData((prev) =>
+          prev.map((v) =>
+            v.id === videoId ? { ...v, deadline: previousDeadline } : v,
+          ),
+        )
+        if (linkedPlanning && previousPublishAt !== undefined) {
+          setPlanningData((prev) =>
+            prev.map((p) =>
+              p.id === linkedPlanning.id
+                ? { ...p, publishAt: previousPublishAt }
+                : p,
+            ),
+          )
+        }
+      }
+      return
+    }
+
+    const itemId = planningItemId
+    if (!itemId) {
+      setDraggingPlanningId(null)
+      setDraggingVideoId(null)
       setDragOverDateKey(null)
       return
     }
@@ -870,24 +1047,37 @@ export function DashboardOverview() {
     setTodoToDelete(null)
   }
 
-  const handleTaskDragStart = (taskId: string) => {
+  const handleTaskDragStart = (event: React.DragEvent, taskId: string) => {
+    event.dataTransfer.setData('text/plain', `${DND_TASK_PLAIN_PREFIX}${taskId}`)
+    event.dataTransfer.effectAllowed = 'move'
+    draggingTaskIdRef.current = taskId
     setDraggingTaskId(taskId)
   }
 
   const handleTaskDragEnd = () => {
+    draggingTaskIdRef.current = null
     setDraggingTaskId(null)
     setDragOverColumn(null)
   }
 
   const handleColumnDragOver = (event: DragEvent<HTMLDivElement>, column: TodoColumn) => {
     event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
     setDragOverColumn(column)
   }
 
-  const handleColumnDrop = (column: TodoColumn) => {
-    if (draggingTaskId) {
-      moveTask(draggingTaskId, column)
+  const handleColumnDrop = (event: React.DragEvent, column: TodoColumn) => {
+    event.preventDefault()
+    event.stopPropagation()
+    const plain = event.dataTransfer.getData('text/plain')
+    let taskId = draggingTaskIdRef.current
+    if (!taskId && plain.startsWith(DND_TASK_PLAIN_PREFIX)) {
+      taskId = plain.slice(DND_TASK_PLAIN_PREFIX.length)
     }
+    if (taskId) {
+      moveTask(taskId, column)
+    }
+    draggingTaskIdRef.current = null
     setDraggingTaskId(null)
     setDragOverColumn(null)
   }
@@ -1011,11 +1201,13 @@ export function DashboardOverview() {
 
     if (!user?.id) return
     try {
+      const maxSort = videoData.reduce((m, v) => Math.max(m, v.sortOrder ?? 0), -1)
       const newVideo = await addVideoItem(user.id, {
         title: videoDraft.title.trim(),
         platform: videoDraft.platform,
         deadline: normalizedDate,
         stage: videoDraft.stage,
+        sortOrder: maxSort + 1,
       })
       addUserPlatform(user.id, newVideo.platform).catch(console.error)
       setVideoData((prev) => [...prev, newVideo])
@@ -1367,31 +1559,50 @@ export function DashboardOverview() {
     })
   }, [dateSlots, filteredPlanning, filteredVideos, totalViews, engagement, localeTag])
 
-  const handlePanelDragStart = (panel: PanelId) => {
+  const handlePanelDragStart = (event: React.DragEvent, panel: PanelId) => {
+    event.dataTransfer.setData('text/plain', `${DND_PANEL_PLAIN_PREFIX}${panel}`)
+    event.dataTransfer.effectAllowed = 'move'
+    draggingPanelRef.current = panel
     setDraggingPanel(panel)
   }
 
   const handlePanelDragOver = (event: DragEvent<HTMLElement>, panel: PanelId) => {
     event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
     setDragOverPanel(panel)
   }
 
-  const handlePanelDrop = (target: PanelId) => {
-    if (!draggingPanel || draggingPanel === target) return
+  const handlePanelDrop = (event: React.DragEvent, target: PanelId) => {
+    event.preventDefault()
+    event.stopPropagation()
+    const plain = event.dataTransfer.getData('text/plain')
+    let source = draggingPanelRef.current
+    if (!source && plain.startsWith(DND_PANEL_PLAIN_PREFIX)) {
+      const id = plain.slice(DND_PANEL_PLAIN_PREFIX.length)
+      if (isPanelId(id)) source = id
+    }
+    if (!source || source === target) {
+      draggingPanelRef.current = null
+      setDraggingPanel(null)
+      setDragOverPanel(null)
+      return
+    }
     setPanelOrder((prev) => {
       const next = [...prev]
-      const fromIndex = next.indexOf(draggingPanel)
+      const fromIndex = next.indexOf(source)
       const targetIndex = next.indexOf(target)
       if (fromIndex < 0 || targetIndex < 0) return prev
       next.splice(fromIndex, 1)
-      next.splice(targetIndex, 0, draggingPanel)
+      next.splice(targetIndex, 0, source)
       return next
     })
+    draggingPanelRef.current = null
     setDraggingPanel(null)
     setDragOverPanel(null)
   }
 
   const handlePanelDragEnd = () => {
+    draggingPanelRef.current = null
     setDraggingPanel(null)
     setDragOverPanel(null)
   }
@@ -1417,6 +1628,110 @@ export function DashboardOverview() {
     window.setTimeout(() => {
       setHighlightedPanel((current) => (current === panel ? null : current))
     }, 3600)
+  }
+
+  const renderVideoListItem = (video: VideoItem, stageSelectId: string) => {
+    const currentStage = videoStages[video.id] ?? video.stage
+    return (
+      <li
+        key={video.id}
+        data-search-id={toSearchTargetId('video', video.id)}
+        data-video-id={video.id}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (draggingVideoId && draggingVideoId !== video.id) {
+            e.dataTransfer.dropEffect = 'move'
+            setDragOverVideoId(video.id)
+          }
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setDragOverVideoId(null)
+          }
+        }}
+        onDrop={(e) => {
+          void handleVideoReorderDrop(e, video.id)
+        }}
+        className={`${
+          highlightedItemId === toSearchTargetId('video', video.id) ? styles.itemPulse : ''
+        } ${draggingVideoId === video.id ? styles.videoRowDragging : ''} ${
+          dragOverVideoId === video.id ? styles.videoRowDropTarget : ''
+        }`}
+      >
+        <div className={styles.videoListRow}>
+          <details className={styles.videoDetails}>
+            <summary className={styles.videoSummary}>
+              <HiChevronDown
+                className={`${styles.dropdownIcon} ${styles.videoSummaryChevron}`}
+                aria-hidden
+              />
+              <span className={styles.videoSummaryTitle}>
+                {highlightMatch(video.title, search)}
+              </span>
+            </summary>
+            <div className={styles.videoDetailsBody}>
+              <span className={styles.videoMetaLine}>
+                {t('dashboard.labelPlatform')}: {highlightMatch(video.platform, search)} —{' '}
+                {t('dashboard.labelDeadline')}: {highlightMatch(video.deadline, search)}
+              </span>
+              <div className={styles.inlineControls}>
+                <label htmlFor={stageSelectId}>{t('dashboard.stageLabel')}</label>
+                <span className={`${styles.stageBadge} ${styles[`stage_${currentStage}`]}`}>
+                  {stageLabels[currentStage]}
+                </span>
+                <select
+                  id={stageSelectId}
+                  value={currentStage}
+                  onChange={(event) =>
+                    setVideoStage(video.id, event.target.value as VideoStage)
+                  }
+                >
+                  <option value="idea">{stageLabels.idea}</option>
+                  <option value="scripting">{stageLabels.scripting}</option>
+                  <option value="recording">{stageLabels.recording}</option>
+                  <option value="editing">{stageLabels.editing}</option>
+                  <option value="published">{stageLabels.published}</option>
+                </select>
+                <div className={styles.videoItemActions}>
+                  <button
+                    type="button"
+                    className={styles.iconActionButton}
+                    data-tooltip={t('dashboard.edit')}
+                    aria-label={t('dashboard.editVideo')}
+                    onClick={() => startVideoEdit(video)}
+                  >
+                    <AiOutlineEdit aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.iconActionButton} ${styles.deleteAction}`}
+                    data-tooltip={t('dashboard.delete')}
+                    aria-label={t('dashboard.deleteVideoAria')}
+                    onClick={() => askVideoDelete(video)}
+                  >
+                    <AiOutlineDelete aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </details>
+          <span
+            className={styles.videoDragHandle}
+            draggable
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onDragStart={(event) => handleVideoDragStart(event, video.id)}
+            onDragEnd={handleVideoDragEnd}
+            title={`${t('dashboard.dragVideoToAgenda')} — ${t('dashboard.dragVideoReorderList')}`}
+            aria-label={t('dashboard.dragVideoHandle')}
+          >
+            <HiBars3 aria-hidden />
+          </span>
+        </div>
+      </li>
+    )
   }
 
   if (isLoading)
@@ -1631,9 +1946,9 @@ export function DashboardOverview() {
             } ${!collapsedPanels.planning ? styles.panelCardOpen : styles.panelCardCollapsed}`}
             style={{ order: panelOrderIndex.planning }}
             draggable
-            onDragStart={() => handlePanelDragStart('planning')}
+            onDragStart={(event) => handlePanelDragStart(event, 'planning')}
             onDragOver={(event) => handlePanelDragOver(event, 'planning')}
-            onDrop={() => handlePanelDrop('planning')}
+            onDrop={(event) => handlePanelDrop(event, 'planning')}
             onDragEnd={handlePanelDragEnd}
             ref={(node) => {
               panelCardRefs.current.planning = node
@@ -1852,9 +2167,9 @@ export function DashboardOverview() {
             } ${!collapsedPanels.videos ? styles.panelCardOpen : styles.panelCardCollapsed}`}
             style={{ order: panelOrderIndex.videos }}
             draggable
-            onDragStart={() => handlePanelDragStart('videos')}
+            onDragStart={(event) => handlePanelDragStart(event, 'videos')}
             onDragOver={(event) => handlePanelDragOver(event, 'videos')}
-            onDrop={() => handlePanelDrop('videos')}
+            onDrop={(event) => handlePanelDrop(event, 'videos')}
             onDragEnd={handlePanelDragEnd}
             ref={(node) => {
               panelCardRefs.current.videos = node
@@ -1973,64 +2288,9 @@ export function DashboardOverview() {
               </div>
               ) : null}
               <ul className={styles.list}>
-                {filteredVideos.map((video) => {
-                  const currentStage = videoStages[video.id] ?? video.stage
-                  return (
-                    <li
-                      key={video.id}
-                      data-search-id={toSearchTargetId('video', video.id)}
-                      className={
-                        highlightedItemId === toSearchTargetId('video', video.id) ? styles.itemPulse : ''
-                      }
-                    >
-                      <strong>{video.title}</strong>
-                      <span>
-                      {t('dashboard.labelPlatform')}: {highlightMatch(video.platform, search)} —{' '}
-                      {t('dashboard.labelDeadline')}:{' '}
-                      {highlightMatch(video.deadline, search)}
-                      </span>
-                      <div className={styles.inlineControls}>
-                        <label htmlFor={`stage-${video.id}`}>{t('dashboard.stageLabel')}</label>
-                        <span className={`${styles.stageBadge} ${styles[`stage_${currentStage}`]}`}>
-                          {stageLabels[currentStage]}
-                        </span>
-                        <select
-                          id={`stage-${video.id}`}
-                          value={currentStage}
-                          onChange={(event) =>
-                            setVideoStage(video.id, event.target.value as VideoStage)
-                          }
-                        >
-                          <option value="idea">{stageLabels.idea}</option>
-                          <option value="scripting">{stageLabels.scripting}</option>
-                          <option value="recording">{stageLabels.recording}</option>
-                          <option value="editing">{stageLabels.editing}</option>
-                          <option value="published">{stageLabels.published}</option>
-                        </select>
-                        <div className={styles.videoItemActions}>
-                          <button
-                            type="button"
-                            className={styles.iconActionButton}
-                            data-tooltip={t('dashboard.edit')}
-                            aria-label={t('dashboard.editVideo')}
-                            onClick={() => startVideoEdit(video)}
-                          >
-                            <AiOutlineEdit aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                            data-tooltip={t('dashboard.delete')}
-                            aria-label={t('dashboard.deleteVideoAria')}
-                            onClick={() => askVideoDelete(video)}
-                          >
-                            <AiOutlineDelete aria-hidden="true" />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  )
-                })}
+                {filteredVideos.map((video) =>
+                  renderVideoListItem(video, `stage-${video.id}`),
+                )}
               </ul>
               </>
               ) : null}
@@ -2048,9 +2308,9 @@ export function DashboardOverview() {
             } ${!collapsedPanels.todo ? styles.panelCardOpen : styles.panelCardCollapsed}`}
             style={{ order: panelOrderIndex.todo }}
             draggable
-            onDragStart={() => handlePanelDragStart('todo')}
+            onDragStart={(event) => handlePanelDragStart(event, 'todo')}
             onDragOver={(event) => handlePanelDragOver(event, 'todo')}
-            onDrop={() => handlePanelDrop('todo')}
+            onDrop={(event) => handlePanelDrop(event, 'todo')}
             onDragEnd={handlePanelDragEnd}
             ref={(node) => {
               panelCardRefs.current.todo = node
@@ -2183,7 +2443,7 @@ export function DashboardOverview() {
                     data-kanban-column={column}
                     onDragOver={(event) => handleColumnDragOver(event, column)}
                     onDragLeave={() => setDragOverColumn(null)}
-                    onDrop={() => handleColumnDrop(column)}
+                    onDrop={(event) => handleColumnDrop(event, column)}
                   >
                     <p className={styles.columnTitle}>
                       {columnLabels[column]}
@@ -2200,7 +2460,7 @@ export function DashboardOverview() {
                             highlightedItemId === toSearchTargetId('todo', task.id) ? styles.itemPulse : ''
                           }`}
                           draggable
-                          onDragStart={() => handleTaskDragStart(task.id)}
+                          onDragStart={(event) => handleTaskDragStart(event, task.id)}
                           onDragEnd={handleTaskDragEnd}
                           onTouchStart={() => handleTaskTouchStart(task.id)}
                           onTouchMove={handleTaskTouchMove}
@@ -2283,9 +2543,9 @@ export function DashboardOverview() {
             } ${!collapsedPanels.chart ? styles.panelCardOpen : styles.panelCardCollapsed}`}
             style={{ order: panelOrderIndex.chart }}
             draggable
-            onDragStart={() => handlePanelDragStart('chart')}
+            onDragStart={(event) => handlePanelDragStart(event, 'chart')}
             onDragOver={(event) => handlePanelDragOver(event, 'chart')}
-            onDrop={() => handlePanelDrop('chart')}
+            onDrop={(event) => handlePanelDrop(event, 'chart')}
             onDragEnd={handlePanelDragEnd}
             ref={(node) => {
               panelCardRefs.current.chart = node
@@ -2660,64 +2920,9 @@ export function DashboardOverview() {
               </div>
               ) : null}
               <ul className={styles.list}>
-                {filteredVideos.map((video) => {
-                  const currentStage = videoStages[video.id] ?? video.stage
-                  return (
-                    <li
-                      key={video.id}
-                      data-search-id={toSearchTargetId('video', video.id)}
-                      className={
-                        highlightedItemId === toSearchTargetId('video', video.id) ? styles.itemPulse : ''
-                      }
-                    >
-                      <strong>{video.title}</strong>
-                      <span>
-                        {t('dashboard.labelPlatform')}: {highlightMatch(video.platform, search)} —{' '}
-                      {t('dashboard.labelDeadline')}:{' '}
-                        {highlightMatch(video.deadline, search)}
-                      </span>
-                      <div className={styles.inlineControls}>
-                        <label htmlFor={`modal-stage-${video.id}`}>{t('dashboard.stageLabel')}</label>
-                        <span className={`${styles.stageBadge} ${styles[`stage_${currentStage}`]}`}>
-                          {stageLabels[currentStage]}
-                        </span>
-                        <select
-                          id={`modal-stage-${video.id}`}
-                          value={currentStage}
-                          onChange={(event) =>
-                            setVideoStage(video.id, event.target.value as VideoStage)
-                          }
-                        >
-                          <option value="idea">{stageLabels.idea}</option>
-                          <option value="scripting">{stageLabels.scripting}</option>
-                          <option value="recording">{stageLabels.recording}</option>
-                          <option value="editing">{stageLabels.editing}</option>
-                          <option value="published">{stageLabels.published}</option>
-                        </select>
-                        <div className={styles.videoItemActions}>
-                          <button
-                            type="button"
-                            className={styles.iconActionButton}
-                            data-tooltip={t('dashboard.edit')}
-                            aria-label={t('dashboard.editVideo')}
-                            onClick={() => startVideoEdit(video)}
-                          >
-                            <AiOutlineEdit aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                            data-tooltip={t('dashboard.delete')}
-                            aria-label={t('dashboard.deleteVideoAria')}
-                            onClick={() => askVideoDelete(video)}
-                          >
-                            <AiOutlineDelete aria-hidden="true" />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  )
-                })}
+                {filteredVideos.map((video) =>
+                  renderVideoListItem(video, `modal-stage-${video.id}`),
+                )}
               </ul>
               </>
             ) : null}
@@ -2818,7 +3023,7 @@ export function DashboardOverview() {
                     data-kanban-column={column}
                     onDragOver={(event) => handleColumnDragOver(event, column)}
                     onDragLeave={() => setDragOverColumn(null)}
-                    onDrop={() => handleColumnDrop(column)}
+                    onDrop={(event) => handleColumnDrop(event, column)}
                   >
                     <p className={styles.columnTitle}>
                       {columnLabels[column]}
@@ -2835,7 +3040,7 @@ export function DashboardOverview() {
                             highlightedItemId === toSearchTargetId('todo', task.id) ? styles.itemPulse : ''
                           }`}
                           draggable
-                          onDragStart={() => handleTaskDragStart(task.id)}
+                          onDragStart={(event) => handleTaskDragStart(event, task.id)}
                           onDragEnd={handleTaskDragEnd}
                           onTouchStart={() => handleTaskTouchStart(task.id)}
                           onTouchMove={handleTaskTouchMove}

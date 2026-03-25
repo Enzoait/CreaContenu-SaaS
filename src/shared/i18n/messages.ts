@@ -82,6 +82,9 @@ const fr = {
   "dashboard.priorityHigh": "Élevée",
 
   "dashboard.dragCardHint": "Glisser pour déplacer la carte",
+  "dashboard.dragVideoHandle": "Glisser vers une date du planning ou vers une autre ligne pour réordonner la liste",
+  "dashboard.dragVideoToAgenda": "Déposer sur une date de l'agenda pour mettre à jour l'échéance",
+  "dashboard.dragVideoReorderList": "Déposer sur une autre ligne pour changer l'ordre dans le suivi",
 
   "dashboard.labelPlatform": "Plateforme",
   "dashboard.labelDeadline": "Échéance",
@@ -272,6 +275,9 @@ const en: Record<MessageKey, string> = {
   "dashboard.priorityHigh": "High",
 
   "dashboard.dragCardHint": "Drag to move the card",
+  "dashboard.dragVideoHandle": "Drag to a planning date or onto another row to reorder the list",
+  "dashboard.dragVideoToAgenda": "Drop on an agenda date to update the due date",
+  "dashboard.dragVideoReorderList": "Drop on another row to change order in the list",
 
   "dashboard.labelPlatform": "Platform",
   "dashboard.labelDeadline": "Due",

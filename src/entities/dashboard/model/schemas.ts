@@ -22,6 +22,10 @@ export const VideoItemSchema = z.object({
   platform: z.string().min(1),
   stage: z.enum(['idea', 'scripting', 'recording', 'editing', 'published']),
   deadline: z.string().min(1),
+  /** Présent si la colonne existe en base (tri secondaire : plus récent en premier) */
+  createdAt: z.string().optional(),
+  /** Ordre manuel dans le suivi (réordonnancement) */
+  sortOrder: z.number().int().nonnegative().optional(),
 })
 
 export const TodoItemSchema = z.object({
