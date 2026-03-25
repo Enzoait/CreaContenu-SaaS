@@ -3,6 +3,11 @@ import { jsPDF } from "jspdf";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
+  HiOutlineArrowDownTray,
+  HiOutlineLockClosed,
+  HiOutlineUser,
+} from "react-icons/hi2";
+import {
   useCurrentUserDataQuery,
   useCurrentUserQuery,
   useUpsertUserDataMutation,
@@ -62,9 +67,6 @@ export const AccountPage = () => {
   const displayPhone = userData?.phoneNumber || "Téléphone indisponible";
   const displayCountry = userData?.country || "Pays indisponible";
   const displayRegion = userData?.region || "Région indisponible";
-  const displayInitials =
-    `${displayFirstname.charAt(0)}${displayLastname.charAt(0)}`.toUpperCase();
-
   const {
     register,
     handleSubmit,
@@ -194,122 +196,138 @@ export const AccountPage = () => {
     }
 
     return (
-      <div className="account-content-grid">
-        <section className="account-card">
-          <div className="account-user-row">
-            {avatarDataUrl ? (
-              <img
-                className="account-avatar"
-                src={avatarDataUrl}
-                alt="Photo de profil"
-              />
-            ) : (
-              <span className="account-avatar account-avatar-fallback">
-                {displayInitials}
-              </span>
-            )}
+      <div className="account-v2-grid">
+        <section className="account-v2-hero">
+          <div className="account-v2-hero-main">
+            <img
+              className="account-v2-photo"
+              src={
+                avatarDataUrl ??
+                `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(displayFullName)}&radius=50`
+              }
+              alt="Photo de profil"
+            />
             <div>
-              <h2 className="account-name">{displayFullName}</h2>
-              <p className="account-role">Créateur de contenu</p>
-              <p className="account-location">
-                {displayRegion}, {displayCountry}
+              <h2 className="account-v2-name">{displayFullName}</h2>
+              <p className="account-v2-subtitle">Créateur de contenu</p>
+              <p className="account-v2-meta">
+                {displayRegion}, {displayCountry} · {displayEmail}
               </p>
             </div>
           </div>
+          <div className="account-v2-kpis">
+            <article>
+              <span>Identifiant</span>
+              <strong>{currentUser?.id?.slice(0, 8) ?? "-"}</strong>
+            </article>
+            <article>
+              <span>Téléphone</span>
+              <strong>{displayPhone}</strong>
+            </article>
+            <article>
+              <span>Dernière mise à jour</span>
+              <strong>{savedAt ? `${savedAt}` : "Pas encore"}</strong>
+            </article>
+          </div>
         </section>
 
-        <section className="account-card">
-          <h3 className="account-section-title">Modifier mes informations</h3>
-          <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
-            <label className="field-label" htmlFor="account-firstname">
-              Prénom
-            </label>
-            <input
-              id="account-firstname"
-              className="field-input"
-              type="text"
-              autoComplete="given-name"
-              {...register("firstname")}
-            />
-            {errors.firstname ? (
-              <p className="error">{errors.firstname.message}</p>
-            ) : null}
+        <section className="account-v2-card">
+          <div className="account-v2-card-header">
+            <h3 className="account-section-title">Modifier mes informations</h3>
+            <span className="account-v2-badge">Profil public</span>
+          </div>
+          <form className="account-v2-form" onSubmit={handleSubmit(onSubmit)}>
+            <div className="account-v2-form-grid">
+              <label className="field-label" htmlFor="account-firstname">
+                Prénom
+              </label>
+              <input
+                id="account-firstname"
+                className="field-input"
+                type="text"
+                autoComplete="given-name"
+                {...register("firstname")}
+              />
+              {errors.firstname ? (
+                <p className="error">{errors.firstname.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-lastname">
-              Nom
-            </label>
-            <input
-              id="account-lastname"
-              className="field-input"
-              type="text"
-              autoComplete="family-name"
-              {...register("lastname")}
-            />
-            {errors.lastname ? (
-              <p className="error">{errors.lastname.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-lastname">
+                Nom
+              </label>
+              <input
+                id="account-lastname"
+                className="field-input"
+                type="text"
+                autoComplete="family-name"
+                {...register("lastname")}
+              />
+              {errors.lastname ? (
+                <p className="error">{errors.lastname.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-email">
-              Adresse email
-            </label>
-            <input
-              id="account-email"
-              className="field-input"
-              type="email"
-              autoComplete="email"
-              {...register("email")}
-            />
-            {errors.email ? (
-              <p className="error">{errors.email.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-email">
+                Adresse email
+              </label>
+              <input
+                id="account-email"
+                className="field-input"
+                type="email"
+                autoComplete="email"
+                {...register("email")}
+              />
+              {errors.email ? (
+                <p className="error">{errors.email.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-phone">
-              Téléphone
-            </label>
-            <input
-              id="account-phone"
-              className="field-input"
-              type="tel"
-              autoComplete="tel"
-              {...register("phoneNumber")}
-            />
-            {errors.phoneNumber ? (
-              <p className="error">{errors.phoneNumber.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-phone">
+                Téléphone
+              </label>
+              <input
+                id="account-phone"
+                className="field-input"
+                type="tel"
+                autoComplete="tel"
+                {...register("phoneNumber")}
+              />
+              {errors.phoneNumber ? (
+                <p className="error">{errors.phoneNumber.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-country">
-              Pays
-            </label>
-            <input
-              id="account-country"
-              className="field-input"
-              type="text"
-              autoComplete="country-name"
-              {...register("country")}
-            />
-            {errors.country ? (
-              <p className="error">{errors.country.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-country">
+                Pays
+              </label>
+              <input
+                id="account-country"
+                className="field-input"
+                type="text"
+                autoComplete="country-name"
+                {...register("country")}
+              />
+              {errors.country ? (
+                <p className="error">{errors.country.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-region">
-              Ville / Région
-            </label>
-            <input
-              id="account-region"
-              className="field-input"
-              type="text"
-              autoComplete="address-level2"
-              {...register("region")}
-            />
-            {errors.region ? (
-              <p className="error">{errors.region.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-region">
+                Ville / Région
+              </label>
+              <input
+                id="account-region"
+                className="field-input"
+                type="text"
+                autoComplete="address-level2"
+                {...register("region")}
+              />
+              {errors.region ? (
+                <p className="error">{errors.region.message}</p>
+              ) : null}
+            </div>
 
             {saveErrorMessage ? (
               <p className="error">{saveErrorMessage}</p>
             ) : null}
 
-            <div className="row-between" style={{ marginTop: "0.75rem" }}>
+            <div className="account-v2-form-actions">
               <button
                 type="submit"
                 className="auth-primary"
@@ -318,9 +336,7 @@ export const AccountPage = () => {
                 {isSavingProfile ? "Enregistrement..." : "Sauvegarder"}
               </button>
               {savedAt ? (
-                <span className="muted" style={{ fontSize: "0.9rem" }}>
-                  Enregistré à {savedAt}
-                </span>
+                <span className="muted">Enregistré à {savedAt}</span>
               ) : null}
             </div>
           </form>
@@ -330,34 +346,59 @@ export const AccountPage = () => {
   };
 
   const renderSecurityPanel = () => (
-    <section className="account-card">
-      <h3 className="account-section-title">Sécurité</h3>
-      <p className="muted">
-        Cette section sera étendue pour la gestion du mot de passe et de la
-        double authentification.
-      </p>
+    <section className="account-v2-card">
+      <div className="account-v2-card-header">
+        <h3 className="account-section-title">Sécurité</h3>
+        <span className="account-v2-badge">Bientôt</span>
+      </div>
+      <div className="account-v2-security-list">
+        <article>
+          <h4>Mot de passe</h4>
+          <p>
+            La gestion et rotation sécurisée du mot de passe sera ajoutée ici.
+          </p>
+        </article>
+        <article>
+          <h4>Double authentification</h4>
+          <p>Activez la 2FA pour renforcer la sécurité de votre compte.</p>
+        </article>
+        <article>
+          <h4>Sessions actives</h4>
+          <p>
+            Consultez les appareils connectés et déconnectez les sessions
+            inconnues.
+          </p>
+        </article>
+      </div>
     </section>
   );
 
   const renderExportPanel = () => (
-    <section className="account-card">
-      <h3 className="account-section-title">Export des données personnelles</h3>
-      <p className="muted" style={{ marginBottom: "1rem" }}>
+    <section className="account-v2-card">
+      <div className="account-v2-card-header">
+        <h3 className="account-section-title">
+          Export des données personnelles
+        </h3>
+        <span className="account-v2-badge">RGPD</span>
+      </div>
+      <p className="muted account-v2-export-text">
         Téléchargez vos informations de profil au format texte ou PDF.
       </p>
-      <div className="row">
+      <div className="account-v2-export-actions">
         <button
           type="button"
-          className="auth-primary"
+          className="auth-primary account-v2-export-btn"
           onClick={handleTextExport}
         >
+          <HiOutlineArrowDownTray aria-hidden="true" />
           Exporter en .txt
         </button>
         <button
           type="button"
-          className="auth-primary"
+          className="auth-primary account-v2-export-btn"
           onClick={handlePdfExport}
         >
+          <HiOutlineArrowDownTray aria-hidden="true" />
           Exporter en .pdf
         </button>
       </div>
@@ -366,22 +407,34 @@ export const AccountPage = () => {
 
   return (
     <CreatorAppShell accountTopBar>
-      <div className="account-layout">
-        <aside className="account-sidebar">
+      <div className="account-v2-layout">
+        <aside className="account-v2-sidebar">
+          <h1 className="account-v2-title">Gestion utilisateur</h1>
+          <p className="account-v2-description">
+            Centralisez votre identité, sécurité et export de données.
+          </p>
           {ACCOUNT_TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
-              className={`account-tab-item ${activeTab === tab.id ? "is-active" : ""}`}
+              className={`account-v2-tab ${activeTab === tab.id ? "is-active" : ""}`}
               onClick={() => setActiveTab(tab.id)}
             >
+              {tab.id === "profil" ? (
+                <HiOutlineUser aria-hidden="true" />
+              ) : null}
+              {tab.id === "securite" ? (
+                <HiOutlineLockClosed aria-hidden="true" />
+              ) : null}
+              {tab.id === "export" ? (
+                <HiOutlineArrowDownTray aria-hidden="true" />
+              ) : null}
               {tab.label}
             </button>
           ))}
         </aside>
 
-        <section className="account-main">
-          <h1 className="account-title">Mon profil</h1>
+        <section className="account-v2-main">
           {activeTab === "profil" ? renderProfilePanel() : null}
           {activeTab === "securite" ? renderSecurityPanel() : null}
           {activeTab === "export" ? renderExportPanel() : null}
