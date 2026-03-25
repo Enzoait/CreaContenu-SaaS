@@ -355,6 +355,76 @@
   font-size: 1.5rem;
 }
 
+.videoRecapSection {
+  border: 1px solid #e8ebf2;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.videoRecapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.videoRecapHeader h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.videoRecapHeader p {
+  margin: 5px 0 0;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.videoRecapLink {
+  border: 1px solid #d4d9e7;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+}
+
+.videoRecapList {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.videoRecapList li {
+  border: 1px solid #edf1f7;
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 8px 10px;
+}
+
+.videoRecapList strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.videoRecapList span {
+  color: #475569;
+  font-size: 0.78rem;
+}
+
+.videoRecapEmpty {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
 .contentGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -436,6 +506,10 @@
 .panelChart {
   background: #dff4ff;
   border-color: #9fd6f7;
+}
+
+.panelHidden {
+  display: none !important;
 }
 
 .panelPlatforms {
@@ -614,7 +688,7 @@
 
 .chartWrap {
   width: 100%;
-  height: 240px;
+  height: 300px;
 }
 
 .chartCenterArea {
@@ -1031,7 +1105,9 @@
   border-radius: 8px;
   padding: 8px;
   background: #fcfdff;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .kanbanColumnDropTarget {
@@ -1404,5 +1480,626 @@
   .platformChipMain {
     min-width: 0;
     text-align: left;
+  }
+}
+
+/* Dashboard redesign overrides */
+.banner,
+.statsGrid,
+.contentGrid,
+.panelCard,
+.statCard,
+.searchInput,
+.searchSuggestions,
+.dropdownTrigger,
+.monthNavButton,
+.panelExpandButton,
+.filterButton,
+.platformFilterItem,
+.agendaDay,
+.agendaItem,
+.kanbanColumn,
+.taskCard,
+.list li,
+.simpleModalCard,
+.confirmCard,
+.userManagementPage,
+.userManagementCard {
+  font-family: Inter, "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+.banner {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 0;
+  box-shadow: 0 10px 26px rgba(17, 24, 39, 0.08);
+  color: #111827;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.banner h1 {
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+}
+
+.banner p {
+  color: #6b7280;
+  margin: 0 0 16px;
+}
+
+.bannerActions {
+  gap: 10px;
+}
+
+.filterButton {
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #374151;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.07);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filterButtonActive {
+  border-color: #c8c2ef;
+  color: #5b4fcf;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(91, 79, 207, 0.15);
+}
+
+.platformFilterItem {
+  border: 1px solid #eceef4;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.platformChipMain {
+  color: #6b7280;
+}
+
+.platformChipMainActive {
+  background: #f2f0ff;
+  color: #5b4fcf;
+}
+
+.platformChipInput {
+  color: #374151;
+}
+
+.platformChipInput::placeholder {
+  color: #9ca3af;
+}
+
+.platformChipAction {
+  color: #6b7280;
+}
+
+.addPlatformButton {
+  border-style: solid;
+  border-color: #e5e7eb;
+  background: #ffffff;
+  color: #5b4fcf;
+}
+
+.inlineAddPlatform input {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+}
+
+.inlineAddPlatform input::placeholder {
+  color: #9ca3af;
+}
+
+.inlineAddPlatform button {
+  color: #5b4fcf;
+}
+
+.sectionTitle {
+  margin: 0 0 14px;
+  font-size: 1.2rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.statsGrid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.statCard {
+  border: 0;
+  border-radius: 18px;
+  padding: 24px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(17, 24, 39, 0.08);
+  display: grid;
+  gap: 10px;
+}
+
+.statCard p {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.statCard strong {
+  margin: 0;
+  font-size: clamp(2.2rem, 3.2vw, 3rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.statIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.2rem;
+}
+
+.statIconPurple {
+  background: #eeebff;
+  color: #5b4fcf;
+}
+
+.statIconPink {
+  background: #fdebf6;
+  color: #cf69ab;
+}
+
+.cardTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.positiveBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #e8f9ee;
+  color: #1f9d55;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 5px 10px;
+}
+
+.dualProgress {
+  display: flex;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.progressPurple {
+  background: #5b4fcf;
+}
+
+.progressPink {
+  background: #e8a0d0;
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.progressLabels span {
+  color: #6b7280;
+  font-size: 0.74rem;
+}
+
+.platformCard h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+.platformList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.platformList li {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #f6f7fb;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+}
+
+.platformLogo {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #ecebff;
+  color: #5b4fcf;
+  flex-shrink: 0;
+}
+
+.platformMeta {
+  display: grid;
+  min-width: 0;
+}
+
+.platformMeta strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.platformMeta small {
+  color: #9ca3af;
+  font-size: 0.76rem;
+}
+
+.platformHours {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.contentGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.panelCard {
+  border: 0;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 20px;
+  box-shadow: 0 10px 26px rgba(17, 24, 39, 0.08);
+}
+
+.panelPlanning,
+.panelVideos,
+.panelTodo,
+.panelChart,
+.modalCardPlanning,
+.modalCardVideos,
+.modalCardTodo,
+.modalCardChart {
+  background: #ffffff;
+  border-color: transparent;
+}
+
+.panelChart {
+  grid-column: 1 / -1;
+}
+
+.panelChart.panelCardOpen {
+  height: 620px;
+}
+
+.panelHeader {
+  margin-bottom: 14px;
+}
+
+.panelHeader h3 {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dropdownTrigger,
+.monthNavButton,
+.panelExpandButton {
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #6b7280;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.07);
+}
+
+.monthLabel,
+.agendaDate,
+.columnTitle {
+  color: #6b7280;
+}
+
+.agendaDay,
+.kanbanColumn {
+  border: 0;
+  background: #f8f9fc;
+  border-radius: 14px;
+}
+
+.agendaItem,
+.taskCard,
+.list li {
+  border: 0;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.06);
+}
+
+.list li {
+  padding: 10px;
+}
+
+.list {
+  gap: 8px;
+}
+
+.list strong {
+  color: #111827;
+  font-size: 0.88rem;
+}
+
+.list span,
+.inlineControls label,
+.taskCard small,
+.emptyText,
+.matchPreview {
+  color: #6b7280;
+}
+
+.inlineControls select,
+.taskTitleInput,
+.planningForm input,
+.planningForm select,
+.videoForm input,
+.videoForm select,
+.todoForm input,
+.todoForm select,
+.checklistInputRow input {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #111827;
+}
+
+.stage_published {
+  color: #1f9d55;
+  background: #e8f9ee;
+}
+
+.chartWrap {
+  height: 340px;
+}
+
+.searchInput {
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 10px 14px;
+}
+
+.searchSuggestions {
+  border: 1px solid #eceef4;
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(17, 24, 39, 0.12);
+}
+
+.simpleModalOverlay,
+.confirmOverlay {
+  background: rgba(17, 24, 39, 0.35);
+}
+
+.simpleModalCard,
+.confirmCard {
+  border-radius: 20px;
+  box-shadow: 0 22px 56px rgba(17, 24, 39, 0.22);
+}
+
+@media (max-width: 1480px) {
+  .contentGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .panelChart {
+    grid-column: auto;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .banner,
+  .statCard,
+  .panelCard {
+    border-radius: 16px;
+    padding: 18px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .filterButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+:global([data-theme="dark"]) .feedback {
+  color: #e5e7eb;
+  background: #0f1218;
+}
+
+:global([data-theme="dark"]) .banner,
+:global([data-theme="dark"]) .statCard,
+:global([data-theme="dark"]) .panelCard,
+:global([data-theme="dark"]) .platformList li,
+:global([data-theme="dark"]) .agendaDay,
+:global([data-theme="dark"]) .kanbanColumn,
+:global([data-theme="dark"]) .agendaItem,
+:global([data-theme="dark"]) .taskCard,
+:global([data-theme="dark"]) .list li,
+:global([data-theme="dark"]) .searchSuggestions,
+:global([data-theme="dark"]) .simpleModalCard,
+:global([data-theme="dark"]) .confirmCard {
+  background: #1a1f2b;
+  border-color: #2a2f3a;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.3);
+}
+
+:global([data-theme="dark"]) .banner h1,
+:global([data-theme="dark"]) .sectionTitle,
+:global([data-theme="dark"]) .statCard strong,
+:global([data-theme="dark"]) .panelHeader h3,
+:global([data-theme="dark"]) .platformMeta strong,
+:global([data-theme="dark"]) .list strong {
+  color: #f3f4f6;
+}
+
+:global([data-theme="dark"]) .banner p,
+:global([data-theme="dark"]) .statCard p,
+:global([data-theme="dark"]) .platformMeta small,
+:global([data-theme="dark"]) .platformHours,
+:global([data-theme="dark"]) .list span,
+:global([data-theme="dark"]) .inlineControls label,
+:global([data-theme="dark"]) .taskCard small,
+:global([data-theme="dark"]) .emptyText,
+:global([data-theme="dark"]) .matchPreview,
+:global([data-theme="dark"]) .monthLabel,
+:global([data-theme="dark"]) .agendaDate,
+:global([data-theme="dark"]) .columnTitle,
+:global([data-theme="dark"]) .progressLabels span {
+  color: #9aa3b2;
+}
+
+:global([data-theme="dark"]) .searchInput,
+:global([data-theme="dark"]) .dropdownTrigger,
+:global([data-theme="dark"]) .monthNavButton,
+:global([data-theme="dark"]) .panelExpandButton,
+:global([data-theme="dark"]) .filterButton,
+:global([data-theme="dark"]) .platformFilterItem,
+:global([data-theme="dark"]) .inlineControls select,
+:global([data-theme="dark"]) .taskTitleInput,
+:global([data-theme="dark"]) .planningForm input,
+:global([data-theme="dark"]) .planningForm select,
+:global([data-theme="dark"]) .videoForm input,
+:global([data-theme="dark"]) .videoForm select,
+:global([data-theme="dark"]) .todoForm input,
+:global([data-theme="dark"]) .todoForm select,
+:global([data-theme="dark"]) .checklistInputRow input {
+  background: #131722;
+  border-color: #30384a;
+  color: #e5e7eb;
+}
+
+:global([data-theme="dark"]) .dualProgress {
+  background: #252b37;
+}
+
+:global([data-theme="dark"]) .platformLogo {
+  background: #2a2448;
+  color: #c5bdf5;
+}
+
+:global([data-theme="dark"]) .positiveBadge {
+  background: #1d3528;
+  color: #79d6a3;
+}
+
+/* Remove remaining shadows from bento grid cards/controls */
+.banner,
+.filterButton,
+.filterButtonActive,
+.statCard,
+.panelCard,
+.dropdownTrigger,
+.monthNavButton,
+.panelExpandButton,
+.agendaItem,
+.taskCard,
+.list li,
+.searchSuggestions,
+.simpleModalCard,
+.confirmCard,
+:global([data-theme="dark"]) .banner,
+:global([data-theme="dark"]) .statCard,
+:global([data-theme="dark"]) .panelCard,
+:global([data-theme="dark"]) .agendaItem,
+:global([data-theme="dark"]) .taskCard,
+:global([data-theme="dark"]) .list li,
+:global([data-theme="dark"]) .searchSuggestions,
+:global([data-theme="dark"]) .simpleModalCard,
+:global([data-theme="dark"]) .confirmCard {
+  box-shadow: none !important;
+}
+
+/* True fullscreen modal: dark backdrop + centered floating window */
+.simpleModalOverlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  margin: 0;
+  overflow: auto;
+  background: rgba(2, 6, 23, 0.62);
+}
+
+.simpleModalCard {
+  position: relative;
+  inset: auto;
+  margin: 0;
+  width: min(1480px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  height: min(94vh, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.modalContent {
+  min-height: 0;
+  overflow: auto;
+  padding: 0 8px 8px;
+}
+
+@media (max-width: 700px) {
+  .simpleModalOverlay {
+    padding: 8px;
+  }
+
+  .simpleModalCard {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
+  }
+
+  .modalContent {
+    padding: 0 6px 6px;
   }
 }

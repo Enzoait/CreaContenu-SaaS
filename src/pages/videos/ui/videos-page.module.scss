@@ -1,0 +1,399 @@
+.page {
+  display: grid;
+  gap: 18px;
+  padding-bottom: 20px;
+}
+
+.page {
+  --ink: #14213d;
+  --muted: #51607a;
+  --line: #d6dfec;
+  --panel: #ffffff;
+  --accent: #00a3a3;
+  --accent-2: #f97316;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      circle at 88% 0%,
+      rgba(249, 115, 22, 0.14),
+      transparent 36%
+    ),
+    radial-gradient(
+      circle at 10% 100%,
+      rgba(0, 163, 163, 0.12),
+      transparent 44%
+    ),
+    linear-gradient(120deg, #fffdf8, #f7fbff);
+  padding: 18px;
+  box-shadow: 0 8px 30px rgba(20, 33, 61, 0.08);
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.hero p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  max-width: 650px;
+}
+
+.backLink {
+  border: 1px solid rgba(20, 33, 61, 0.2);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 9px 14px;
+  text-decoration: none;
+  font-weight: 700;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.backLink:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(20, 33, 61, 0.12);
+}
+
+.metrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metricCard {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: 14px;
+  box-shadow: 0 4px 20px rgba(20, 33, 61, 0.05);
+}
+
+.metricCard span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.metricCard strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.6rem;
+  color: var(--ink);
+}
+
+.formCard {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.formHeader h2 {
+  margin: 0;
+  font-size: 1.02rem;
+  color: var(--ink);
+}
+
+.toggleFormButton {
+  border: 1px solid #b9c6db;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #ffffff, #f3f7ff);
+  color: var(--ink);
+  padding: 7px 10px;
+  font-weight: 700;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.formGrid input,
+.formGrid select {
+  border: 1px solid #c7d3e5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 0.86rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+}
+
+.formActions button,
+.secondaryButton,
+.dangerButton {
+  border: 1px solid #c7d3e5;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 6px 10px;
+  font-weight: 700;
+}
+
+.dangerButton {
+  border-color: #f8c8ab;
+  color: #9a3412;
+  background: #fff7ed;
+}
+
+.errorMessage {
+  margin: 0;
+  color: #9a3412;
+  font-size: 0.85rem;
+}
+
+.videoBoard {
+  display: grid;
+  gap: 8px;
+}
+
+.videoBoardHeader {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.3fr) minmax(260px, 1fr) minmax(
+      220px,
+      0.8fr
+    );
+  gap: 10px;
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.videoRow {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.3fr) minmax(260px, 1fr) minmax(
+      220px,
+      0.8fr
+    );
+  gap: 10px;
+  align-items: center;
+  transition:
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.videoRow:hover {
+  border-color: #a8bad6;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(20, 33, 61, 0.08);
+}
+
+.thumb {
+  width: 100%;
+  max-width: 180px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #e2e8f0;
+  border-radius: 10px;
+  border: 1px solid #d5deeb;
+}
+
+.videoMain {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.videoTitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.videoMain > div,
+.videoMain > a,
+.videoMain > p,
+.videoMain > small,
+.videoMain > h3 {
+  grid-column: 2;
+}
+
+.metaRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.metaChip {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  background: #f4f8ff;
+  color: var(--ink);
+  border: 1px solid #d4e0f3;
+}
+
+.deadline {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.videoLink {
+  color: #0f766e;
+  font-weight: 700;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.videoLink:hover {
+  text-decoration: underline;
+}
+
+.planningHint {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.videoControls {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.stageRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.stageRow label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.stageRow select {
+  border: 1px solid #c7d3e5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 6px 8px;
+}
+
+.calendar {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.calendar h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.calendarList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.calendarItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px dashed #d6dfec;
+  padding-bottom: 6px;
+}
+
+.calendarItem:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.empty {
+  border: 1px dashed #b9c6db;
+  border-radius: 10px;
+  background: #f8fbff;
+  color: var(--muted);
+  padding: 12px;
+}
+
+@media (max-width: 900px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .videoBoardHeader {
+    display: none;
+  }
+
+  .videoRow {
+    grid-template-columns: 1fr;
+  }
+
+  .videoMain {
+    grid-template-columns: 1fr;
+  }
+
+  .videoMain > div,
+  .videoMain > a,
+  .videoMain > p,
+  .videoMain > small,
+  .videoMain > h3 {
+    grid-column: 1;
+  }
+
+  .thumb {
+    max-width: 100%;
+  }
+
+  .videoControls {
+    justify-items: start;
+  }
+
+  .rowActions {
+    justify-content: flex-start;
+  }
+}

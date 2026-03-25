@@ -3,15 +3,15 @@ import { jsPDF } from "jspdf";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
+  HiOutlineArrowDownTray,
+  HiOutlineLockClosed,
+  HiOutlineUser,
+} from "react-icons/hi2";
+import {
   useCurrentUserDataQuery,
   useCurrentUserQuery,
   useUpsertUserDataMutation,
 } from "../../../entities/user";
-import {
-  changePasswordSchema,
-  useChangePasswordMutation,
-  type ChangePasswordFormValues,
-} from "../../../features/auth";
 import {
   accountProfileFormSchema,
   useAccountActiveTab,
@@ -67,9 +67,6 @@ export const AccountPage = () => {
   const displayPhone = userData?.phoneNumber || "Téléphone indisponible";
   const displayCountry = userData?.country || "Pays indisponible";
   const displayRegion = userData?.region || "Région indisponible";
-  const displayInitials =
-    `${displayFirstname.charAt(0)}${displayLastname.charAt(0)}`.toUpperCase();
-
   const {
     register,
     handleSubmit: handleProfileSubmit,
@@ -107,30 +104,6 @@ export const AccountPage = () => {
     userData?.region,
   ]);
 
-  const {
-    register: registerSecurity,
-    handleSubmit: handleSecuritySubmit,
-    reset: resetSecurityForm,
-    formState: { errors: securityErrors },
-  } = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
-  const {
-    mutateAsync: changePassword,
-    isPending: isChangingPassword,
-    isError: isPasswordChangeError,
-    error: passwordChangeError,
-  } = useChangePasswordMutation();
-  const [passwordUpdatedAt, setPasswordUpdatedAt] = useState<string | null>(
-    null,
-  );
-
   const onSubmit = async (values: AccountProfileFormValues) => {
     if (!currentUser?.id) {
       setSaveErrorMessage(
@@ -164,21 +137,6 @@ export const AccountPage = () => {
           : "Erreur pendant la sauvegarde du profil.",
       );
     }
-  };
-
-  const onPasswordSubmit = async (values: ChangePasswordFormValues) => {
-    await changePassword(values);
-    resetSecurityForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setPasswordUpdatedAt(
-      new Date().toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    );
   };
 
   const handleTextExport = () => {
@@ -238,122 +196,141 @@ export const AccountPage = () => {
     }
 
     return (
-      <div className="account-content-grid">
-        <section className="account-card">
-          <div className="account-user-row">
-            {avatarDataUrl ? (
-              <img
-                className="account-avatar"
-                src={avatarDataUrl}
-                alt="Photo de profil"
-              />
-            ) : (
-              <span className="account-avatar account-avatar-fallback">
-                {displayInitials}
-              </span>
-            )}
+      <div className="account-v2-grid">
+        <section className="account-v2-hero">
+          <div className="account-v2-hero-main">
+            <img
+              className="account-v2-photo"
+              src={
+                avatarDataUrl ??
+                `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(displayFullName)}&radius=50`
+              }
+              alt="Photo de profil"
+            />
             <div>
-              <h2 className="account-name">{displayFullName}</h2>
-              <p className="account-role">Créateur de contenu</p>
-              <p className="account-location">
-                {displayRegion}, {displayCountry}
+              <h2 className="account-v2-name">{displayFullName}</h2>
+              <p className="account-v2-subtitle">Créateur de contenu</p>
+              <p className="account-v2-meta">
+                {displayRegion}, {displayCountry} · {displayEmail}
               </p>
             </div>
           </div>
+          <div className="account-v2-kpis">
+            <article>
+              <span>Identifiant</span>
+              <strong>{currentUser?.id?.slice(0, 8) ?? "-"}</strong>
+            </article>
+            <article>
+              <span>Téléphone</span>
+              <strong>{displayPhone}</strong>
+            </article>
+            <article>
+              <span>Dernière mise à jour</span>
+              <strong>{savedAt ? `${savedAt}` : "Pas encore"}</strong>
+            </article>
+          </div>
         </section>
 
-        <section className="account-card">
-          <h3 className="account-section-title">Modifier mes informations</h3>
-          <form className="auth-form" onSubmit={handleProfileSubmit(onSubmit)}>
-            <label className="field-label" htmlFor="account-firstname">
-              Prénom
-            </label>
-            <input
-              id="account-firstname"
-              className="field-input"
-              type="text"
-              autoComplete="given-name"
-              {...register("firstname")}
-            />
-            {errors.firstname ? (
-              <p className="error">{errors.firstname.message}</p>
-            ) : null}
+        <section className="account-v2-card">
+          <div className="account-v2-card-header">
+            <h3 className="account-section-title">Modifier mes informations</h3>
+            <span className="account-v2-badge">Profil public</span>
+          </div>
+          <form
+            className="account-v2-form"
+            onSubmit={handleProfileSubmit(onSubmit)}
+          >
+            <div className="account-v2-form-grid">
+              <label className="field-label" htmlFor="account-firstname">
+                Prénom
+              </label>
+              <input
+                id="account-firstname"
+                className="field-input"
+                type="text"
+                autoComplete="given-name"
+                {...register("firstname")}
+              />
+              {errors.firstname ? (
+                <p className="error">{errors.firstname.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-lastname">
-              Nom
-            </label>
-            <input
-              id="account-lastname"
-              className="field-input"
-              type="text"
-              autoComplete="family-name"
-              {...register("lastname")}
-            />
-            {errors.lastname ? (
-              <p className="error">{errors.lastname.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-lastname">
+                Nom
+              </label>
+              <input
+                id="account-lastname"
+                className="field-input"
+                type="text"
+                autoComplete="family-name"
+                {...register("lastname")}
+              />
+              {errors.lastname ? (
+                <p className="error">{errors.lastname.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-email">
-              Adresse email
-            </label>
-            <input
-              id="account-email"
-              className="field-input"
-              type="email"
-              autoComplete="email"
-              {...register("email")}
-            />
-            {errors.email ? (
-              <p className="error">{errors.email.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-email">
+                Adresse email
+              </label>
+              <input
+                id="account-email"
+                className="field-input"
+                type="email"
+                autoComplete="email"
+                {...register("email")}
+              />
+              {errors.email ? (
+                <p className="error">{errors.email.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-phone">
-              Téléphone
-            </label>
-            <input
-              id="account-phone"
-              className="field-input"
-              type="tel"
-              autoComplete="tel"
-              {...register("phoneNumber")}
-            />
-            {errors.phoneNumber ? (
-              <p className="error">{errors.phoneNumber.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-phone">
+                Téléphone
+              </label>
+              <input
+                id="account-phone"
+                className="field-input"
+                type="tel"
+                autoComplete="tel"
+                {...register("phoneNumber")}
+              />
+              {errors.phoneNumber ? (
+                <p className="error">{errors.phoneNumber.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-country">
-              Pays
-            </label>
-            <input
-              id="account-country"
-              className="field-input"
-              type="text"
-              autoComplete="country-name"
-              {...register("country")}
-            />
-            {errors.country ? (
-              <p className="error">{errors.country.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-country">
+                Pays
+              </label>
+              <input
+                id="account-country"
+                className="field-input"
+                type="text"
+                autoComplete="country-name"
+                {...register("country")}
+              />
+              {errors.country ? (
+                <p className="error">{errors.country.message}</p>
+              ) : null}
 
-            <label className="field-label" htmlFor="account-region">
-              Ville / Région
-            </label>
-            <input
-              id="account-region"
-              className="field-input"
-              type="text"
-              autoComplete="address-level2"
-              {...register("region")}
-            />
-            {errors.region ? (
-              <p className="error">{errors.region.message}</p>
-            ) : null}
+              <label className="field-label" htmlFor="account-region">
+                Ville / Région
+              </label>
+              <input
+                id="account-region"
+                className="field-input"
+                type="text"
+                autoComplete="address-level2"
+                {...register("region")}
+              />
+              {errors.region ? (
+                <p className="error">{errors.region.message}</p>
+              ) : null}
+            </div>
 
             {saveErrorMessage ? (
               <p className="error">{saveErrorMessage}</p>
             ) : null}
 
-            <div className="row-between" style={{ marginTop: "0.75rem" }}>
+            <div className="account-v2-form-actions">
               <button
                 type="submit"
                 className="auth-primary"
@@ -362,9 +339,7 @@ export const AccountPage = () => {
                 {isSavingProfile ? "Enregistrement..." : "Sauvegarder"}
               </button>
               {savedAt ? (
-                <span className="muted" style={{ fontSize: "0.9rem" }}>
-                  Enregistré à {savedAt}
-                </span>
+                <span className="muted">Enregistré à {savedAt}</span>
               ) : null}
             </div>
           </form>
@@ -374,104 +349,59 @@ export const AccountPage = () => {
   };
 
   const renderSecurityPanel = () => (
-    <section className="account-card">
-      <h3 className="account-section-title">Sécurité</h3>
-      <p className="muted" style={{ marginBottom: "1rem" }}>
-        Mettez a jour votre mot de passe en confirmant d'abord le mot de passe
-        actuel.
-      </p>
-      <form
-        className="auth-form"
-        onSubmit={handleSecuritySubmit(onPasswordSubmit)}
-      >
-        <label className="field-label" htmlFor="account-current-password">
-          Mot de passe actuel
-        </label>
-        <input
-          id="account-current-password"
-          className="field-input"
-          type="password"
-          autoComplete="current-password"
-          placeholder="Votre mot de passe actuel"
-          {...registerSecurity("currentPassword")}
-        />
-        {securityErrors.currentPassword ? (
-          <p className="error">{securityErrors.currentPassword.message}</p>
-        ) : null}
-
-        <label className="field-label" htmlFor="account-new-password">
-          Nouveau mot de passe
-        </label>
-        <input
-          id="account-new-password"
-          className="field-input"
-          type="password"
-          autoComplete="new-password"
-          placeholder="Minimum 8 caracteres"
-          {...registerSecurity("newPassword")}
-        />
-        {securityErrors.newPassword ? (
-          <p className="error">{securityErrors.newPassword.message}</p>
-        ) : null}
-
-        <label className="field-label" htmlFor="account-confirm-password">
-          Confirmer le nouveau mot de passe
-        </label>
-        <input
-          id="account-confirm-password"
-          className="field-input"
-          type="password"
-          autoComplete="new-password"
-          placeholder="Repetez le nouveau mot de passe"
-          {...registerSecurity("confirmPassword")}
-        />
-        {securityErrors.confirmPassword ? (
-          <p className="error">{securityErrors.confirmPassword.message}</p>
-        ) : null}
-
-        {isPasswordChangeError ? (
-          <p className="error">{passwordChangeError.message}</p>
-        ) : null}
-
-        <div className="row-between" style={{ marginTop: "0.75rem" }}>
-          <button
-            type="submit"
-            className="auth-primary"
-            disabled={isChangingPassword}
-          >
-            {isChangingPassword
-              ? "Mise a jour en cours..."
-              : "Mettre a jour le mot de passe"}
-          </button>
-          {passwordUpdatedAt ? (
-            <span className="success" style={{ fontSize: "0.9rem" }}>
-              Mot de passe mis a jour a {passwordUpdatedAt}
-            </span>
-          ) : null}
-        </div>
-      </form>
+    <section className="account-v2-card">
+      <div className="account-v2-card-header">
+        <h3 className="account-section-title">Sécurité</h3>
+        <span className="account-v2-badge">Bientôt</span>
+      </div>
+      <div className="account-v2-security-list">
+        <article>
+          <h4>Mot de passe</h4>
+          <p>
+            La gestion et rotation sécurisée du mot de passe sera ajoutée ici.
+          </p>
+        </article>
+        <article>
+          <h4>Double authentification</h4>
+          <p>Activez la 2FA pour renforcer la sécurité de votre compte.</p>
+        </article>
+        <article>
+          <h4>Sessions actives</h4>
+          <p>
+            Consultez les appareils connectés et déconnectez les sessions
+            inconnues.
+          </p>
+        </article>
+      </div>
     </section>
   );
 
   const renderExportPanel = () => (
-    <section className="account-card">
-      <h3 className="account-section-title">Export des données personnelles</h3>
-      <p className="muted" style={{ marginBottom: "1rem" }}>
+    <section className="account-v2-card">
+      <div className="account-v2-card-header">
+        <h3 className="account-section-title">
+          Export des données personnelles
+        </h3>
+        <span className="account-v2-badge">RGPD</span>
+      </div>
+      <p className="muted account-v2-export-text">
         Téléchargez vos informations de profil au format texte ou PDF.
       </p>
-      <div className="row">
+      <div className="account-v2-export-actions">
         <button
           type="button"
-          className="auth-primary"
+          className="auth-primary account-v2-export-btn"
           onClick={handleTextExport}
         >
+          <HiOutlineArrowDownTray aria-hidden="true" />
           Exporter en .txt
         </button>
         <button
           type="button"
-          className="auth-primary"
+          className="auth-primary account-v2-export-btn"
           onClick={handlePdfExport}
         >
+          <HiOutlineArrowDownTray aria-hidden="true" />
           Exporter en .pdf
         </button>
       </div>
@@ -480,22 +410,34 @@ export const AccountPage = () => {
 
   return (
     <CreatorAppShell accountTopBar>
-      <div className="account-layout">
-        <aside className="account-sidebar">
+      <div className="account-v2-layout">
+        <aside className="account-v2-sidebar">
+          <h1 className="account-v2-title">Gestion utilisateur</h1>
+          <p className="account-v2-description">
+            Centralisez votre identité, sécurité et export de données.
+          </p>
           {ACCOUNT_TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
-              className={`account-tab-item ${activeTab === tab.id ? "is-active" : ""}`}
+              className={`account-v2-tab ${activeTab === tab.id ? "is-active" : ""}`}
               onClick={() => setActiveTab(tab.id)}
             >
+              {tab.id === "profil" ? (
+                <HiOutlineUser aria-hidden="true" />
+              ) : null}
+              {tab.id === "securite" ? (
+                <HiOutlineLockClosed aria-hidden="true" />
+              ) : null}
+              {tab.id === "export" ? (
+                <HiOutlineArrowDownTray aria-hidden="true" />
+              ) : null}
               {tab.label}
             </button>
           ))}
         </aside>
 
-        <section className="account-main">
-          <h1 className="account-title">Mon profil</h1>
+        <section className="account-v2-main">
           {activeTab === "profil" ? renderProfilePanel() : null}
           {activeTab === "securite" ? renderSecurityPanel() : null}
           {activeTab === "export" ? renderExportPanel() : null}

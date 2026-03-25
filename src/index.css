@@ -1,14 +1,10 @@
 :root {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family:
+    Inter, "SF Pro Text", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #111827;
-  background: radial-gradient(
-    circle at top right,
-    #fef3c7,
-    #eff6ff 45%,
-    #ffffff
-  );
+  background: #f2f2f7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -23,8 +19,25 @@ body {
   margin: 0;
   min-width: 320px;
   color: #111827;
+  background: #f2f2f7;
 }
 
 #root {
   min-height: 100vh;
+}
+
+:root[data-theme="dark"] {
+  color: #e5e7eb;
+  background: #0f1218;
+}
+
+:root[data-theme="dark"] body {
+  color: #e5e7eb;
+  background: #0f1218;
+}
+
+/* Force remove all box-shadows on div and button elements as requested */
+div,
+button {
+  box-shadow: none !important;
 }

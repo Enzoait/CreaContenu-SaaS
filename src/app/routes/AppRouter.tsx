@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AccountPage, AuthPage, DashboardPage } from "../../pages";
+import { AccountPage, AuthPage, DashboardPage, VideosPage } from "../../pages";
 import { selectIsAuthenticated, useAuthStore } from "../../shared/model";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -22,6 +22,14 @@ export const AppRouter = () => {
         element={
           <ProtectedRoute>
             <AccountPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/videos"
+        element={
+          <ProtectedRoute>
+            <VideosPage />
           </ProtectedRoute>
         }
       />

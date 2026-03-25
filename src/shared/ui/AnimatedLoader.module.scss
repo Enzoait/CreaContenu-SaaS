@@ -1,0 +1,77 @@
+.loader {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  background: #f2f2f7;
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+}
+
+.visual {
+  width: 72px;
+  height: 72px;
+  position: relative;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(91, 79, 207, 0.22);
+  border-top-color: #5b4fcf;
+  animation: spin 0.95s linear infinite;
+}
+
+.dot {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5b4fcf;
+  animation: pulse 0.95s ease-in-out infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .dot {
+    animation: none;
+  }
+}
+
+:global([data-theme="dark"]) .loader {
+  background: #0f1218;
+}
+
+:global([data-theme="dark"]) .ring {
+  border-color: rgba(122, 104, 221, 0.28);
+  border-top-color: #7a68dd;
+}
+
+:global([data-theme="dark"]) .dot {
+  background: #7a68dd;
+}
