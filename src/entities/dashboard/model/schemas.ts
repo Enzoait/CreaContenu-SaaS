@@ -28,6 +28,7 @@ export const TodoItemSchema = z.object({
   platform: z.string().min(1),
   priority: z.enum(['low', 'medium', 'high']),
   done: z.boolean(),
+  column: z.enum(['todo', 'doing', 'done']).optional(),
 })
 
 export const DashboardDataSchema = z.object({
@@ -35,4 +36,5 @@ export const DashboardDataSchema = z.object({
   planning: z.array(PlanningItemSchema),
   videos: z.array(VideoItemSchema),
   todos: z.array(TodoItemSchema),
+  platforms: z.array(z.string()).optional(),
 })
