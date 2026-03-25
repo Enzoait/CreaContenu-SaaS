@@ -85,6 +85,7 @@ describe("DashboardOverview", () => {
       platform: "youtube",
       deadline: "2026-12-15",
       stage: "idea" as const,
+      coverImageUrl: "https://example.com/cover.jpg",
     }));
     apiMocks.addPlanningItem.mockImplementation(async () => ({
       id: "plan-new",
@@ -200,6 +201,9 @@ describe("DashboardOverview", () => {
     ) as HTMLInputElement;
     await user.type(dateInput, "2026-12-15");
 
+    const coverInputs = screen.getAllByPlaceholderText(/image obligatoire/i);
+    await user.type(coverInputs[0], "https://example.com/cover.jpg");
+
     const submits = screen.getAllByRole("button", {
       name: /Ajouter un suivi vidéo/i,
     });
@@ -213,6 +217,7 @@ describe("DashboardOverview", () => {
           platform: "youtube",
           deadline: "2026-12-15",
           stage: "idea",
+          coverImageUrl: "https://example.com/cover.jpg",
         }),
       );
     });

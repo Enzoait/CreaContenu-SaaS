@@ -26,6 +26,10 @@ export const VideoItemSchema = z.object({
   createdAt: z.string().optional(),
   /** Ordre manuel dans le suivi (réordonnancement) */
   sortOrder: z.number().int().nonnegative().optional(),
+  /** URL https vers l’image de couverture */
+  coverImageUrl: z.string().optional(),
+  /** URL de la vidéo publiée (attendu si stage = published) */
+  videoUrl: z.string().optional(),
 })
 
 export const TodoItemSchema = z.object({

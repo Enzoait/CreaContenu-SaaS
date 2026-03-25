@@ -107,9 +107,16 @@ const fr = {
   "dashboard.hideVideoForm": "Masquer ajout de suivi vidéo",
   "dashboard.videoTitlePlaceholder": "Titre de la vidéo",
   "dashboard.editVideo": "Modifier le suivi vidéo",
+  "dashboard.videoCoverUrlLabel": "Image de couverture (URL https)",
+  "dashboard.videoCoverUrlPlaceholder": "https://… (image obligatoire)",
+  "dashboard.videoPublishedUrlLabel": "URL de la vidéo publiée",
+  "dashboard.videoPublishedUrlPlaceholder": "https://… (lien vers la vidéo en ligne)",
+  "dashboard.videoPublishedUrlRequired":
+    "Pour publier, indiquez une URL https valide vers la vidéo, puis validez le formulaire.",
+  "dashboard.videoOpenPublishedLink": "Ouvrir la vidéo publiée",
   "dashboard.videoHint":
-    "Indiquez un titre, une date d'échéance et une plateforme réelle (obligatoire — pas l'option « Pas de plateforme »).",
-  "dashboard.videoSubmitTitle": "Titre, date et plateforme requis",
+    "Titre, date, plateforme réelle, URL d’image https obligatoires. Si l’étape est « Publié », l’URL de la vidéo est obligatoire.",
+  "dashboard.videoSubmitTitle": "Complétez les champs obligatoires (image ; URL vidéo si publié)",
   "dashboard.stageLabel": "Étape :",
 
   "dashboard.todoTitle": "To-do list (Trello)",
@@ -300,9 +307,16 @@ const en: Record<MessageKey, string> = {
   "dashboard.hideVideoForm": "Hide video form",
   "dashboard.videoTitlePlaceholder": "Video title",
   "dashboard.editVideo": "Edit video tracking",
+  "dashboard.videoCoverUrlLabel": "Cover image (https URL)",
+  "dashboard.videoCoverUrlPlaceholder": "https://… (required)",
+  "dashboard.videoPublishedUrlLabel": "Published video URL",
+  "dashboard.videoPublishedUrlPlaceholder": "https://… (link to the live video)",
+  "dashboard.videoPublishedUrlRequired":
+    "To publish, enter a valid https URL to the video, then save the form.",
+  "dashboard.videoOpenPublishedLink": "Open published video",
   "dashboard.videoHint":
-    "Enter a title, due date and a real platform (not “No platform”).",
-  "dashboard.videoSubmitTitle": "Title, date and platform required",
+    "Title, due date, real platform, and a valid https image URL are required. If the stage is Published, the video URL is required.",
+  "dashboard.videoSubmitTitle": "Fill required fields (cover image; video URL when published)",
   "dashboard.stageLabel": "Stage:",
 
   "dashboard.todoTitle": "To-do list",

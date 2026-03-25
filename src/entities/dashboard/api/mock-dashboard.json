@@ -40,21 +40,24 @@
       "title": "Tutoriel Zustand",
       "platform": "youtube",
       "stage": "editing",
-      "deadline": "2026-03-30"
+      "deadline": "2026-03-30",
+      "coverImageUrl": "https://picsum.photos/seed/vcover1/128/128"
     },
     {
       "id": "v2",
       "title": "Setup du projet SaaS",
       "platform": "instagram",
       "stage": "scripting",
-      "deadline": "2026-03-26"
+      "deadline": "2026-03-26",
+      "coverImageUrl": "https://picsum.photos/seed/vcover2/128/128"
     },
     {
       "id": "v3",
       "title": "Routine createur matinale",
       "platform": "tiktok",
       "stage": "recording",
-      "deadline": "2026-03-27"
+      "deadline": "2026-03-27",
+      "coverImageUrl": "https://picsum.photos/seed/vcover3/128/128"
     }
   ],
   "todos": [

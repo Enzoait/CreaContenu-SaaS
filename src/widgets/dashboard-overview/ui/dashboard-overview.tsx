@@ -18,6 +18,7 @@ import {
   deleteVideoItem as deleteVideoItemApi,
   renamePlatformInVideos,
   deletePlatformInVideos,
+  type VideoItemUpdatePatch,
 } from '../../../entities/dashboard/api/videos-api'
 import {
   addTodoItem,
@@ -118,6 +119,21 @@ type VideoItem = {
   createdAt?: string
   /** Ordre manuel (liste suivi vidéo) */
   sortOrder?: number
+  /** URL https vers l’image de couverture */
+  coverImageUrl?: string
+  /** URL de la vidéo publiée */
+  videoUrl?: string
+}
+
+function isValidHttpUrl(s: string): boolean {
+  const t = s.trim()
+  if (!t) return false
+  try {
+    const u = new URL(t)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
 }
 
 function compareVideosBySort(a: VideoItem, b: VideoItem): number {
@@ -149,6 +165,8 @@ type VideoDraft = {
   platform: string
   deadline: string
   stage: VideoStage
+  coverImageUrl: string
+  videoUrl: string
 }
 
 type ChecklistItem = {
@@ -291,6 +309,8 @@ export function DashboardOverview() {
     platform: '',
     deadline: '',
     stage: 'idea',
+    coverImageUrl: '',
+    videoUrl: '',
   })
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null)
   const [isVideoFormOpen, setIsVideoFormOpen] = useState(false)
@@ -532,16 +552,25 @@ export function DashboardOverview() {
     [planningDraft.title, planningDraft.platform, planningDraft.publishAt],
   )
 
-  const isVideoDraftValid = useMemo(
-    () =>
+  const isVideoDraftValid = useMemo(() => {
+    const base =
       Boolean(
         videoDraft.title.trim() &&
           videoDraft.deadline &&
           videoDraft.platform &&
           videoDraft.platform !== NO_PLATFORM_LABEL,
-      ),
-    [videoDraft.title, videoDraft.deadline, videoDraft.platform],
-  )
+      ) && isValidHttpUrl(videoDraft.coverImageUrl)
+    const publishedOk =
+      videoDraft.stage !== 'published' || isValidHttpUrl(videoDraft.videoUrl)
+    return base && publishedOk
+  }, [
+    videoDraft.title,
+    videoDraft.deadline,
+    videoDraft.platform,
+    videoDraft.coverImageUrl,
+    videoDraft.videoUrl,
+    videoDraft.stage,
+  ])
 
   const isTodoDraftValid = useMemo(
     () =>
@@ -1108,6 +1137,12 @@ export function DashboardOverview() {
   }
 
   const setVideoStage = (id: string, nextStage: VideoStage) => {
+    if (nextStage === 'published') {
+      const item = videoData.find((v) => v.id === id)
+      if (!item?.videoUrl?.trim()) {
+        return
+      }
+    }
     setVideoStages((prev) => ({ ...prev, [id]: nextStage }))
     setVideoData((prev) => prev.map((item) => (item.id === id ? { ...item, stage: nextStage } : item)))
     updateVideoItem(id, { stage: nextStage }).catch(console.error)
@@ -1123,6 +1158,8 @@ export function DashboardOverview() {
       platform: platforms[0] ?? NO_PLATFORM_LABEL,
       deadline: '',
       stage: 'idea',
+      coverImageUrl: '',
+      videoUrl: '',
     })
     setEditingVideoId(null)
   }
@@ -1132,10 +1169,15 @@ export function DashboardOverview() {
       !videoDraft.title.trim() ||
       !videoDraft.platform ||
       videoDraft.platform === NO_PLATFORM_LABEL ||
-      !videoDraft.deadline
+      !videoDraft.deadline ||
+      !isValidHttpUrl(videoDraft.coverImageUrl) ||
+      (videoDraft.stage === 'published' && !isValidHttpUrl(videoDraft.videoUrl))
     )
       return
     const normalizedDate = toDateKey(videoDraft.deadline)
+    const coverTrim = videoDraft.coverImageUrl.trim()
+    const videoUrlForApi =
+      videoDraft.stage === 'published' ? videoDraft.videoUrl.trim() : null
     const ensureVisibility = (eventPlatform: string, eventDate: string) => {
       setSearch('')
       if (platform !== 'all' && platform !== eventPlatform) {
@@ -1149,12 +1191,15 @@ export function DashboardOverview() {
     if (editingVideoId) {
       const linkedPlanning = planningData.find((p) => p.videoId === editingVideoId)
       try {
-        await updateVideoItem(editingVideoId, {
+        const editPatch: VideoItemUpdatePatch = {
           title: videoDraft.title.trim(),
           platform: videoDraft.platform,
           deadline: normalizedDate,
           stage: videoDraft.stage,
-        })
+          coverImageUrl: coverTrim,
+          videoUrl: videoUrlForApi,
+        }
+        await updateVideoItem(editingVideoId, editPatch)
         if (linkedPlanning) {
           await updatePlanningItem(linkedPlanning.id, {
             title: videoDraft.title.trim(),
@@ -1171,6 +1216,8 @@ export function DashboardOverview() {
                   platform: videoDraft.platform,
                   deadline: normalizedDate,
                   stage: videoDraft.stage,
+                  coverImageUrl: coverTrim,
+                  videoUrl: videoUrlForApi ?? undefined,
                 }
               : item,
           ),
@@ -1208,6 +1255,8 @@ export function DashboardOverview() {
         deadline: normalizedDate,
         stage: videoDraft.stage,
         sortOrder: maxSort + 1,
+        coverImageUrl: coverTrim,
+        videoUrl: videoUrlForApi ?? undefined,
       })
       addUserPlatform(user.id, newVideo.platform).catch(console.error)
       setVideoData((prev) => [...prev, newVideo])
@@ -1232,16 +1281,31 @@ export function DashboardOverview() {
     setIsVideoFormOpen(false)
   }
 
-  const startVideoEdit = (item: VideoItem) => {
+  const startVideoEdit = (
+    item: VideoItem,
+    opts?: { forceStage?: VideoStage },
+  ) => {
     setFocusedPanel('videos')
+    setCollapsedPanels((prev) => ({ ...prev, videos: false }))
     setIsVideoFormOpen(true)
     setEditingVideoId(item.id)
+    const stage = opts?.forceStage ?? (videoStages[item.id] ?? item.stage)
     setVideoDraft({
       title: item.title,
       platform: item.platform,
       deadline: toDateKey(item.deadline),
-      stage: videoStages[item.id] ?? item.stage,
+      stage,
+      coverImageUrl: item.coverImageUrl ?? '',
+      videoUrl: item.videoUrl ?? '',
     })
+  }
+
+  const handleInlineVideoStageChange = (video: VideoItem, nextStage: VideoStage) => {
+    if (nextStage === 'published' && !video.videoUrl?.trim()) {
+      startVideoEdit(video, { forceStage: 'published' })
+      return
+    }
+    setVideoStage(video.id, nextStage)
   }
 
   const deleteVideoItem = (id: string) => {
@@ -1660,6 +1724,15 @@ export function DashboardOverview() {
         }`}
       >
         <div className={styles.videoListRow}>
+          {isValidHttpUrl(video.coverImageUrl ?? '') ? (
+            <img
+              className={styles.videoThumb}
+              src={video.coverImageUrl}
+              alt=""
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
+          ) : null}
           <details className={styles.videoDetails}>
             <summary className={styles.videoSummary}>
               <HiChevronDown
@@ -1675,6 +1748,16 @@ export function DashboardOverview() {
                 {t('dashboard.labelPlatform')}: {highlightMatch(video.platform, search)} —{' '}
                 {t('dashboard.labelDeadline')}: {highlightMatch(video.deadline, search)}
               </span>
+              {currentStage === 'published' && video.videoUrl ? (
+                <a
+                  href={video.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.videoPublishedLink}
+                >
+                  {t('dashboard.videoOpenPublishedLink')}
+                </a>
+              ) : null}
               <div className={styles.inlineControls}>
                 <label htmlFor={stageSelectId}>{t('dashboard.stageLabel')}</label>
                 <span className={`${styles.stageBadge} ${styles[`stage_${currentStage}`]}`}>
@@ -1684,7 +1767,10 @@ export function DashboardOverview() {
                   id={stageSelectId}
                   value={currentStage}
                   onChange={(event) =>
-                    setVideoStage(video.id, event.target.value as VideoStage)
+                    handleInlineVideoStageChange(
+                      video,
+                      event.target.value as VideoStage,
+                    )
                   }
                 >
                   <option value="idea">{stageLabels.idea}</option>
@@ -2254,9 +2340,40 @@ export function DashboardOverview() {
                     <option value="published">{stageLabels.published}</option>
                   </select>
                 </div>
+                <label className={styles.videoFormFullRow}>
+                  <span className={styles.videoFormFieldLabel}>
+                    {t('dashboard.videoCoverUrlLabel')}
+                  </span>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    autoComplete="url"
+                    placeholder={t('dashboard.videoCoverUrlPlaceholder')}
+                    value={videoDraft.coverImageUrl}
+                    onChange={(event) => setVideoDraftField('coverImageUrl', event.target.value)}
+                  />
+                </label>
+                {videoDraft.stage === 'published' ? (
+                  <label className={styles.videoFormFullRow}>
+                    <span className={styles.videoFormFieldLabel}>
+                      {t('dashboard.videoPublishedUrlLabel')}
+                    </span>
+                    <input
+                      type="url"
+                      inputMode="url"
+                      autoComplete="url"
+                      placeholder={t('dashboard.videoPublishedUrlPlaceholder')}
+                      value={videoDraft.videoUrl}
+                      onChange={(event) => setVideoDraftField('videoUrl', event.target.value)}
+                      aria-invalid={!isValidHttpUrl(videoDraft.videoUrl)}
+                    />
+                  </label>
+                ) : null}
                 {!isVideoDraftValid ? (
                   <p className={styles.planningFormHint} role="status">
-                    {t('dashboard.videoHint')}
+                    {videoDraft.stage === 'published' && !isValidHttpUrl(videoDraft.videoUrl)
+                      ? t('dashboard.videoPublishedUrlRequired')
+                      : t('dashboard.videoHint')}
                   </p>
                 ) : null}
                 <div className={styles.videoFormActions}>
@@ -2886,9 +3003,40 @@ export function DashboardOverview() {
                     <option value="published">{stageLabels.published}</option>
                   </select>
                 </div>
+                <label className={styles.videoFormFullRow}>
+                  <span className={styles.videoFormFieldLabel}>
+                    {t('dashboard.videoCoverUrlLabel')}
+                  </span>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    autoComplete="url"
+                    placeholder={t('dashboard.videoCoverUrlPlaceholder')}
+                    value={videoDraft.coverImageUrl}
+                    onChange={(event) => setVideoDraftField('coverImageUrl', event.target.value)}
+                  />
+                </label>
+                {videoDraft.stage === 'published' ? (
+                  <label className={styles.videoFormFullRow}>
+                    <span className={styles.videoFormFieldLabel}>
+                      {t('dashboard.videoPublishedUrlLabel')}
+                    </span>
+                    <input
+                      type="url"
+                      inputMode="url"
+                      autoComplete="url"
+                      placeholder={t('dashboard.videoPublishedUrlPlaceholder')}
+                      value={videoDraft.videoUrl}
+                      onChange={(event) => setVideoDraftField('videoUrl', event.target.value)}
+                      aria-invalid={!isValidHttpUrl(videoDraft.videoUrl)}
+                    />
+                  </label>
+                ) : null}
                 {!isVideoDraftValid ? (
                   <p className={styles.planningFormHint} role="status">
-                    {t('dashboard.videoHint')}
+                    {videoDraft.stage === 'published' && !isValidHttpUrl(videoDraft.videoUrl)
+                      ? t('dashboard.videoPublishedUrlRequired')
+                      : t('dashboard.videoHint')}
                   </p>
                 ) : null}
                 <div className={styles.videoFormActions}>
