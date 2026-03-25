@@ -10,6 +10,7 @@ function mapRow(row: {
   platform: string
   publish_at: string
   status: string
+  video_id: string | null
 }): PlanningItem {
   return {
     id: row.id,
@@ -17,13 +18,14 @@ function mapRow(row: {
     platform: row.platform,
     publishAt: row.publish_at,
     status: row.status as PlanningItem['status'],
+    ...(row.video_id ? { videoId: row.video_id } : {}),
   }
 }
 
 export async function fetchPlanningItems(userId: string): Promise<PlanningItem[]> {
   const { data, error } = await supabase
     .from('planning_items')
-    .select('id, title, platform, publish_at, status')
+    .select('id, title, platform, publish_at, status, video_id')
     .eq('user_id', userId)
     .order('publish_at', { ascending: true })
 
@@ -35,16 +37,19 @@ export async function addPlanningItem(
   userId: string,
   item: Omit<PlanningItem, 'id'>,
 ): Promise<PlanningItem> {
+  const insert: Record<string, unknown> = {
+    user_id: userId,
+    title: item.title,
+    platform: item.platform,
+    publish_at: item.publishAt,
+    status: item.status,
+  }
+  if (item.videoId !== undefined) insert.video_id = item.videoId
+
   const { data, error } = await supabase
     .from('planning_items')
-    .insert({
-      user_id: userId,
-      title: item.title,
-      platform: item.platform,
-      publish_at: item.publishAt,
-      status: item.status,
-    })
-    .select('id, title, platform, publish_at, status')
+    .insert(insert)
+    .select('id, title, platform, publish_at, status, video_id')
     .single()
 
   if (error) throw new Error(error.message)
@@ -60,6 +65,7 @@ export async function updatePlanningItem(
   if (patch.platform !== undefined) update.platform = patch.platform
   if (patch.publishAt !== undefined) update.publish_at = patch.publishAt
   if (patch.status !== undefined) update.status = patch.status
+  if (patch.videoId !== undefined) update.video_id = patch.videoId ?? null
 
   const { error } = await supabase.from('planning_items').update(update).eq('id', id)
   if (error) throw new Error(error.message)
