@@ -49,7 +49,6 @@ export const useProfileDisplayName = () =>
     normalizeLegacyDisplayName(state.displayName),
   );
 
-/** Texte court pour en-têtes (ex. dashboard) : préférence locale, pas l’email Supabase. */
 export const useProfileTitleSuffix = () => {
   const displayName = useProfilePreferencesStore((state) =>
     normalizeLegacyDisplayName(state.displayName),
@@ -60,7 +59,6 @@ export const useProfileTitleSuffix = () => {
   return displayName || firstname || "Créateur";
 };
 
-/** État dérivé : nombre de champs « remplis » côté préférences. */
 export const useProfileCompleteness = () =>
   useProfilePreferencesStore((state) => {
     let score = 0;

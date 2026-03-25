@@ -81,11 +81,11 @@ type TodoColumn = "todo" | "doing" | "done";
 type VideoStage = "idea" | "scripting" | "recording" | "editing" | "published";
 type PanelId = "planning" | "videos" | "todo" | "chart";
 type SuggestionItem = {
-  label: string; // texte affiché dans le dropdown (enrichi si ambigu)
+  label: string;
   panel: PanelId;
   targetId: string | null;
   detail?: string;
-  searchTerm?: string; // terme brut pour setSearch + highlight (= label original)
+  searchTerm?: string;
 };
 
 type PlanningItem = {
@@ -480,7 +480,6 @@ export function DashboardOverview() {
     const query = search.trim().toLowerCase();
     if (!query) return [];
 
-    // 1. Collecter tous les candidats bruts (sans dédup)
     const candidates: SuggestionItem[] = [];
 
     const push = (item: SuggestionItem) => candidates.push(item);
@@ -551,16 +550,14 @@ export function DashboardOverview() {
       });
     }
 
-    // 2. Filtrer par query sur les candidats bruts (avant dédup)
     const normQuery = normalizeText(query);
     const matching = candidates.filter((s) =>
       normalizeText(s.label).includes(normQuery),
     );
 
-    // 3. Calculer doublons sur les candidats filtrés (tous, avant dédup)
     const labelPanels = new Map<string, Set<PanelId>>();
     const labelCount = new Map<string, number>();
-    const seen = new Set<string>(); // clé unique par (label, panel, targetId)
+    const seen = new Set<string>();
     for (const s of matching) {
       const dedupeKey = `${normalizeText(s.label)}|${s.panel}|${s.targetId ?? "section"}`;
       if (seen.has(dedupeKey)) continue;
@@ -571,7 +568,6 @@ export function DashboardOverview() {
       labelPanels.get(norm)!.add(s.panel);
     }
 
-    // 4. Dédupliquer et enrichir le label si ambigu
     const pool = new Map<string, SuggestionItem>();
     for (const s of matching) {
       const dedupeKey = `${normalizeText(s.label)}|${s.panel}|${s.targetId ?? "section"}`;
@@ -594,7 +590,6 @@ export function DashboardOverview() {
           ? `${rawLabel} — ${panelLabel}`
           : `${rawLabel} — ${panelLabel}${s.detail ? ` — ${s.detail}` : ""}`;
 
-      // On remplace label par le texte enrichi et on garde searchTerm pour setSearch
       pool.set(dedupeKey, { ...s, label: enrichedLabel, searchTerm: rawLabel });
     }
 
@@ -1333,8 +1328,7 @@ export function DashboardOverview() {
           toDateKey(item.publishAt) === slot.key &&
           (item.status === "published" || item.status === "scheduled"),
       ).length;
-      // Add slight deterministic variation so the curve stays readable
-      // even when activity is nearly constant across the selected period.
+
       const oscillation =
         0.16 *
         (1 +

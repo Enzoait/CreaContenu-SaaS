@@ -1483,7 +1483,6 @@
   }
 }
 
-/* Dashboard redesign overrides */
 .banner,
 .statsGrid,
 .contentGrid,
@@ -2026,7 +2025,6 @@
   color: #79d6a3;
 }
 
-/* Remove remaining shadows from bento grid cards/controls */
 .banner,
 .filterButton,
 .filterButtonActive,
@@ -2053,7 +2051,6 @@
   box-shadow: none !important;
 }
 
-/* True fullscreen modal: dark backdrop + centered floating window */
 .simpleModalOverlay {
   position: fixed;
   inset: 0;

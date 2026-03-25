@@ -5,11 +5,6 @@ const supabaseUrl =
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY ?? "public-anon-key-placeholder";
 
-/**
- * Remplace le verrou Web Locks par défaut de GoTrue. En dev, React Strict Mode
- * double-monte les effets et laisse des verrous orphelins → warnings 5000ms et
- * AbortError sur la session. Ce lock exécute la callback sans synchronisation inter-onglets.
- */
 async function authLock<R>(
   _name: string,
   _acquireTimeout: number,

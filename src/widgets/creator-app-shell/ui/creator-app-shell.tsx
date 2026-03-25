@@ -30,9 +30,7 @@ import styles from "./creator-app-shell.module.scss";
 
 type CreatorAppShellProps = {
   children: ReactNode;
-  /** Contenu à droite dans la barre du haut (recherche, filtres rapides, etc.) */
   topBarTrailing?: ReactNode;
-  /** Barre du haut simplifiee: avatar vers la gestion compte (ex. page /account) */
   accountTopBar?: boolean;
 };
 
