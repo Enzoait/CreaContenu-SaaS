@@ -25,7 +25,11 @@ export const SignInForm = () => {
   };
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
+    <form
+      className="auth-form"
+      noValidate
+      onSubmit={handleSubmit(onSubmit)}
+    >
       <label className="field-label" htmlFor="sign-in-email">
         Adresse email
       </label>
