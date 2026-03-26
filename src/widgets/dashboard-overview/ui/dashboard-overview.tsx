@@ -717,21 +717,25 @@ export function DashboardOverview() {
     panelLabels,
   ]);
 
-  const ratio = filteredPlanning.length / Math.max(1, planningData.length);
-  const periodWeight =
-    period === "7d"
-      ? 0.35
-      : period === "30d"
-        ? 1
-        : period === "90d"
-          ? 1.35
-          : 1.7;
-  const totalViews = Math.round(
-    (data?.stats.totalViews ?? 0) * periodWeight * Math.max(0.35, ratio),
-  );
-  const engagement = Number(
-    ((data?.stats.engagementRate ?? 0) * Math.max(0.8, ratio)).toFixed(1),
-  );
+  /** Contenus au statut « publié » (agenda + suivi vidéo), selon filtres période / plateforme. */
+  const totalViews =
+    filteredPlanning.filter((i) => i.status === "published").length +
+    filteredVideos.filter((v) => v.stage === "published").length;
+
+  const engagement = useMemo(() => {
+    if (filteredBoard.length > 0) {
+      const done = filteredBoard.filter((t) => t.column === "done").length;
+      return Math.round((done / filteredBoard.length) * 1000) / 10;
+    }
+    const denom = filteredPlanning.length + filteredVideos.length;
+    if (denom === 0) return 0;
+    const num =
+      filteredPlanning.filter((i) => i.status === "published").length +
+      filteredVideos.filter((v) => v.stage === "published").length;
+    return Math.round((num / denom) * 1000) / 10;
+  }, [filteredBoard, filteredPlanning, filteredVideos]);
+
+  /** Créneaux agenda au statut publié ou planifié (filtres appliqués). */
   const publishedCount = filteredPlanning.filter(
     (item) => item.status === "published" || item.status === "scheduled",
   ).length;
@@ -1626,96 +1630,57 @@ export function DashboardOverview() {
   const isLastPanelSingle = panelOrder.length % 2 === 1;
   const lastPanel = panelOrder[panelOrder.length - 1];
 
+  /** Séries du graphique : uniquement des comptages réels par jour (mois affiché). */
   const chartData = useMemo(() => {
-    const safeTotalViews = Math.max(1, totalViews);
-    const slotsCount = Math.max(1, dateSlots.length);
-    const rawChartData = dateSlots.map((slot, index) => {
-      const planningItemsForDay = filteredPlanning.filter(
-        (item) => toDateKey(item.publishAt) === slot.key,
-      ).length;
-      const videosForDay = filteredVideos.filter(
-        (item) => toDateKey(item.deadline) === slot.key,
-      ).length;
+    return dateSlots.map((slot) => {
       const publishedForDay = filteredPlanning.filter(
         (item) =>
           toDateKey(item.publishAt) === slot.key &&
           (item.status === "published" || item.status === "scheduled"),
       ).length;
+      const publications =
+        filteredPlanning.filter(
+          (item) =>
+            toDateKey(item.publishAt) === slot.key &&
+            item.status === "published",
+        ).length +
+        filteredVideos.filter(
+          (item) =>
+            toDateKey(item.deadline) === slot.key &&
+            item.stage === "published",
+        ).length;
+      const videosDue = filteredVideos.filter(
+        (item) => toDateKey(item.deadline) === slot.key,
+      ).length;
 
-      const oscillation =
-        0.16 *
-        (1 +
-          Math.sin(((index + 1) / slotsCount) * Math.PI * 1.4 + Math.PI / 6));
-      const activityScore =
-        1 +
-        planningItemsForDay * 0.9 +
-        videosForDay * 0.7 +
-        publishedForDay * 0.45 +
-        oscillation;
-      const engagementJour = Number(
-        Math.min(
-          100,
-          Math.max(
-            0,
-            engagement * 0.82 +
-              videosForDay * 2.1 +
-              planningItemsForDay * 0.9 +
-              activityScore * 0.65,
-          ),
-        ).toFixed(1),
-      );
-      const received = Math.max(
-        0,
-        videosForDay * 2 + Math.round((index + 1) * 0.6),
-      );
       return {
         label: formatDateLabel(slot.key, localeTag),
-        activityScore,
-        engagement: engagementJour,
+        publications,
         publies: publishedForDay,
-        received,
+        videosDue,
       };
     });
-
-    const totalScore = rawChartData.reduce(
-      (acc, item) => acc + item.activityScore,
-      0,
-    );
-    const safeTotalScore = Math.max(1, totalScore);
-
-    return rawChartData.map((item) => ({
-      ...item,
-      views: Math.max(
-        1,
-        Math.round((safeTotalViews * item.activityScore) / safeTotalScore),
-      ),
-    }));
-  }, [
-    dateSlots,
-    filteredPlanning,
-    filteredVideos,
-    totalViews,
-    engagement,
-    localeTag,
-  ]);
-
-  const growthRatio = Number(
-    (
-      ((publishedCount + filteredVideos.length) /
-        Math.max(1, filteredPlanning.length)) *
-      7.96
-    ).toFixed(2),
-  );
+  }, [dateSlots, filteredPlanning, filteredVideos, localeTag]);
 
   const publishingProgress = Math.min(
     100,
-    Math.round((publishedCount / Math.max(1, filteredPlanning.length)) * 100),
+    Math.round(
+      (filteredPlanning.filter((i) => i.status === "published").length /
+        Math.max(1, filteredPlanning.length)) *
+        100,
+    ),
   );
   const deliveryProgress = Math.min(
     100,
     Math.round(
-      (filteredVideos.length / Math.max(1, filteredPlanning.length)) * 100,
+      (filteredVideos.filter((v) => v.stage === "published").length /
+        Math.max(1, filteredVideos.length)) *
+        100,
     ),
+  );
+
+  const growthRatio = Number(
+    ((publishingProgress + deliveryProgress) / 2).toFixed(2),
   );
 
   const platformBreakdown = useMemo(() => {
@@ -2970,7 +2935,7 @@ export function DashboardOverview() {
                       <ComposedChart data={chartData}>
                         <defs>
                           <linearGradient
-                            id="viewsAreaGradient"
+                            id="publicationsAreaGradient"
                             x1="0"
                             y1="0"
                             x2="0"
@@ -3022,33 +2987,24 @@ export function DashboardOverview() {
                         <Area
                           yAxisId="left"
                           type="monotone"
-                          dataKey="views"
-                          name={t("dashboard.totalViews")}
+                          dataKey="publications"
+                          name={t("dashboard.chartSeriesPublications")}
                           stroke="none"
-                          fill="url(#viewsAreaGradient)"
+                          fill="url(#publicationsAreaGradient)"
                         />
                         <Line
                           yAxisId="left"
                           type="monotone"
-                          dataKey="views"
-                          name={t("dashboard.totalViews")}
+                          dataKey="publications"
+                          name={t("dashboard.chartSeriesPublications")}
                           stroke="#5b4fcf"
                           strokeWidth={3}
-                          dot={false}
-                        />
-                        <Line
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey="engagement"
-                          name={t("dashboard.avgEngagement")}
-                          stroke="#7a68dd"
-                          strokeWidth={2}
                           dot={false}
                         />
                         <Bar
                           yAxisId="left"
                           dataKey="publies"
-                          name={t("dashboard.statusPublished")}
+                          name={t("dashboard.chartSeriesAgendaSlots")}
                           radius={[8, 8, 0, 0]}
                           barSize={14}
                         >
@@ -3065,8 +3021,8 @@ export function DashboardOverview() {
                         </Bar>
                         <Bar
                           yAxisId="right"
-                          dataKey="received"
-                          name={t("dashboard.chartBarReceived")}
+                          dataKey="videosDue"
+                          name={t("dashboard.chartSeriesVideosDue")}
                           fill="#e8a0d0"
                           radius={[8, 8, 0, 0]}
                           barSize={10}
@@ -3794,26 +3750,24 @@ export function DashboardOverview() {
                         <Line
                           yAxisId="left"
                           type="monotone"
-                          dataKey="views"
-                          name={t("dashboard.totalViews")}
+                          dataKey="publications"
+                          name={t("dashboard.chartSeriesPublications")}
                           stroke="#2563eb"
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                        <Line
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey="engagement"
-                          name={t("dashboard.avgEngagement")}
-                          stroke="#7c3aed"
                           strokeWidth={2}
                           dot={false}
                         />
                         <Bar
                           yAxisId="left"
                           dataKey="publies"
-                          name={t("dashboard.chartPublishedPeriod")}
+                          name={t("dashboard.chartSeriesAgendaSlots")}
                           fill="#14b8a6"
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar
+                          yAxisId="right"
+                          dataKey="videosDue"
+                          name={t("dashboard.chartSeriesVideosDue")}
+                          fill="#e8a0d0"
                           radius={[4, 4, 0, 0]}
                         />
                       </ComposedChart>

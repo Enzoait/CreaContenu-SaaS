@@ -39,10 +39,32 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     new Set([...storedPlatforms, ...derivedPlatforms]),
   );
 
+  const planningPublishedCount = planning.filter(
+    (p) => p.status === "published",
+  ).length;
+  const videosPublishedCount = videos.filter(
+    (v) => v.stage === "published",
+  ).length;
+  /** Pas d’analytics vues en base : nombre réel de contenus au statut « publié ». */
+  const totalViews = planningPublishedCount + videosPublishedCount;
+
+  const todosDone = todos.filter((t) => t.done).length;
+  const todosTotal = todos.length;
+  const engagementRate =
+    todosTotal > 0
+      ? Math.round((todosDone / todosTotal) * 1000) / 10
+      : planning.length + videos.length === 0
+        ? 0
+        : (() => {
+            const denom = planning.length + videos.length;
+            const num = planningPublishedCount + videosPublishedCount;
+            return Math.round((num / denom) * 1000) / 10;
+          })();
+
   return {
     stats: {
-      totalViews: 0,
-      engagementRate: 0,
+      totalViews,
+      engagementRate,
       publishedThisMonth,
     },
     planning,

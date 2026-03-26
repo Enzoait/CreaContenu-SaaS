@@ -47,6 +47,47 @@ describe("getDashboardData", () => {
     expect(mocks.fetchPlanningItems).toHaveBeenCalledWith("user-1");
   });
 
+  it("agrège totalViews et engagement à partir des données réelles", async () => {
+    mocks.fetchPlanningItems.mockResolvedValue([
+      {
+        id: "1",
+        title: "A",
+        platform: "yt",
+        publishAt: "2099-01-01",
+        status: "published" as const,
+      },
+    ]);
+    mocks.fetchVideoItems.mockResolvedValue([
+      {
+        id: "v1",
+        title: "V",
+        platform: "ig",
+        deadline: "2099-02-01",
+        stage: "published" as const,
+      },
+    ]);
+    mocks.fetchTodoItems.mockResolvedValue([
+      {
+        id: "t1",
+        label: "T",
+        platform: "yt",
+        priority: "low" as const,
+        column: "done" as const,
+      },
+      {
+        id: "t2",
+        label: "T2",
+        platform: "yt",
+        priority: "low" as const,
+        column: "todo" as const,
+      },
+    ]);
+
+    const data = await getDashboardData("user-1");
+    expect(data.stats.totalViews).toBe(2);
+    expect(data.stats.engagementRate).toBe(50);
+  });
+
   it("compte les publications du mois courant", async () => {
     const now = new Date();
     const y = now.getFullYear();

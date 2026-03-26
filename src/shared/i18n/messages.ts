@@ -57,9 +57,14 @@ const fr = {
   "dashboard.statusPublished": "Publié",
 
   "dashboard.chartPublishedPeriod": "Publié sur la période",
+  "dashboard.chartSeriesPublications":
+    "Publications (statut publié, ce jour)",
+  "dashboard.chartSeriesAgendaSlots":
+    "Agenda (publiés + planifiés, ce jour)",
+  "dashboard.chartSeriesVideosDue": "Vidéos à l’échéance (ce jour)",
   "dashboard.chartViews": "Vues",
   "dashboard.chartEngagement": "Engagement %",
-  "dashboard.totalViews": "Vues totales",
+  "dashboard.totalViews": "Publications totales",
   "dashboard.avgEngagement": "Engagement moyen",
 
   "dashboard.addPlatform": "Ajouter plateforme",
@@ -155,7 +160,7 @@ const fr = {
   "dashboard.searchKwPlatforms": "plateformes",
   "dashboard.searchKwStats": "stats",
 
-  "dashboard.statPublishedContent": "Contenus publiés",
+  "dashboard.statPublishedContent": "Agenda (publiés / planifiés)",
   "dashboard.statEngagementCardTitle": "Engagement moyen",
   "dashboard.statGrowthBadge": "+{n}%",
   "dashboard.statPctPublished": "{n}% publié",
@@ -365,9 +370,14 @@ const en: Record<MessageKey, string> = {
   "dashboard.statusPublished": "Published",
 
   "dashboard.chartPublishedPeriod": "Published in period",
+  "dashboard.chartSeriesPublications":
+    "Publications (published status, that day)",
+  "dashboard.chartSeriesAgendaSlots":
+    "Calendar (published + scheduled, that day)",
+  "dashboard.chartSeriesVideosDue": "Videos due (that day)",
   "dashboard.chartViews": "Views",
   "dashboard.chartEngagement": "Engagement %",
-  "dashboard.totalViews": "Total views",
+  "dashboard.totalViews": "Total publications",
   "dashboard.avgEngagement": "Average engagement",
 
   "dashboard.addPlatform": "Add platform",
@@ -464,7 +474,7 @@ const en: Record<MessageKey, string> = {
   "dashboard.searchKwPlatforms": "platforms",
   "dashboard.searchKwStats": "stats",
 
-  "dashboard.statPublishedContent": "Published content",
+  "dashboard.statPublishedContent": "Calendar (published / scheduled)",
   "dashboard.statEngagementCardTitle": "Average engagement",
   "dashboard.statGrowthBadge": "+{n}%",
   "dashboard.statPctPublished": "{n}% published",
