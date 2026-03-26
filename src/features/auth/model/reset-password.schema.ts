@@ -1,17 +1,24 @@
 import { z } from "zod";
+import type { MessageKey } from "../../../shared/i18n/messages";
 
-export const resetPasswordSchema = z
-  .object({
-    newPassword: z
-      .string()
-      .min(8, "Le nouveau mot de passe doit contenir au moins 8 caracteres"),
-    confirmPassword: z
-      .string()
-      .min(8, "La confirmation doit contenir au moins 8 caracteres"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Les mots de passe ne correspondent pas",
-  });
+export type AuthTranslate = (key: MessageKey) => string;
 
-export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+export function createResetPasswordSchema(t: AuthTranslate) {
+  return z
+    .object({
+      newPassword: z
+        .string()
+        .min(8, t("auth.validationNewPasswordMin8")),
+      confirmPassword: z
+        .string()
+        .min(8, t("auth.validationConfirmPasswordMin8")),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      path: ["confirmPassword"],
+      message: t("auth.validationPasswordMismatch"),
+    });
+}
+
+export type ResetPasswordFormValues = z.infer<
+  ReturnType<typeof createResetPasswordSchema>
+>;

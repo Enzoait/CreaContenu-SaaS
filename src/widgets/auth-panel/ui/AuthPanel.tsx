@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import { HiMoon, HiSun } from "react-icons/hi2";
 import {
   ForgotPasswordForm,
   ResetPasswordForm,
   SignInForm,
   SignUpForm,
 } from "../../../features/auth";
+import { useI18n } from "../../../shared/i18n";
+import { useAppTheme, useToggleAppTheme } from "../../../shared/model";
+import { LanguageSwitcher } from "../../language-switcher";
 import styles from "./AuthPanel.module.scss";
 
 type AuthTab = "sign-in" | "sign-up" | "forgot-password" | "reset-password";
@@ -15,6 +19,9 @@ type AuthPanelProps = {
 
 export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
   const [tab, setTab] = useState<AuthTab>(initialTab);
+  const { t } = useI18n();
+  const theme = useAppTheme();
+  const toggleTheme = useToggleAppTheme();
 
   useEffect(() => {
     setTab(initialTab);
@@ -24,6 +31,35 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
 
   return (
     <section className={styles["auth-shell"]}>
+      <div
+        className={styles["auth-toolbar"]}
+        role="toolbar"
+        aria-label={t("auth.toolbarAria")}
+      >
+        <button
+          type="button"
+          className={styles["auth-theme-toggle"]}
+          onClick={toggleTheme}
+          aria-label={
+            theme === "dark"
+              ? t("shell.themeSwitchLight")
+              : t("shell.themeSwitchDark")
+          }
+        >
+          {theme === "dark" ? (
+            <HiSun aria-hidden="true" />
+          ) : (
+            <HiMoon aria-hidden="true" />
+          )}
+          <span>
+            {theme === "dark"
+              ? t("shell.themeShortLight")
+              : t("shell.themeShortDark")}
+          </span>
+        </button>
+        <LanguageSwitcher />
+      </div>
+
       {/* ── Panneau gauche ── */}
       <article className={styles["auth-left"]}>
         <div className={styles["auth-logo"]}>
@@ -33,19 +69,16 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
 
         <div className={styles["auth-header"]}>
           <h1 className="auth-title">
-            {tab === "sign-in" && "Bon retour 👋"}
-            {tab === "sign-up" && "Créez votre compte"}
-            {tab === "forgot-password" && "Mot de passe oublié"}
-            {tab === "reset-password" && "Réinitialiser"}
+            {tab === "sign-in" && t("auth.titleSignIn")}
+            {tab === "sign-up" && t("auth.titleSignUp")}
+            {tab === "forgot-password" && t("auth.titleForgotPassword")}
+            {tab === "reset-password" && t("auth.titleResetPassword")}
           </h1>
           <p className={styles["auth-subtitle"]}>
-            {tab === "sign-in" && "Connectez-vous pour accéder à votre espace."}
-            {tab === "sign-up" &&
-              "Rejoignez des milliers de créateurs de contenu."}
-            {tab === "forgot-password" &&
-              "Entrez votre email pour recevoir un lien de réinitialisation."}
-            {tab === "reset-password" &&
-              "Choisissez un nouveau mot de passe sécurisé."}
+            {tab === "sign-in" && t("auth.subtitleSignIn")}
+            {tab === "sign-up" && t("auth.subtitleSignUp")}
+            {tab === "forgot-password" && t("auth.subtitleForgotPassword")}
+            {tab === "reset-password" && t("auth.subtitleResetPassword")}
           </p>
         </div>
 
@@ -53,7 +86,7 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
           <div
             className={styles["auth-tabs"]}
             role="tablist"
-            aria-label="Mode d'authentification"
+            aria-label={t("auth.tabListAria")}
           >
             <button
               type="button"
@@ -62,7 +95,7 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
               onClick={() => setTab("sign-in")}
               aria-selected={tab === "sign-in"}
             >
-              Connexion
+              {t("auth.tabSignIn")}
             </button>
             <button
               type="button"
@@ -71,7 +104,7 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
               onClick={() => setTab("sign-up")}
               aria-selected={tab === "sign-up"}
             >
-              Inscription
+              {t("auth.tabSignUp")}
             </button>
             <span
               className={styles["auth-tab-slider"]}
@@ -96,21 +129,18 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
           )}
         </div>
 
-        <p className={styles["auth-footer-note"]}>
-          © 2026 CreaContenu — Tous droits réservés.
-        </p>
+        <p className={styles["auth-footer-note"]}>{t("auth.footerCopyright")}</p>
       </article>
 
       {/* ── Panneau droit (décoratif) ── */}
       <aside className={styles["auth-right"]} aria-hidden="true">
         <div className={styles["auth-right-inner"]}>
-          <div className={styles["auth-right-badge"]}>Nouveau ✦</div>
+          <div className={styles["auth-right-badge"]}>{t("auth.promoBadge")}</div>
           <h2 className={styles["auth-right-title"]}>
-            La façon la plus simple de gérer votre workflow de contenu
+            {t("auth.promoTitle")}
           </h2>
           <p className={styles["auth-right-subtitle"]}>
-            Organisez, validez, publiez et suivez votre contenu depuis un seul
-            tableau de bord intelligent.
+            {t("auth.promoSubtitle")}
           </p>
 
           {/* Mock UI Card */}
@@ -137,17 +167,23 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
           <div className={styles["auth-stats-row"]}>
             <div className={styles["auth-stat"]}>
               <span className={styles["auth-stat-value"]}>12k+</span>
-              <span className={styles["auth-stat-label"]}>Créateurs</span>
+              <span className={styles["auth-stat-label"]}>
+                {t("auth.statCreators")}
+              </span>
             </div>
             <div className={styles["auth-stat-divider"]} />
             <div className={styles["auth-stat"]}>
               <span className={styles["auth-stat-value"]}>98%</span>
-              <span className={styles["auth-stat-label"]}>Satisfaction</span>
+              <span className={styles["auth-stat-label"]}>
+                {t("auth.statSatisfaction")}
+              </span>
             </div>
             <div className={styles["auth-stat-divider"]} />
             <div className={styles["auth-stat"]}>
               <span className={styles["auth-stat-value"]}>4.9★</span>
-              <span className={styles["auth-stat-label"]}>Note moyenne</span>
+              <span className={styles["auth-stat-label"]}>
+                {t("auth.statRating")}
+              </span>
             </div>
           </div>
         </div>

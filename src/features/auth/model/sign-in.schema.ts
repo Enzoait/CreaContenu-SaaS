@@ -1,10 +1,15 @@
 import { z } from "zod";
+import type { MessageKey } from "../../../shared/i18n/messages";
 
-export const signInSchema = z.object({
-  email: z.string().email("Email invalide"),
-  password: z
-    .string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caracteres"),
-});
+export type AuthTranslate = (key: MessageKey) => string;
 
-export type SignInFormValues = z.infer<typeof signInSchema>;
+export function createSignInSchema(t: AuthTranslate) {
+  return z.object({
+    email: z.string().email(t("auth.validationEmailInvalid")),
+    password: z
+      .string()
+      .min(8, t("auth.validationPasswordMin8")),
+  });
+}
+
+export type SignInFormValues = z.infer<ReturnType<typeof createSignInSchema>>;

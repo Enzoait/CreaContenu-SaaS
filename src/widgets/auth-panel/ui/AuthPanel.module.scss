@@ -4,12 +4,58 @@
 .auth-shell {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
-  gap: 20px;
+  grid-template-rows: auto 1fr;
+  gap: 0;
   width: 100%;
   max-width: none;
   min-height: 100dvh;
   background: #0a0a0f;
   font-family: "Inter", system-ui, sans-serif;
+}
+
+.auth-toolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  padding: 0.75rem clamp(1rem, 3vw, 1.5rem);
+  background: rgba(0, 0, 0, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.auth-theme-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.auth-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-theme-toggle:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
+
+.auth-theme-toggle svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
 }
 
 /* ─────────────────────────────────────────
@@ -329,4 +375,88 @@
     padding: 2rem 1.5rem;
     border-right: none;
   }
+}
+
+/* ── Thème clair (persisté via data-theme sur <html>) ── */
+:global([data-theme="light"]) .auth-shell {
+  background: #f1f5f9;
+}
+
+:global([data-theme="light"]) .auth-toolbar {
+  background: #f8fafc;
+  border-bottom-color: #e2e8f0;
+}
+
+:global([data-theme="light"]) .auth-theme-toggle {
+  border-color: #e2e8f0;
+  background: #ffffff;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+:global([data-theme="light"]) .auth-theme-toggle:hover {
+  background: #f8fafc;
+}
+
+:global([data-theme="light"]) .auth-left {
+  background: #ffffff;
+  border-right-color: #e2e8f0;
+}
+
+:global([data-theme="light"]) .auth-logo-text,
+:global([data-theme="light"]) .auth-title {
+  color: #0f172a;
+}
+
+:global([data-theme="light"]) .auth-subtitle {
+  color: #64748b;
+}
+
+:global([data-theme="light"]) .auth-tab {
+  color: #64748b;
+}
+
+:global([data-theme="light"]) .auth-tab.is-active {
+  color: #111827;
+}
+
+:global([data-theme="light"]) .auth-footer-note {
+  color: #94a3b8;
+}
+
+:global([data-theme="light"]) .auth-right {
+  background:
+    radial-gradient(
+      ellipse at 60% 30%,
+      rgba(124, 106, 255, 0.08) 0%,
+      transparent 65%
+    ),
+    #f8fafc;
+}
+
+:global([data-theme="light"]) .auth-right-title {
+  color: #0f172a;
+}
+
+:global([data-theme="light"]) .auth-right-subtitle {
+  color: #64748b;
+}
+
+:global([data-theme="light"]) .preview-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+:global([data-theme="light"]) .auth-stats-row {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+:global([data-theme="light"]) .auth-stat-value {
+  color: #0f172a;
+}
+
+:global([data-theme="light"]) .auth-stat-label {
+  color: #64748b;
 }

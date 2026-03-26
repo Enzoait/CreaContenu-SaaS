@@ -3,14 +3,20 @@ export { SignUpForm } from "./ui/SignUpForm";
 export { SignOutButton } from "./ui/SignOutButton";
 export { ForgotPasswordForm } from "./ui/ForgotPasswordForm";
 export { ResetPasswordForm } from "./ui/ResetPasswordForm";
-export { signInSchema, type SignInFormValues } from "./model/sign-in.schema";
-export { signUpSchema, type SignUpFormValues } from "./model/sign-up.schema";
 export {
-  forgotPasswordSchema,
+  createSignInSchema,
+  type SignInFormValues,
+} from "./model/sign-in.schema";
+export {
+  createSignUpSchema,
+  type SignUpFormValues,
+} from "./model/sign-up.schema";
+export {
+  createForgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from "./model/forgot-password.schema";
 export {
-  resetPasswordSchema,
+  createResetPasswordSchema,
   type ResetPasswordFormValues,
 } from "./model/reset-password.schema";
 export {

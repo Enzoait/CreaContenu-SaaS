@@ -26,6 +26,88 @@ const fr = {
   "shell.langFrAria": "Français",
   "shell.langEnAria": "Anglais",
 
+  "auth.toolbarAria": "Langue et apparence",
+
+  "auth.titleSignIn": "Bon retour 👋",
+  "auth.titleSignUp": "Créez votre compte",
+  "auth.titleForgotPassword": "Mot de passe oublié",
+  "auth.titleResetPassword": "Réinitialiser le mot de passe",
+  "auth.subtitleSignIn": "Connectez-vous pour accéder à votre espace.",
+  "auth.subtitleSignUp":
+    "Rejoignez des milliers de créateurs de contenu.",
+  "auth.subtitleForgotPassword":
+    "Entrez votre e-mail pour recevoir un lien de réinitialisation.",
+  "auth.subtitleResetPassword":
+    "Choisissez un nouveau mot de passe sécurisé.",
+  "auth.tabListAria": "Mode d'authentification",
+  "auth.tabSignIn": "Connexion",
+  "auth.tabSignUp": "Inscription",
+  "auth.footerCopyright": "© 2026 CreaContenu — Tous droits réservés.",
+  "auth.promoBadge": "Nouveau ✦",
+  "auth.promoTitle":
+    "La façon la plus simple de gérer votre workflow de contenu",
+  "auth.promoSubtitle":
+    "Organisez, validez, publiez et suivez votre contenu depuis un seul tableau de bord intelligent.",
+  "auth.statCreators": "Créateurs",
+  "auth.statSatisfaction": "Satisfaction",
+  "auth.statRating": "Note moyenne",
+
+  "auth.fieldEmail": "Adresse e-mail",
+  "auth.placeholderEmail": "vous@exemple.com",
+  "auth.fieldPassword": "Mot de passe",
+  "auth.forgotPasswordLink": "Mot de passe oublié ?",
+  "auth.placeholderPasswordMin8": "min. 8 caractères",
+  "auth.acceptTerms":
+    "J'accepte les conditions et la politique de confidentialité",
+  "auth.signInSubmitting": "Connexion en cours…",
+  "auth.signInSubmit": "Se connecter",
+
+  "auth.fieldFirstName": "Prénom",
+  "auth.placeholderFirstName": "Camille",
+  "auth.fieldLastName": "Nom",
+  "auth.placeholderLastName": "Martin",
+  "auth.fieldPhone": "Téléphone",
+  "auth.placeholderPhone": "+33 6 00 00 00 00",
+  "auth.fieldCountry": "Pays",
+  "auth.placeholderCountry": "France",
+  "auth.fieldRegion": "Région / ville",
+  "auth.placeholderRegion": "Île-de-France",
+  "auth.fieldConfirmPassword": "Confirmer le mot de passe",
+  "auth.placeholderConfirmPassword": "Répétez le mot de passe",
+  "auth.fieldProfilePicture": "Lien de la photo de profil",
+  "auth.placeholderProfilePicture": "https://exemple.com/ma-photo.jpg",
+  "auth.signUpSubmitting": "Inscription en cours…",
+  "auth.signUpSubmit": "S'inscrire",
+  "auth.verifyEmailMessage":
+    "Vérifiez votre e-mail pour activer votre compte.",
+
+  "auth.forgotSubmitting": "Envoi en cours…",
+  "auth.forgotSendLink": "Envoyer le lien",
+  "auth.forgotSuccessMessage":
+    "Si un compte existe, un e-mail de réinitialisation a été envoyé.",
+  "auth.backToSignIn": "Retour à la connexion",
+
+  "auth.fieldNewPassword": "Nouveau mot de passe",
+  "auth.resetSubmitting": "Mise à jour…",
+  "auth.resetSubmit": "Réinitialiser le mot de passe",
+  "auth.resetSuccessMessage":
+    "Mot de passe mis à jour. Vous pouvez vous reconnecter.",
+
+  "auth.validationEmailInvalid": "E-mail invalide",
+  "auth.validationPasswordMin8":
+    "Le mot de passe doit contenir au moins 8 caractères",
+  "auth.validationFirstNameRequired": "Le prénom est obligatoire",
+  "auth.validationLastNameRequired": "Le nom est obligatoire",
+  "auth.validationPhoneRequired": "Le numéro de téléphone est obligatoire",
+  "auth.validationCountryRequired": "Le pays est obligatoire",
+  "auth.validationRegionRequired": "La région est obligatoire",
+  "auth.validationUrlInvalid": "URL invalide",
+  "auth.validationConfirmPasswordMin8":
+    "La confirmation doit contenir au moins 8 caractères",
+  "auth.validationPasswordMismatch": "Les mots de passe ne correspondent pas",
+  "auth.validationNewPasswordMin8":
+    "Le nouveau mot de passe doit contenir au moins 8 caractères",
+
   "dashboard.loading": "Chargement du dashboard…",
   "dashboard.loadError": "Une erreur est survenue pendant le chargement.",
   "dashboard.title": "Dashboard créateur — {suffix}",
@@ -339,6 +421,85 @@ const en: Record<MessageKey, string> = {
   "shell.profileAlt": "Profile photo for {name}",
   "shell.langFrAria": "French",
   "shell.langEnAria": "English",
+
+  "auth.toolbarAria": "Language and appearance",
+
+  "auth.titleSignIn": "Welcome back 👋",
+  "auth.titleSignUp": "Create your account",
+  "auth.titleForgotPassword": "Forgot password",
+  "auth.titleResetPassword": "Reset your password",
+  "auth.subtitleSignIn": "Sign in to access your workspace.",
+  "auth.subtitleSignUp": "Join thousands of content creators.",
+  "auth.subtitleForgotPassword":
+    "Enter your email to receive a reset link.",
+  "auth.subtitleResetPassword": "Choose a secure new password.",
+  "auth.tabListAria": "Authentication mode",
+  "auth.tabSignIn": "Sign in",
+  "auth.tabSignUp": "Sign up",
+  "auth.footerCopyright": "© 2026 CreaContenu — All rights reserved.",
+  "auth.promoBadge": "New ✦",
+  "auth.promoTitle": "The simplest way to manage your content workflow",
+  "auth.promoSubtitle":
+    "Organise, approve, publish and track your content from one smart dashboard.",
+  "auth.statCreators": "Creators",
+  "auth.statSatisfaction": "Satisfaction",
+  "auth.statRating": "Average rating",
+
+  "auth.fieldEmail": "Email address",
+  "auth.placeholderEmail": "you@example.com",
+  "auth.fieldPassword": "Password",
+  "auth.forgotPasswordLink": "Forgot password?",
+  "auth.placeholderPasswordMin8": "min. 8 characters",
+  "auth.acceptTerms":
+    "I accept the terms and privacy policy",
+  "auth.signInSubmitting": "Signing in…",
+  "auth.signInSubmit": "Sign in",
+
+  "auth.fieldFirstName": "First name",
+  "auth.placeholderFirstName": "Alex",
+  "auth.fieldLastName": "Last name",
+  "auth.placeholderLastName": "Martin",
+  "auth.fieldPhone": "Phone",
+  "auth.placeholderPhone": "+33 6 00 00 00 00",
+  "auth.fieldCountry": "Country",
+  "auth.placeholderCountry": "France",
+  "auth.fieldRegion": "Region / city",
+  "auth.placeholderRegion": "Île-de-France",
+  "auth.fieldConfirmPassword": "Confirm password",
+  "auth.placeholderConfirmPassword": "Repeat your password",
+  "auth.fieldProfilePicture": "Profile picture URL",
+  "auth.placeholderProfilePicture": "https://example.com/my-photo.jpg",
+  "auth.signUpSubmitting": "Signing up…",
+  "auth.signUpSubmit": "Sign up",
+  "auth.verifyEmailMessage":
+    "Check your email to activate your account.",
+
+  "auth.forgotSubmitting": "Sending…",
+  "auth.forgotSendLink": "Send link",
+  "auth.forgotSuccessMessage":
+    "If an account exists, a reset email has been sent.",
+  "auth.backToSignIn": "Back to sign in",
+
+  "auth.fieldNewPassword": "New password",
+  "auth.resetSubmitting": "Updating…",
+  "auth.resetSubmit": "Reset password",
+  "auth.resetSuccessMessage":
+    "Password updated. You can sign in again.",
+
+  "auth.validationEmailInvalid": "Invalid email",
+  "auth.validationPasswordMin8":
+    "Password must be at least 8 characters",
+  "auth.validationFirstNameRequired": "First name is required",
+  "auth.validationLastNameRequired": "Last name is required",
+  "auth.validationPhoneRequired": "Phone number is required",
+  "auth.validationCountryRequired": "Country is required",
+  "auth.validationRegionRequired": "Region is required",
+  "auth.validationUrlInvalid": "Invalid URL",
+  "auth.validationConfirmPasswordMin8":
+    "Confirmation must be at least 8 characters",
+  "auth.validationPasswordMismatch": "Passwords do not match",
+  "auth.validationNewPasswordMin8":
+    "New password must be at least 8 characters",
 
   "dashboard.loading": "Loading dashboard…",
   "dashboard.loadError": "Something went wrong while loading.",

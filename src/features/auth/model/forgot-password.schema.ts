@@ -1,7 +1,14 @@
 import { z } from "zod";
+import type { MessageKey } from "../../../shared/i18n/messages";
 
-export const forgotPasswordSchema = z.object({
-  email: z.string().email("Email invalide"),
-});
+export type AuthTranslate = (key: MessageKey) => string;
 
-export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+export function createForgotPasswordSchema(t: AuthTranslate) {
+  return z.object({
+    email: z.string().email(t("auth.validationEmailInvalid")),
+  });
+}
+
+export type ForgotPasswordFormValues = z.infer<
+  ReturnType<typeof createForgotPasswordSchema>
+>;

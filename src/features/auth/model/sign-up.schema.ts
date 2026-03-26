@@ -1,32 +1,35 @@
 import { z } from "zod";
+import type { MessageKey } from "../../../shared/i18n/messages";
 
-export const signUpSchema = z
-  .object({
-    firstname: z.string().trim().min(1, "Le prénom est obligatoire"),
-    lastname: z.string().trim().min(1, "Le nom est obligatoire"),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(1, "Le numéro de téléphone est obligatoire"),
-    country: z.string().trim().min(1, "Le pays est obligatoire"),
-    region: z.string().trim().min(1, "La région est obligatoire"),
-    email: z.string().email("Email invalide"),
-    profilePicture: z
-      .string()
-      .trim()
-      .url("URL invalide")
-      .optional()
-      .or(z.literal("")),
-    password: z
-      .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caracteres"),
-    confirmPassword: z
-      .string()
-      .min(8, "La confirmation doit contenir au moins 8 caracteres"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Les mots de passe ne correspondent pas",
-  });
+export type AuthTranslate = (key: MessageKey) => string;
 
-export type SignUpFormValues = z.infer<typeof signUpSchema>;
+export function createSignUpSchema(t: AuthTranslate) {
+  return z
+    .object({
+      firstname: z.string().trim().min(1, t("auth.validationFirstNameRequired")),
+      lastname: z.string().trim().min(1, t("auth.validationLastNameRequired")),
+      phoneNumber: z
+        .string()
+        .trim()
+        .min(1, t("auth.validationPhoneRequired")),
+      country: z.string().trim().min(1, t("auth.validationCountryRequired")),
+      region: z.string().trim().min(1, t("auth.validationRegionRequired")),
+      email: z.string().email(t("auth.validationEmailInvalid")),
+      profilePicture: z.union([
+        z.literal(""),
+        z.string().url({ message: t("auth.validationUrlInvalid") }),
+      ]),
+      password: z
+        .string()
+        .min(8, t("auth.validationPasswordMin8")),
+      confirmPassword: z
+        .string()
+        .min(8, t("auth.validationConfirmPasswordMin8")),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      path: ["confirmPassword"],
+      message: t("auth.validationPasswordMismatch"),
+    });
+}
+
+export type SignUpFormValues = z.infer<ReturnType<typeof createSignUpSchema>>;

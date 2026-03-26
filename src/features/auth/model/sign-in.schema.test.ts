@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { signInSchema } from "./sign-in.schema";
+import { translate } from "../../../shared/i18n/messages";
+import { createSignInSchema } from "./sign-in.schema";
 
-describe("signInSchema", () => {
+const signInSchema = createSignInSchema((k) => translate("fr", k));
+
+describe("createSignInSchema", () => {
   it("valide un payload correct", () => {
     const result = signInSchema.safeParse({
       email: "test@creacontenu.com",

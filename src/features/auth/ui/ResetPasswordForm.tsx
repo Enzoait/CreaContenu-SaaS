@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useI18n } from "../../../shared/i18n";
 import {
-  resetPasswordSchema,
+  createResetPasswordSchema,
   type ResetPasswordFormValues,
 } from "../model/reset-password.schema";
 import { useResetPasswordMutation } from "../model/use-reset-password-mutation";
@@ -15,6 +16,11 @@ export const ResetPasswordForm = ({
   onBackToSignIn,
 }: ResetPasswordFormProps) => {
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const { t } = useI18n();
+  const resetPasswordSchema = useMemo(
+    () => createResetPasswordSchema(t),
+    [t],
+  );
   const { mutateAsync, isPending, isError, error } = useResetPasswordMutation();
   const {
     register,
@@ -36,13 +42,13 @@ export const ResetPasswordForm = ({
   return (
     <form className="auth-form" noValidate onSubmit={handleSubmit(onSubmit)}>
       <label className="field-label" htmlFor="reset-password-new">
-        Nouveau mot de passe
+        {t("auth.fieldNewPassword")}
       </label>
       <input
         id="reset-password-new"
         className="field-input"
         type="password"
-        placeholder="min 8 caracteres"
+        placeholder={t("auth.placeholderPasswordMin8")}
         {...register("newPassword")}
       />
       {errors.newPassword ? (
@@ -50,13 +56,13 @@ export const ResetPasswordForm = ({
       ) : null}
 
       <label className="field-label" htmlFor="reset-password-confirm">
-        Confirmer le mot de passe
+        {t("auth.fieldConfirmPassword")}
       </label>
       <input
         id="reset-password-confirm"
         className="field-input"
         type="password"
-        placeholder="repetez le mot de passe"
+        placeholder={t("auth.placeholderConfirmPassword")}
         {...register("confirmPassword")}
       />
       {errors.confirmPassword ? (
@@ -64,18 +70,16 @@ export const ResetPasswordForm = ({
       ) : null}
 
       <button className="auth-primary" type="submit" disabled={isPending}>
-        {isPending ? "Mise a jour..." : "Reinitialiser le mot de passe"}
+        {isPending ? t("auth.resetSubmitting") : t("auth.resetSubmit")}
       </button>
 
       {isError ? <p className="error">{error.message}</p> : null}
       {hasSubmitted ? (
-        <p className="success">
-          Mot de passe mis a jour. Vous pouvez vous reconnecter.
-        </p>
+        <p className="success">{t("auth.resetSuccessMessage")}</p>
       ) : null}
 
       <button type="button" className="text-action" onClick={onBackToSignIn}>
-        Retour a la connexion
+        {t("auth.backToSignIn")}
       </button>
     </form>
   );

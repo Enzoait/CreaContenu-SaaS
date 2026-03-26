@@ -1,11 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { signUpSchema, type SignUpFormValues } from "../model/sign-up.schema";
+import { useI18n } from "../../../shared/i18n";
+import {
+  createSignUpSchema,
+  type SignUpFormValues,
+} from "../model/sign-up.schema";
 import { useSignUpMutation } from "../model/use-sign-up-mutation";
 
 export const SignUpForm = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
+  const signUpSchema = useMemo(() => createSignUpSchema(t), [t]);
   const { mutateAsync, isPending, isError, error, data } = useSignUpMutation();
   const {
     register,
@@ -36,13 +43,13 @@ export const SignUpForm = () => {
   return (
     <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
       <label className="field-label" htmlFor="sign-up-firstname">
-        Prénom
+        {t("auth.fieldFirstName")}
       </label>
       <input
         id="sign-up-firstname"
         className="field-input"
         type="text"
-        placeholder="Michael"
+        placeholder={t("auth.placeholderFirstName")}
         {...register("firstname")}
       />
       {errors.firstname ? (
@@ -50,13 +57,13 @@ export const SignUpForm = () => {
       ) : null}
 
       <label className="field-label" htmlFor="sign-up-lastname">
-        Nom
+        {t("auth.fieldLastName")}
       </label>
       <input
         id="sign-up-lastname"
         className="field-input"
         type="text"
-        placeholder="Rodriguez"
+        placeholder={t("auth.placeholderLastName")}
         {...register("lastname")}
       />
       {errors.lastname ? (
@@ -64,13 +71,13 @@ export const SignUpForm = () => {
       ) : null}
 
       <label className="field-label" htmlFor="sign-up-phone">
-        Téléphone
+        {t("auth.fieldPhone")}
       </label>
       <input
         id="sign-up-phone"
         className="field-input"
         type="tel"
-        placeholder="+33 6 00 00 00 00"
+        placeholder={t("auth.placeholderPhone")}
         {...register("phoneNumber")}
       />
       {errors.phoneNumber ? (
@@ -78,13 +85,13 @@ export const SignUpForm = () => {
       ) : null}
 
       <label className="field-label" htmlFor="sign-up-country">
-        Pays
+        {t("auth.fieldCountry")}
       </label>
       <input
         id="sign-up-country"
         className="field-input"
         type="text"
-        placeholder="France"
+        placeholder={t("auth.placeholderCountry")}
         {...register("country")}
       />
       {errors.country ? (
@@ -92,37 +99,37 @@ export const SignUpForm = () => {
       ) : null}
 
       <label className="field-label" htmlFor="sign-up-region">
-        Région / Ville
+        {t("auth.fieldRegion")}
       </label>
       <input
         id="sign-up-region"
         className="field-input"
         type="text"
-        placeholder="Île-de-France"
+        placeholder={t("auth.placeholderRegion")}
         {...register("region")}
       />
       {errors.region ? <p className="error">{errors.region.message}</p> : null}
 
       <label className="field-label" htmlFor="sign-up-email">
-        Adresse email
+        {t("auth.fieldEmail")}
       </label>
       <input
         id="sign-up-email"
         className="field-input"
         type="email"
-        placeholder="vous@exemple.com"
+        placeholder={t("auth.placeholderEmail")}
         {...register("email")}
       />
       {errors.email ? <p className="error">{errors.email.message}</p> : null}
 
       <label className="field-label" htmlFor="sign-up-password">
-        Mot de passe
+        {t("auth.fieldPassword")}
       </label>
       <input
         id="sign-up-password"
         className="field-input"
         type="password"
-        placeholder="min 8 caracteres"
+        placeholder={t("auth.placeholderPasswordMin8")}
         {...register("password")}
       />
       {errors.password ? (
@@ -130,13 +137,13 @@ export const SignUpForm = () => {
       ) : null}
 
       <label className="field-label" htmlFor="sign-up-confirm-password">
-        Confirmer le mot de passe
+        {t("auth.fieldConfirmPassword")}
       </label>
       <input
         id="sign-up-confirm-password"
         className="field-input"
         type="password"
-        placeholder="repetez le mot de passe"
+        placeholder={t("auth.placeholderConfirmPassword")}
         {...register("confirmPassword")}
       />
       {errors.confirmPassword ? (
@@ -144,13 +151,13 @@ export const SignUpForm = () => {
       ) : null}
 
       <label className="field-label" htmlFor="sign-up-avatar">
-        Lien de photo de profil
+        {t("auth.fieldProfilePicture")}
       </label>
       <input
         id="sign-up-avatar"
         className="field-input"
         type="url"
-        placeholder="https://exemple.com/ma-photo.jpg"
+        placeholder={t("auth.placeholderProfilePicture")}
         {...register("profilePicture")}
       />
       {errors.profilePicture ? (
@@ -159,18 +166,16 @@ export const SignUpForm = () => {
 
       <label className="checkbox-row">
         <input type="checkbox" />
-        <span>J'accepte les conditions et la politique de confidentialite</span>
+        <span>{t("auth.acceptTerms")}</span>
       </label>
 
       <button className="auth-primary" type="submit" disabled={isPending}>
-        {isPending ? "Inscription en cours..." : "S'inscrire"}
+        {isPending ? t("auth.signUpSubmitting") : t("auth.signUpSubmit")}
       </button>
 
       {isError ? <p className="error">{error.message}</p> : null}
       {data?.requiresEmailConfirmation ? (
-        <p className="success">
-          Verifiez votre email pour activer votre compte.
-        </p>
+        <p className="success">{t("auth.verifyEmailMessage")}</p>
       ) : null}
     </form>
   );
