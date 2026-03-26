@@ -6,6 +6,62 @@
   background: #f6f7fb;
 }
 
+.errorRetryButton {
+  margin-top: 14px;
+  border: 1px solid #991b1b;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #991b1b;
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.errorRetryButton:hover {
+  filter: brightness(0.97);
+}
+
+:global([data-theme="dark"]) .errorRetryButton {
+  border-color: #fecaca;
+  background: rgba(15, 23, 42, 0.6);
+  color: #fecaca;
+}
+
+.loadErrorToolbar {
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.dataLoadFailedMessage {
+  margin: 0;
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dataLoadFailedDetail {
+  margin: 6px 0 0;
+  color: #991b1b;
+  font-size: 0.82rem;
+  word-break: break-word;
+}
+
+:global([data-theme="dark"]) .loadErrorToolbar {
+  background: rgba(127, 29, 29, 0.22);
+  border-color: #7f1d1d;
+}
+
+:global([data-theme="dark"]) .dataLoadFailedMessage {
+  color: #fca5a5;
+}
+
+:global([data-theme="dark"]) .dataLoadFailedDetail {
+  color: #fecaca;
+}
+
 .shell {
   min-height: 100vh;
   display: grid;
@@ -280,6 +336,12 @@
 .filterButtonActive {
   background: #ffffff;
   color: #4f46e5;
+}
+
+.filterButtonDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .addPlatformButton {

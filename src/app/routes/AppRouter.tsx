@@ -1,6 +1,15 @@
+import { Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AccountPage, AuthPage, DashboardPage, VideosPage } from "../../pages";
+import {
+  AccountPage,
+  AuthPage,
+  DashboardPage,
+  VideosPage,
+  VideosPageQueryErrorFallback,
+} from "../../pages";
 import { selectIsAuthenticated, useAuthStore } from "../../shared/model";
+import { AnimatedLoader } from "../../shared/ui/AnimatedLoader";
+import { QueryRouteErrorBoundary } from "../../shared/ui/QueryRouteErrorBoundary";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export const AppRouter = () => {
@@ -30,7 +39,15 @@ export const AppRouter = () => {
         path="/videos"
         element={
           <ProtectedRoute>
-            <VideosPage />
+            <QueryRouteErrorBoundary
+              fallbackRender={({ error, onRetry }) => (
+                <VideosPageQueryErrorFallback error={error} onRetry={onRetry} />
+              )}
+            >
+              <Suspense fallback={<AnimatedLoader />}>
+                <VideosPage />
+              </Suspense>
+            </QueryRouteErrorBoundary>
           </ProtectedRoute>
         }
       />

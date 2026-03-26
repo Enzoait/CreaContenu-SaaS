@@ -26,6 +26,10 @@ const fr = {
   "shell.langFrAria": "Français",
   "shell.langEnAria": "Anglais",
 
+  "app.errorBoundaryHint":
+    "L’application a rencontré une erreur inattendue. Rechargez la page pour continuer.",
+  "app.reloadPage": "Recharger la page",
+
   "auth.toolbarAria": "Langue et apparence",
 
   "auth.titleSignIn": "Bon retour 👋",
@@ -111,6 +115,7 @@ const fr = {
 
   "dashboard.loading": "Chargement du dashboard…",
   "dashboard.loadError": "Une erreur est survenue pendant le chargement.",
+  "dashboard.dataLoadFailed": "Impossible de charger les données.",
   "dashboard.title": "Dashboard créateur — {suffix}",
   "dashboard.bannerSubtitle":
     "Filtres actifs sur toutes les sections + recherche globale.",
@@ -315,6 +320,9 @@ const fr = {
   "videos.errorStage": "Impossible de mettre à jour l'étape.",
   "videos.loadError":
     "Une erreur est survenue pendant le chargement des vidéos.",
+  "videos.errorAlertTitle": "Une erreur s’est produite",
+  "videos.retry": "Réessayer",
+  "videos.rowDelete": "Supprimer",
   "videos.reorderError": "Impossible de réordonner les vidéos.",
 
   "account.tabProfile": "Mon profil",
@@ -427,6 +435,10 @@ const en: Record<MessageKey, string> = {
   "shell.langFrAria": "French",
   "shell.langEnAria": "English",
 
+  "app.errorBoundaryHint":
+    "The app hit an unexpected error. Reload the page to continue.",
+  "app.reloadPage": "Reload page",
+
   "auth.toolbarAria": "Language and appearance",
 
   "auth.titleSignIn": "Welcome back 👋",
@@ -506,6 +518,7 @@ const en: Record<MessageKey, string> = {
 
   "dashboard.loading": "Loading dashboard…",
   "dashboard.loadError": "Something went wrong while loading.",
+  "dashboard.dataLoadFailed": "Could not load data.",
   "dashboard.title": "Creator dashboard — {suffix}",
   "dashboard.bannerSubtitle": "Active filters on all sections + global search.",
   "dashboard.periodAll": "All",
@@ -704,6 +717,9 @@ const en: Record<MessageKey, string> = {
   "videos.errorDelete": "Could not delete.",
   "videos.errorStage": "Could not update stage.",
   "videos.loadError": "An error occurred while loading videos.",
+  "videos.errorAlertTitle": "Something went wrong",
+  "videos.retry": "Try again",
+  "videos.rowDelete": "Delete",
   "videos.reorderError": "Could not reorder videos.",
 
   "account.tabProfile": "My profile",

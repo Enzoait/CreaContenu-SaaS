@@ -261,7 +261,8 @@ function isInPeriod(
 export function DashboardOverview() {
   const profileTitleSuffix = useProfileTitleSuffix();
   const user = useAuthStore(selectAuthUser);
-  const { data, isLoading, isFetching, isError } = useDashboardData();
+  const { data, isLoading, isFetching, isError, error, refetch } =
+    useDashboardData();
   const period = useDashboardPeriod();
   const platform = useDashboardPlatform();
   const setPeriod = useSetDashboardPeriod();
@@ -1807,12 +1808,131 @@ export function DashboardOverview() {
   const shouldShowLoader =
     !bootLoaderDone || isLoading || (!data && isFetching);
   if (shouldShowLoader) return <AnimatedLoader />;
-  if (isError || !data)
+  if (isError || !data) {
+    const detail =
+      error instanceof Error ? error.message : error ? String(error) : "";
+    const periodKeys = ["7d", "30d", "90d", "all"] as const;
+    const errorPanels = [
+      ["planning", styles.panelPlanning, t("dashboard.planningTitle")] as const,
+      ["videos", styles.panelVideos, t("dashboard.panelVideosHeading")] as const,
+      ["todo", styles.panelTodo, t("dashboard.todoTitle")] as const,
+      ["chart", styles.panelChart, t("dashboard.statsTitle")] as const,
+    ];
     return (
-      <div className={styles.feedback}>
-        Une erreur est survenue pendant le chargement.
-      </div>
+      <CreatorAppShell
+        topBarTrailing={
+          <div className={styles.searchBox}>
+            <input
+              className={styles.searchInput}
+              placeholder={t("dashboard.searchPlaceholder")}
+              disabled
+              readOnly
+              aria-disabled="true"
+            />
+          </div>
+        }
+      >
+        <>
+          <section className={styles.banner}>
+            <h1>{t("dashboard.title", { suffix: profileTitleSuffix })}</h1>
+            <p>{t("dashboard.bannerSubtitle")}</p>
+            <div className={styles.bannerActions}>
+              {periodKeys.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  disabled
+                  className={`${styles.filterButton} ${styles.filterButtonDisabled}`}
+                >
+                  <HiOutlineCalendarDays aria-hidden="true" />
+                  {item === "all" ? t("dashboard.periodAll") : item}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled
+                className={`${styles.filterButton} ${styles.filterButtonDisabled}`}
+              >
+                {t("dashboard.allPlatforms")}
+              </button>
+            </div>
+          </section>
+
+          <div className={styles.loadErrorToolbar} role="alert">
+            <p className={styles.dataLoadFailedMessage}>
+              {t("dashboard.dataLoadFailed")}
+            </p>
+            {detail ? (
+              <p className={styles.dataLoadFailedDetail}>{detail}</p>
+            ) : null}
+            <button
+              type="button"
+              className={styles.errorRetryButton}
+              onClick={() => {
+                void refetch();
+              }}
+            >
+              {t("videos.retry")}
+            </button>
+          </div>
+
+          <h2 className={styles.sectionTitle}>{t("dashboard.panelChart")}</h2>
+          <section className={styles.statsGrid}>
+            <article className={styles.statCard}>
+              <span className={`${styles.statIcon} ${styles.statIconPurple}`}>
+                <HiOutlineClock aria-hidden="true" />
+              </span>
+              <p className={styles.dataLoadFailedMessage}>
+                {t("dashboard.dataLoadFailed")}
+              </p>
+            </article>
+            <article className={styles.statCard}>
+              <span className={`${styles.statIcon} ${styles.statIconPink}`}>
+                <HiOutlineCheckCircle aria-hidden="true" />
+              </span>
+              <p className={styles.dataLoadFailedMessage}>
+                {t("dashboard.dataLoadFailed")}
+              </p>
+            </article>
+            <article className={styles.statCard}>
+              <div className={styles.cardTopRow}>
+                <p>{t("dashboard.statEngagementCardTitle")}</p>
+                <span className={styles.positiveBadge}>—</span>
+              </div>
+              <p className={styles.dataLoadFailedMessage}>
+                {t("dashboard.dataLoadFailed")}
+              </p>
+            </article>
+            <article className={`${styles.statCard} ${styles.platformCard}`}>
+              <h3>{t("dashboard.byPlatform")}</h3>
+              <p className={styles.dataLoadFailedMessage}>
+                {t("dashboard.dataLoadFailed")}
+              </p>
+            </article>
+          </section>
+
+          <section className={styles.contentGrid}>
+            {errorPanels.map(([panelKey, panelClass, panelTitle]) => (
+              <article
+                key={panelKey}
+                data-panel-card={panelKey}
+                className={`${styles.panelCard} ${panelClass} ${styles.panelCardOpen}`}
+              >
+                <div className={styles.panelContent}>
+                  <div className={styles.panelHeader}>
+                    <h3>{panelTitle}</h3>
+                  </div>
+                  <p className={styles.dataLoadFailedMessage}>
+                    {t("dashboard.dataLoadFailed")}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </section>
+        </>
+      </CreatorAppShell>
     );
+  }
 
   return (
     <CreatorAppShell

@@ -110,12 +110,10 @@ describe("DashboardOverview", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText("Chargement du dashboard…"),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Chargement" })).toBeInTheDocument();
   });
 
-  it("affiche le contenu principal quand les données sont prêtes", () => {
+  it("affiche le contenu principal quand les données sont prêtes", async () => {
     dashboardMocks.useDashboardData.mockReturnValue({
       data: {
         stats: {
@@ -138,16 +136,24 @@ describe("DashboardOverview", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Dashboard créateur — Test/i),
-    ).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(/Dashboard créateur — Test/i),
+        ).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
   });
 
-  it("affiche un message d’erreur si le chargement échoue", () => {
+  it("affiche un message d’erreur si le chargement échoue", async () => {
+    const refetch = vi.fn();
     dashboardMocks.useDashboardData.mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: true,
+      error: new Error("Échec réseau"),
+      refetch,
     });
 
     renderDashboard(
@@ -156,9 +162,15 @@ describe("DashboardOverview", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText("Une erreur est survenue pendant le chargement."),
-    ).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
+    const failedMessages = screen.getAllByText(/Impossible de charger les données/);
+    expect(failedMessages.length).toBeGreaterThan(0);
+    expect(screen.getByText("Échec réseau")).toBeInTheDocument();
   });
 
   it("crée un événement planning après l’ajout d’une vidéo dans le suivi", async () => {
@@ -186,9 +198,13 @@ describe("DashboardOverview", () => {
       </MemoryRouter>,
     );
 
-    const toggles = screen.getAllByRole("button", {
-      name: /Ajouter un suivi vidéo/i,
-    });
+    const toggles = await waitFor(
+      () =>
+        screen.getAllByRole("button", {
+          name: /Ajouter une vidéo/i,
+        }),
+      { timeout: 3000 },
+    );
     await user.click(toggles[0]);
 
     const titles = screen.getAllByPlaceholderText("Titre de la vidéo");
@@ -200,9 +216,7 @@ describe("DashboardOverview", () => {
     ) as HTMLInputElement;
     await user.type(dateInput, "2026-12-15");
 
-    const submits = screen.getAllByRole("button", {
-      name: /Ajouter un suivi vidéo/i,
-    });
+    const submits = screen.getAllByRole("button", { name: /^Ajouter$/i });
     await user.click(submits[0]);
 
     await waitFor(() => {

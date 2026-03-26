@@ -1,1 +1,4 @@
-export { VideosPage } from "./ui/videos-page";
+export {
+  VideosPage,
+  VideosPageQueryErrorFallback,
+} from "./ui/videos-page";

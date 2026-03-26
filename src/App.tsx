@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AppRouter } from "./app/routes";
 import { QueryProvider } from "./app/providers";
+import { AppErrorBoundary } from "./shared/ui/AppErrorBoundary";
 import { AuthBootstrap } from "./app/model";
 import { useAppTheme } from "./shared/model";
 import { useLocaleStore } from "./shared/model/locale-store";
@@ -25,11 +26,13 @@ function App() {
 
   return (
     <QueryProvider>
-      <BrowserRouter>
-        <AuthBootstrap>
-          <AppRouter />
-        </AuthBootstrap>
-      </BrowserRouter>
+      <AppErrorBoundary>
+        <BrowserRouter>
+          <AuthBootstrap>
+            <AppRouter />
+          </AuthBootstrap>
+        </BrowserRouter>
+      </AppErrorBoundary>
     </QueryProvider>
   );
 }

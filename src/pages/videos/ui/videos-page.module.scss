@@ -9,6 +9,13 @@
   --muted: #51607a;
   --line: #d6dfec;
   --panel: #ffffff;
+  --field-bg: #ffffff;
+  --field-fg: #14213d;
+  --field-border: #c7d3e5;
+  --primary-btn-bg: #00a3a3;
+  --primary-btn-fg: #ffffff;
+  --primary-btn-border: #008f8f;
+  --danger-bg: #fff7ed;
   --hero-background:
     radial-gradient(
       circle at 88% 0%,
@@ -31,6 +38,13 @@
   --muted: #9aa3b2;
   --line: #263238;
   --panel: #0f1620;
+  --field-bg: #0b1116;
+  --field-fg: #e6eef8;
+  --field-border: #1a2328;
+  --primary-btn-bg: #5b4fcf;
+  --primary-btn-fg: #f8fafc;
+  --primary-btn-border: #4338ca;
+  --danger-bg: rgba(249, 115, 22, 0.12);
   --hero-background: linear-gradient(
     120deg,
     rgba(255, 255, 255, 0.02),
@@ -157,12 +171,30 @@
 
 .formGrid input,
 .formGrid select {
-  border: 1px solid #c7d3e5;
+  border: 1px solid var(--field-border);
   border-radius: 8px;
-  background: #ffffff;
-  color: var(--ink);
+  background: var(--field-bg);
+  color: var(--field-fg);
   padding: 8px 10px;
   font-size: 0.86rem;
+}
+
+.formGrid input.fieldError,
+.formGrid select.fieldError {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
+}
+
+.fieldError {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
+}
+
+:global([data-theme="dark"]) .formGrid input.fieldError,
+:global([data-theme="dark"]) .formGrid select.fieldError,
+:global([data-theme="dark"]) .fieldError {
+  border-color: #f87171;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.35);
 }
 
 .formActions {
@@ -170,7 +202,7 @@
   gap: 8px;
 }
 
-.formActions button,
+.formActions button:not(.primaryButton),
 .secondaryButton,
 .dangerButton {
   border: 1px solid var(--line);
@@ -181,10 +213,32 @@
   font-weight: 700;
 }
 
+.primaryButton {
+  border: 1px solid var(--primary-btn-border);
+  border-radius: 999px;
+  background: var(--primary-btn-bg);
+  color: var(--primary-btn-fg);
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.primaryButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .dangerButton {
   border-color: var(--accent-2);
   color: var(--accent-2);
-  background: var(--panel);
+  background: var(--danger-bg);
 }
 
 /* Ensure row action buttons use theme variables too */
@@ -201,13 +255,48 @@
 .rowActions .dangerButton {
   border-color: var(--accent-2);
   color: var(--accent-2);
-  background: var(--panel);
+  background: var(--danger-bg);
+}
+
+.errorBanner {
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #7f1d1d;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+}
+
+.errorBanner strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+:global([data-theme="dark"]) .errorBanner {
+  border-color: #7f1d1d;
+  background: rgba(127, 29, 29, 0.35);
+  color: #fecaca;
 }
 
 .errorMessage {
   margin: 0;
   color: #9a3412;
   font-size: 0.85rem;
+}
+
+:global([data-theme="dark"]) .errorMessage {
+  color: #fdba74;
+}
+
+.validationHint {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  color: #b45309;
+}
+
+:global([data-theme="dark"]) .validationHint {
+  color: #fcd34d;
 }
 
 .videoBoard {
@@ -375,10 +464,10 @@
 }
 
 .stageRow select {
-  border: 1px solid #c7d3e5;
+  border: 1px solid var(--field-border);
   border-radius: 8px;
-  background: #ffffff;
-  color: var(--ink);
+  background: var(--field-bg);
+  color: var(--field-fg);
   padding: 6px 8px;
 }
 
@@ -511,12 +600,19 @@
     color: #e6eef8;
   }
 
-  :global([data-theme="dark"]) .formActions button,
+  :global([data-theme="dark"]) .formActions button:not(.primaryButton),
   :global([data-theme="dark"]) .secondaryButton,
   :global([data-theme="dark"]) .dangerButton {
     background: #0b1116;
     border-color: #23303a;
     color: #e6eef8;
+  }
+
+  :global([data-theme="dark"]) .formActions button.primaryButton,
+  :global([data-theme="dark"]) .primaryButton {
+    background: var(--primary-btn-bg);
+    border-color: var(--primary-btn-border);
+    color: var(--primary-btn-fg);
   }
 
   :global([data-theme="dark"]) .videoRow {
@@ -548,14 +644,34 @@
   :global([data-theme="dark"]) .toggleFormButton,
   :global([data-theme="dark"]) .formGrid input,
   :global([data-theme="dark"]) .formGrid select,
-  :global([data-theme="dark"]) .formActions button,
+  :global([data-theme="dark"]) .formActions button:not(.primaryButton),
   :global([data-theme="dark"]) .secondaryButton,
   :global([data-theme="dark"]) .dangerButton,
   :global([data-theme="dark"]) .metaChip,
   :global([data-theme="dark"]) .empty {
     background: var(--panel) !important;
     border-color: #232a33 !important;
-    color: var(--text) !important;
+    color: var(--ink) !important;
+  }
+
+  :global([data-theme="dark"]) .formGrid input,
+  :global([data-theme="dark"]) .formGrid select,
+  :global([data-theme="dark"]) .stageRow select {
+    background: var(--field-bg) !important;
+    border-color: var(--field-border) !important;
+    color: var(--field-fg) !important;
+  }
+
+  :global([data-theme="dark"]) .formActions button.primaryButton {
+    background: var(--primary-btn-bg) !important;
+    border-color: var(--primary-btn-border) !important;
+    color: var(--primary-btn-fg) !important;
+  }
+
+  :global([data-theme="dark"]) .dangerButton {
+    background: var(--danger-bg) !important;
+    border-color: var(--accent-2) !important;
+    color: var(--accent-2) !important;
   }
 
   :global([data-theme="dark"]) .toggleFormButton {

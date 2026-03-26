@@ -11,9 +11,8 @@ import {
 } from "../../../entities/dashboard/api/videos-api";
 import { toDateKey } from "../../../shared/lib/date-key";
 import { moveInArray } from "../../../shared/lib/reorder-list";
-import { useDashboardData } from "../../../entities/dashboard/model/use-dashboard-data";
+import { useDashboardDataSuspense } from "../../../entities/dashboard/model/use-dashboard-data";
 import { selectAuthUser, useAuthStore } from "../../../shared/model/auth-store";
-import { AnimatedLoader } from "../../../shared/ui/AnimatedLoader";
 import { useI18n } from "../../../shared/i18n/use-i18n";
 import { CreatorAppShell } from "../../../widgets/creator-app-shell";
 import styles from "./videos-page.module.scss";
@@ -68,11 +67,37 @@ function formatDate(value: string, locale: string): string {
   });
 }
 
-export function VideosPage() {
+export function VideosPageQueryErrorFallback({
+  error,
+  onRetry,
+}: {
+  error: Error;
+  onRetry: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <CreatorAppShell>
+      <section className={styles.page}>
+        <div className={styles.errorBanner} role="alert">
+          <strong>{t("videos.errorAlertTitle")}</strong>
+          <p>{t("videos.loadError")}</p>
+          {error.message ? (
+            <p className={styles.errorMessage}>{error.message}</p>
+          ) : null}
+          <button type="button" className={styles.primaryButton} onClick={onRetry}>
+            {t("videos.retry")}
+          </button>
+        </div>
+      </section>
+    </CreatorAppShell>
+  );
+}
+
+function VideosPageWithUser({ userId }: { userId: string }) {
   const { t, localeTag } = useI18n();
   const user = useAuthStore(selectAuthUser);
   const queryClient = useQueryClient();
-  const { data, isLoading, isFetching, isError } = useDashboardData();
+  const { data } = useDashboardDataSuspense(userId);
 
   const stageLabelMap = useMemo(
     () => ({
@@ -87,7 +112,8 @@ export function VideosPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [draggingVideoRowIndex, setDraggingVideoRowIndex] = useState<
     number | null
   >(null);
@@ -184,23 +210,12 @@ export function VideosPage() {
             queryKey: ["dashboard", "overview", user.id],
           });
         } catch (err) {
-          setErrorMessage(
+          setApiErrorMessage(
             err instanceof Error ? err.message : t("videos.reorderError"),
           );
         }
       })();
     };
-
-  const shouldShowLoader = isLoading || (!data && isFetching);
-  if (shouldShowLoader) return <AnimatedLoader />;
-
-  if (isError || !data) {
-    return (
-      <div className={styles.empty}>
-        Une erreur est survenue pendant le chargement des videos.
-      </div>
-    );
-  }
 
   const resetDraft = () => {
     setVideoDraft({
@@ -223,7 +238,8 @@ export function VideosPage() {
 
   const submitVideo = async () => {
     if (!user?.id) {
-      setErrorMessage(t("videos.errorUser"));
+      setApiErrorMessage(t("videos.errorUser"));
+      setShowValidationErrors(false);
       return;
     }
 
@@ -232,11 +248,13 @@ export function VideosPage() {
       !videoDraft.platform.trim() ||
       !videoDraft.deadline
     ) {
-      setErrorMessage(t("videos.errorRequired"));
+      setShowValidationErrors(true);
+      setApiErrorMessage(null);
       return;
     }
 
-    setErrorMessage(null);
+    setShowValidationErrors(false);
+    setApiErrorMessage(null);
     setIsSubmitting(true);
 
     try {
@@ -276,10 +294,8 @@ export function VideosPage() {
       resetDraft();
       setIsFormOpen(false);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Impossible d'enregistrer la video.",
+      setApiErrorMessage(
+        error instanceof Error ? error.message : t("videos.errorSave"),
       );
     } finally {
       setIsSubmitting(false);
@@ -300,7 +316,7 @@ export function VideosPage() {
   };
 
   const removeVideo = async (id: string) => {
-    setErrorMessage(null);
+    setApiErrorMessage(null);
     setIsSubmitting(true);
     try {
       await deleteVideoItem(id);
@@ -309,7 +325,7 @@ export function VideosPage() {
         resetDraft();
       }
     } catch (error) {
-      setErrorMessage(
+      setApiErrorMessage(
         error instanceof Error ? error.message : t("videos.errorDelete"),
       );
     } finally {
@@ -318,16 +334,20 @@ export function VideosPage() {
   };
 
   const setVideoStage = async (id: string, stage: VideoStage) => {
-    setErrorMessage(null);
+    setApiErrorMessage(null);
     try {
       await updateVideoItem(id, { stage });
       await refreshVideos();
     } catch (error) {
-      setErrorMessage(
+      setApiErrorMessage(
         error instanceof Error ? error.message : t("videos.errorStage"),
       );
     }
   };
+
+  const titleInvalid = showValidationErrors && !videoDraft.title.trim();
+  const platformInvalid = showValidationErrors && !videoDraft.platform.trim();
+  const deadlineInvalid = showValidationErrors && !videoDraft.deadline;
 
   return (
     <CreatorAppShell>
@@ -384,6 +404,9 @@ export function VideosPage() {
               <input
                 placeholder={t("videos.placeholderTitle")}
                 value={videoDraft.title}
+                aria-invalid={titleInvalid}
+                aria-required
+                className={titleInvalid ? styles.fieldError : undefined}
                 onChange={(event) =>
                   setVideoDraft((prev) => ({
                     ...prev,
@@ -394,6 +417,9 @@ export function VideosPage() {
               <input
                 type="date"
                 value={videoDraft.deadline}
+                aria-invalid={deadlineInvalid}
+                aria-required
+                className={deadlineInvalid ? styles.fieldError : undefined}
                 onChange={(event) =>
                   setVideoDraft((prev) => ({
                     ...prev,
@@ -403,6 +429,9 @@ export function VideosPage() {
               />
               <select
                 value={videoDraft.platform}
+                aria-invalid={platformInvalid}
+                aria-required
+                className={platformInvalid ? styles.fieldError : undefined}
                 onChange={(event) =>
                   setVideoDraft((prev) => ({
                     ...prev,
@@ -461,6 +490,7 @@ export function VideosPage() {
               <div className={`${styles.formActions} ${styles.formGridFieldFull}`}>
                 <button
                   type="button"
+                  className={styles.primaryButton}
                   onClick={submitVideo}
                   disabled={isSubmitting}
                 >
@@ -480,13 +510,22 @@ export function VideosPage() {
             </div>
           ) : null}
 
-          {errorMessage ? (
-            <p className={styles.errorMessage}>{errorMessage}</p>
+          {showValidationErrors ? (
+            <p className={styles.validationHint} role="alert">
+              {t("videos.errorRequired")}
+            </p>
+          ) : null}
+
+          {apiErrorMessage ? (
+            <div className={styles.errorBanner} role="alert">
+              <strong>{t("videos.errorAlertTitle")}</strong>
+              <p className={styles.errorMessage}>{apiErrorMessage}</p>
+            </div>
           ) : null}
         </section>
 
         {videos.length === 0 ? (
-          <div className={styles.empty}>Aucune video pour le moment.</div>
+          <div className={styles.empty}>{t("videos.empty")}</div>
         ) : null}
 
         {videos.length > 0 ? (
@@ -567,11 +606,11 @@ export function VideosPage() {
                           )
                         }
                       >
-                        <option value="idea">Idee</option>
-                        <option value="scripting">Script</option>
-                        <option value="recording">Tournage</option>
-                        <option value="editing">Montage</option>
-                        <option value="published">Publiee</option>
+                        <option value="idea">{stageLabelMap.idea}</option>
+                        <option value="scripting">{stageLabelMap.scripting}</option>
+                        <option value="recording">{stageLabelMap.recording}</option>
+                        <option value="editing">{stageLabelMap.editing}</option>
+                        <option value="published">{stageLabelMap.published}</option>
                       </select>
                     </div>
                     <div className={styles.rowActions}>
@@ -580,7 +619,7 @@ export function VideosPage() {
                         className={styles.secondaryButton}
                         onClick={() => startEdit(video)}
                       >
-                        Modifier
+                        {t("videos.modify")}
                       </button>
                       <button
                         type="button"
@@ -588,7 +627,7 @@ export function VideosPage() {
                         onClick={() => removeVideo(video.id)}
                         disabled={isSubmitting}
                       >
-                        Supprimer
+                        {t("videos.rowDelete")}
                       </button>
                     </div>
                   </div>
@@ -619,4 +658,22 @@ export function VideosPage() {
       </section>
     </CreatorAppShell>
   );
+}
+
+export function VideosPage() {
+  const { t } = useI18n();
+  const user = useAuthStore(selectAuthUser);
+  if (!user?.id) {
+    return (
+      <CreatorAppShell>
+        <section className={styles.page}>
+          <div className={styles.errorBanner} role="alert">
+            <strong>{t("videos.errorAlertTitle")}</strong>
+            <p>{t("videos.errorUser")}</p>
+          </div>
+        </section>
+      </CreatorAppShell>
+    );
+  }
+  return <VideosPageWithUser userId={user.id} />;
 }

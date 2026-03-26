@@ -1,4 +1,4 @@
 export { AuthPage } from "./auth-page";
 export { DashboardPage } from "./dashboard";
 export { AccountPage } from "./account-page";
-export { VideosPage } from "./videos";
+export { VideosPage, VideosPageQueryErrorFallback } from "./videos";
