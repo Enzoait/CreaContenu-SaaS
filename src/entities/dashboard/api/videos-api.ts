@@ -10,19 +10,37 @@ function mapRow(row: {
   platform: string
   stage: string
   deadline: string
+  sort_order?: number | null
   video_url?: string | null
   cover_image_url?: string | null
 }): VideoItem {
   const cover = row.cover_image_url?.trim() ?? ''
+  const sortOrder =
+    typeof row.sort_order === 'number' ? row.sort_order : undefined
   return {
     id: row.id,
     title: row.title,
     platform: row.platform,
     stage: row.stage as VideoItem['stage'],
     deadline: row.deadline,
+    ...(sortOrder !== undefined ? { sortOrder } : {}),
     ...(row.video_url ? { videoUrl: row.video_url } : {}),
     ...(cover ? { coverImageUrl: cover } : {}),
   }
+}
+
+async function getNextSortOrder(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('video_items')
+    .select('sort_order')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  const max = data?.sort_order
+  return typeof max === 'number' ? max + 1 : 0
 }
 
 export async function fetchVideoItems(userId: string): Promise<VideoItem[]> {
@@ -30,6 +48,7 @@ export async function fetchVideoItems(userId: string): Promise<VideoItem[]> {
     .from('video_items')
     .select('*')
     .eq('user_id', userId)
+    .order('sort_order', { ascending: true })
     .order('deadline', { ascending: true })
 
   if (error) throw new Error(error.message)
@@ -53,6 +72,8 @@ export async function addVideoItem(
   item: Omit<VideoItem, 'id'>,
 ): Promise<VideoItem> {
   const cover = item.coverImageUrl?.trim() ?? ''
+  const sort_order =
+    item.sortOrder !== undefined ? item.sortOrder : await getNextSortOrder(userId)
   const { data, error } = await supabase
     .from('video_items')
     .insert({
@@ -61,6 +82,7 @@ export async function addVideoItem(
       platform: item.platform,
       stage: item.stage,
       deadline: item.deadline,
+      sort_order,
       cover_image_url: cover,
       ...(item.videoUrl !== undefined && item.videoUrl !== ''
         ? { video_url: item.videoUrl }
@@ -98,9 +120,30 @@ export async function updateVideoItem(
   if (patch.coverImageUrl !== undefined) {
     update.cover_image_url = patch.coverImageUrl.trim()
   }
+  if (patch.sortOrder !== undefined) {
+    update.sort_order = patch.sortOrder
+  }
 
   const { error } = await supabase.from('video_items').update(update).eq('id', id)
   if (error) throw new Error(error.message)
+}
+
+export async function reorderVideoItems(
+  userId: string,
+  orderedIds: string[],
+): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from('video_items')
+        .update({ sort_order: index })
+        .eq('id', id)
+        .eq('user_id', userId),
+    ),
+  )
+  for (const r of results) {
+    if (r.error) throw new Error(r.error.message)
+  }
 }
 
 export async function deleteVideoItem(id: string): Promise<void> {

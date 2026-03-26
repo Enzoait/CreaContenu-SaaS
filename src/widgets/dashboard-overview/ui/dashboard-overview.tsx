@@ -16,6 +16,7 @@ import {
   addVideoItem,
   updateVideoItem,
   deleteVideoItem as deleteVideoItemApi,
+  reorderVideoItems,
   renamePlatformInVideos,
   deletePlatformInVideos,
 } from "../../../entities/dashboard/api/videos-api";
@@ -71,6 +72,7 @@ import { CreatorAppShell } from "../../creator-app-shell";
 import { AnimatedLoader } from "../../../shared/ui/AnimatedLoader";
 import { useQueryClient } from "@tanstack/react-query";
 import { toDateKey } from "../../../shared/lib/date-key";
+import { mergeVisibleReorder, moveInArray } from "../../../shared/lib/reorder-list";
 
 function BodyPortal({ children }: { children: ReactNode }) {
   if (typeof document === "undefined") {
@@ -115,7 +117,15 @@ type VideoItem = {
   deadline: string;
   videoUrl?: string;
   coverImageUrl?: string;
+  sortOrder?: number;
 };
+
+function compareVideoOrder(a: VideoItem, b: VideoItem): number {
+  const ao = a.sortOrder ?? 0;
+  const bo = b.sortOrder ?? 0;
+  if (ao !== bo) return ao - bo;
+  return a.deadline.localeCompare(b.deadline);
+}
 
 type VideoDraft = {
   title: string;
@@ -301,6 +311,9 @@ export function DashboardOverview() {
     null,
   );
   const [dragOverDateKey, setDragOverDateKey] = useState<string | null>(null);
+  const [draggingVideoRowIndex, setDraggingVideoRowIndex] = useState<
+    number | null
+  >(null);
   const [videoData, setVideoData] = useState<VideoItem[]>([]);
   const [videoDraft, setVideoDraft] = useState<VideoDraft>({
     title: "",
@@ -465,6 +478,11 @@ export function DashboardOverview() {
   const filteredVideos = videoData
     .filter((item) => platform === "all" || item.platform === platform)
     .filter((item) => isInPeriod(item.deadline, period));
+
+  const sortedFilteredVideos = useMemo(
+    () => [...filteredVideos].sort(compareVideoOrder),
+    [filteredVideos],
+  );
 
   const filteredBoard = todoBoard.filter(
     (item) => platform === "all" || item.platform === platform,
@@ -736,6 +754,55 @@ export function DashboardOverview() {
       }
     }
   };
+
+  const handleVideoRowDragStart =
+    (index: number) => (event: DragEvent<HTMLLIElement>) => {
+      event.stopPropagation();
+      event.dataTransfer.setData("text/plain", String(index));
+      event.dataTransfer.effectAllowed = "move";
+      setDraggingVideoRowIndex(index);
+    };
+
+  const handleVideoRowDragEnd = () => {
+    setDraggingVideoRowIndex(null);
+  };
+
+  const handleVideoRowDragOver = (event: DragEvent<HTMLLIElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+
+  const handleVideoRowDrop =
+    (visibleOrderedVideos: VideoItem[], dropIndex: number) =>
+    (event: DragEvent<HTMLLIElement>) => {
+      event.preventDefault();
+      const from = Number(event.dataTransfer.getData("text/plain"));
+      setDraggingVideoRowIndex(null);
+      if (Number.isNaN(from) || from === dropIndex || !user?.id) return;
+
+      const visibleIds = visibleOrderedVideos.map((v) => v.id);
+      const newVis = moveInArray(visibleIds, from, dropIndex);
+      const fullOrdered = [...videoData]
+        .sort(compareVideoOrder)
+        .map((v) => v.id);
+      const newFull = mergeVisibleReorder(fullOrdered, visibleIds, newVis);
+      const byId = new Map(videoData.map((v) => [v.id, v]));
+      const next: VideoItem[] = newFull.map((id, index) => {
+        const base = byId.get(id);
+        if (!base) {
+          throw new Error(`missing video ${id}`);
+        }
+        return { ...base, sortOrder: index };
+      });
+      setVideoData(next);
+      reorderVideoItems(user.id, newFull)
+        .then(() => {
+          void queryClient.invalidateQueries({
+            queryKey: ["dashboard", "overview", user.id],
+          });
+        })
+        .catch(console.error);
+    };
 
   const setTaskLabel = (id: string, label: string) => {
     setTodoBoard((prev) =>
@@ -1542,10 +1609,7 @@ export function DashboardOverview() {
   }, [filteredPlanning, filteredVideos, filteredBoard]);
 
   const videoRecapItems = useMemo(
-    () =>
-      [...filteredVideos]
-        .sort((a, b) => a.deadline.localeCompare(b.deadline))
-        .slice(0, 3),
+    () => [...filteredVideos].sort(compareVideoOrder).slice(0, 3),
     [filteredVideos],
   );
 
@@ -2184,9 +2248,36 @@ export function DashboardOverview() {
                     </Link>
                   </div>
                   {videoRecapItems.length > 0 ? (
-                    <ul className={styles.videoRecapList}>
-                      {videoRecapItems.map((video) => (
-                        <li key={video.id}>
+                    <ul
+                      className={styles.videoRecapList}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "move";
+                      }}
+                    >
+                      {videoRecapItems.map((video, recapIndex) => (
+                        <li
+                          key={video.id}
+                          draggable
+                          onDragStart={handleVideoRowDragStart(recapIndex)}
+                          onDragEnd={handleVideoRowDragEnd}
+                          onDragOver={handleVideoRowDragOver}
+                          onDrop={handleVideoRowDrop(
+                            videoRecapItems,
+                            recapIndex,
+                          )}
+                          data-search-id={toSearchTargetId("video", video.id)}
+                          className={`${
+                            highlightedItemId ===
+                            toSearchTargetId("video", video.id)
+                              ? styles.itemPulse
+                              : ""
+                          } ${
+                            draggingVideoRowIndex === recapIndex
+                              ? styles.videoRowDragging
+                              : ""
+                          }`.trim()}
+                        >
                           <strong>{video.title}</strong>
                           <span>
                             {video.platform} - {stageLabelMap[video.stage]} -{" "}
@@ -2986,19 +3077,31 @@ export function DashboardOverview() {
                       </div>
                     ) : null}
                     <ul className={styles.list}>
-                      {filteredVideos.map((video) => {
+                      {sortedFilteredVideos.map((video, videoRowIndex) => {
                         const currentStage =
                           videoStages[video.id] ?? video.stage;
                         return (
                           <li
                             key={video.id}
+                            draggable
+                            onDragStart={handleVideoRowDragStart(videoRowIndex)}
+                            onDragEnd={handleVideoRowDragEnd}
+                            onDragOver={handleVideoRowDragOver}
+                            onDrop={handleVideoRowDrop(
+                              sortedFilteredVideos,
+                              videoRowIndex,
+                            )}
                             data-search-id={toSearchTargetId("video", video.id)}
-                            className={
+                            className={`${
                               highlightedItemId ===
                               toSearchTargetId("video", video.id)
                                 ? styles.itemPulse
                                 : ""
-                            }
+                            } ${
+                              draggingVideoRowIndex === videoRowIndex
+                                ? styles.videoRowDragging
+                                : ""
+                            }`}
                           >
                             <div className={styles.videoListRow}>
                               {video.coverImageUrl ? (
@@ -3006,6 +3109,7 @@ export function DashboardOverview() {
                                   className={styles.videoThumbMini}
                                   src={video.coverImageUrl}
                                   alt=""
+                                  draggable={false}
                                 />
                               ) : null}
                               <div>
@@ -3023,6 +3127,7 @@ export function DashboardOverview() {
                                       href={video.videoUrl}
                                       target="_blank"
                                       rel="noreferrer"
+                                      draggable={false}
                                     >
                                       Ouvrir la vidéo
                                     </a>

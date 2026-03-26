@@ -408,6 +408,14 @@
   padding: 8px 10px;
 }
 
+.videoRecapList li[draggable="true"] {
+  cursor: grab;
+}
+
+.videoRecapList li[draggable="true"]:active {
+  cursor: grabbing;
+}
+
 .videoRecapList strong {
   display: block;
   font-size: 0.9rem;
@@ -1029,6 +1037,19 @@
   gap: 2px;
   border-bottom: 1px solid #edf0f5;
   padding-bottom: 8px;
+}
+
+.list li[draggable="true"] {
+  cursor: grab;
+}
+
+.list li[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.videoRowDragging {
+  opacity: 0.45;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.18);
 }
 
 .list li:last-child {

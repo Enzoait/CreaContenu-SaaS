@@ -25,6 +25,8 @@ export const VideoItemSchema = z.object({
   videoUrl: z.string().optional(),
   /** Image de couverture (colonne cover_image_url, NOT NULL en BDD, chaîne vide si absent) */
   coverImageUrl: z.string().optional(),
+  /** Ordre d’affichage (colonne sort_order) */
+  sortOrder: z.number().int().nonnegative().optional(),
 });
 
 export const TodoItemSchema = z.object({

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type DragEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { addPlanningItem } from "../../../entities/dashboard/api/planning-api";
@@ -6,9 +6,11 @@ import { planningStatusFromVideoStage } from "../../../entities/dashboard/api/vi
 import {
   addVideoItem,
   deleteVideoItem,
+  reorderVideoItems,
   updateVideoItem,
 } from "../../../entities/dashboard/api/videos-api";
 import { toDateKey } from "../../../shared/lib/date-key";
+import { moveInArray } from "../../../shared/lib/reorder-list";
 import { useDashboardData } from "../../../entities/dashboard/model/use-dashboard-data";
 import { selectAuthUser, useAuthStore } from "../../../shared/model/auth-store";
 import { AnimatedLoader } from "../../../shared/ui/AnimatedLoader";
@@ -25,7 +27,15 @@ type DisplayVideo = {
   deadline: string;
   coverImageUrl?: string;
   videoUrl?: string;
+  sortOrder?: number;
 };
+
+function compareVideoOrder(a: DisplayVideo, b: DisplayVideo): number {
+  const ao = a.sortOrder ?? 0;
+  const bo = b.sortOrder ?? 0;
+  if (ao !== bo) return ao - bo;
+  return a.deadline.localeCompare(b.deadline);
+}
 
 const STAGE_LABEL: Record<VideoStage, string> = {
   idea: "Idee",
@@ -73,6 +83,9 @@ export function VideosPage() {
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [draggingVideoRowIndex, setDraggingVideoRowIndex] = useState<
+    number | null
+  >(null);
   const [videoDraft, setVideoDraft] = useState<{
     title: string;
     platform: string;
@@ -88,11 +101,12 @@ export function VideosPage() {
   const videos = useMemo<DisplayVideo[]>(() => {
     if (!data) return [];
     return [...data.videos]
-      .sort((a, b) => a.deadline.localeCompare(b.deadline))
+      .sort(compareVideoOrder)
       .map((video) => {
         const enrichedVideo = video as DisplayVideo;
         return {
           ...video,
+          sortOrder: enrichedVideo.sortOrder,
           coverImageUrl: enrichedVideo.coverImageUrl,
           videoUrl: enrichedVideo.videoUrl,
         };
@@ -129,6 +143,46 @@ export function VideosPage() {
       };
     });
   }, [videos, data?.planning]);
+
+  const handleVideoDragStart =
+    (index: number) => (event: DragEvent<HTMLElement>) => {
+      event.dataTransfer.setData("text/plain", String(index));
+      event.dataTransfer.effectAllowed = "move";
+      setDraggingVideoRowIndex(index);
+    };
+
+  const handleVideoDragEnd = () => {
+    setDraggingVideoRowIndex(null);
+  };
+
+  const handleVideoDragOver = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+
+  const handleVideoDrop =
+    (dropIndex: number) => (event: DragEvent<HTMLElement>) => {
+      event.preventDefault();
+      const from = Number(event.dataTransfer.getData("text/plain"));
+      setDraggingVideoRowIndex(null);
+      if (!user?.id || Number.isNaN(from) || from === dropIndex) return;
+      const ids = videos.map((v) => v.id);
+      const newFull = moveInArray(ids, from, dropIndex);
+      void (async () => {
+        try {
+          await reorderVideoItems(user.id, newFull);
+          await queryClient.invalidateQueries({
+            queryKey: ["dashboard", "overview", user.id],
+          });
+        } catch (err) {
+          setErrorMessage(
+            err instanceof Error
+              ? err.message
+              : "Réordonnancement impossible.",
+          );
+        }
+      })();
+    };
 
   const shouldShowLoader = isLoading || (!data && isFetching);
   if (shouldShowLoader) return <AnimatedLoader />;
@@ -402,18 +456,31 @@ export function VideosPage() {
               <span>Infos</span>
               <span>Actions</span>
             </header>
-            {videos.map((video) => {
+            {videos.map((video, index) => {
               const videoUrl = video.videoUrl ?? getDefaultVideoUrl(video);
               const coverSrc =
                 video.coverImageUrl?.trim() || getDefaultThumbnailUrl(video);
 
               return (
-                <article key={video.id} className={styles.videoRow}>
+                <article
+                  key={video.id}
+                  draggable
+                  onDragStart={handleVideoDragStart(index)}
+                  onDragEnd={handleVideoDragEnd}
+                  onDragOver={handleVideoDragOver}
+                  onDrop={handleVideoDrop(index)}
+                  className={`${styles.videoRow}${
+                    draggingVideoRowIndex === index
+                      ? ` ${styles.videoRowDragging}`
+                      : ""
+                  }`}
+                >
                   <img
                     className={styles.thumb}
                     src={coverSrc}
                     alt={`Miniature de ${video.title}`}
                     loading="lazy"
+                    draggable={false}
                   />
                   <div className={styles.videoMain}>
                     <h3 className={styles.videoTitle}>{video.title}</h3>
