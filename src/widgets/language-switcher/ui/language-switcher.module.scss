@@ -44,6 +44,21 @@
   z-index: 1;
 }
 
+@media (max-width: 400px) {
+  .group {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .segment,
+  .segmentActive {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
 :global([data-theme="dark"]) .group {
   background: #1a1f2b;
   border-color: #2a2f3a;

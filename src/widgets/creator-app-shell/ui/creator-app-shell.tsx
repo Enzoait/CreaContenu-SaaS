@@ -357,28 +357,30 @@ export function CreatorAppShell({
             {resolvedTrailing ? (
               <div className={styles.topBarTrailing}>{resolvedTrailing}</div>
             ) : null}
-            <button
-              type="button"
-              className={styles.themeToggle}
-              onClick={toggleTheme}
-              aria-label={
-                theme === "dark"
-                  ? t("shell.themeSwitchLight")
-                  : t("shell.themeSwitchDark")
-              }
-            >
-              {theme === "dark" ? (
-                <HiSun aria-hidden="true" />
-              ) : (
-                <HiMoon aria-hidden="true" />
-              )}
-              <span>
-                {theme === "dark"
-                  ? t("shell.themeShortLight")
-                  : t("shell.themeShortDark")}
-              </span>
-            </button>
-            <LanguageSwitcher />
+            <div className={styles.topBarThemeLangRow}>
+              <button
+                type="button"
+                className={styles.themeToggle}
+                onClick={toggleTheme}
+                aria-label={
+                  theme === "dark"
+                    ? t("shell.themeSwitchLight")
+                    : t("shell.themeSwitchDark")
+                }
+              >
+                {theme === "dark" ? (
+                  <HiSun aria-hidden="true" />
+                ) : (
+                  <HiMoon aria-hidden="true" />
+                )}
+                <span>
+                  {theme === "dark"
+                    ? t("shell.themeShortLight")
+                    : t("shell.themeShortDark")}
+                </span>
+              </button>
+              <LanguageSwitcher className={styles.themeLangInline} />
+            </div>
             <button
               type="button"
               className={styles.profileButton}
