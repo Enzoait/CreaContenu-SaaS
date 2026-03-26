@@ -9,21 +9,19 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("./planning-api", () => ({
-  fetchPlanningItems: (...args: unknown[]) =>
-    mocks.fetchPlanningItems(...args),
+  fetchPlanningItems: (userId: string) => mocks.fetchPlanningItems(userId),
 }));
 
 vi.mock("./videos-api", () => ({
-  fetchVideoItems: (...args: unknown[]) => mocks.fetchVideoItems(...args),
+  fetchVideoItems: (userId: string) => mocks.fetchVideoItems(userId),
 }));
 
 vi.mock("./todos-api", () => ({
-  fetchTodoItems: (...args: unknown[]) => mocks.fetchTodoItems(...args),
+  fetchTodoItems: (userId: string) => mocks.fetchTodoItems(userId),
 }));
 
 vi.mock("./platforms-api", () => ({
-  fetchUserPlatforms: (...args: unknown[]) =>
-    mocks.fetchUserPlatforms(...args),
+  fetchUserPlatforms: (userId: string) => mocks.fetchUserPlatforms(userId),
 }));
 
 describe("getDashboardData", () => {

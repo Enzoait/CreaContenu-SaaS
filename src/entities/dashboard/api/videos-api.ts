@@ -105,11 +105,21 @@ export async function addVideoItem(
   )
 }
 
+type VideoUpdateRow = Partial<{
+  title: string
+  platform: string
+  stage: VideoItem['stage']
+  deadline: string
+  video_url: string | null
+  cover_image_url: string
+  sort_order: number
+}>
+
 export async function updateVideoItem(
   id: string,
   patch: Partial<Omit<VideoItem, 'id'>>,
 ): Promise<void> {
-  const update: Record<string, unknown> = {}
+  const update: VideoUpdateRow = {}
   if (patch.title !== undefined) update.title = patch.title
   if (patch.platform !== undefined) update.platform = patch.platform
   if (patch.stage !== undefined) update.stage = patch.stage

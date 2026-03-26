@@ -33,11 +33,20 @@ export async function fetchPlanningItems(userId: string): Promise<PlanningItem[]
   return (data ?? []).map(mapRow)
 }
 
+type PlanningInsertRow = {
+  user_id: string
+  title: string
+  platform: string
+  publish_at: string
+  status: PlanningItem['status']
+  video_id?: string
+}
+
 export async function addPlanningItem(
   userId: string,
   item: Omit<PlanningItem, 'id'>,
 ): Promise<PlanningItem> {
-  const insert: Record<string, unknown> = {
+  const insert: PlanningInsertRow = {
     user_id: userId,
     title: item.title,
     platform: item.platform,
@@ -56,11 +65,19 @@ export async function addPlanningItem(
   return mapRow(data)
 }
 
+type PlanningUpdateRow = Partial<{
+  title: string
+  platform: string
+  publish_at: string
+  status: PlanningItem['status']
+  video_id: string | null
+}>
+
 export async function updatePlanningItem(
   id: string,
   patch: Partial<Omit<PlanningItem, 'id'>>,
 ): Promise<void> {
-  const update: Record<string, unknown> = {}
+  const update: PlanningUpdateRow = {}
   if (patch.title !== undefined) update.title = patch.title
   if (patch.platform !== undefined) update.platform = patch.platform
   if (patch.publishAt !== undefined) update.publish_at = patch.publishAt

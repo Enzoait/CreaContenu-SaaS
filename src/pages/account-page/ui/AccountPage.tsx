@@ -193,7 +193,7 @@ export const AccountPage = () => {
       `${t("account.exportFieldPhone")}: ${displayPhone}`,
       `${t("account.exportFieldCountry")}: ${displayCountry}`,
       `${t("account.exportFieldRegion")}: ${displayRegion}`,
-      `${t("account.exportUserId")}: ${currentUser?.id ?? t("account.unknown")}`,
+      `${t("account.exportUserId")}: ${currentUser?.id ?? t("account.notAvailable")}`,
     ].join("\n");
 
     downloadBlob(
@@ -218,7 +218,7 @@ export const AccountPage = () => {
       `${t("account.exportFieldPhone")}: ${displayPhone}`,
       `${t("account.exportFieldCountry")}: ${displayCountry}`,
       `${t("account.exportFieldRegion")}: ${displayRegion}`,
-      `${t("account.exportUserId")}: ${currentUser?.id ?? t("account.unknown")}`,
+      `${t("account.exportUserId")}: ${currentUser?.id ?? t("account.notAvailable")}`,
     ];
 
     document.text(lines, 20, 32);

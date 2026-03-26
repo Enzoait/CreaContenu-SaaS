@@ -226,7 +226,7 @@ export function CreatorAppShell({
 
     const mq = window.matchMedia("(max-width: 1100px)");
     const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobileView(Boolean((e as any).matches));
+      setIsMobileView(Boolean(e.matches));
     };
 
     // set initial

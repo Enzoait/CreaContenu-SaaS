@@ -57,11 +57,18 @@ export async function addTodoItem(
   return mapRow(data)
 }
 
+type TodoUpdateRow = Partial<{
+  label: string
+  platform: string
+  priority: TodoItemRow['priority']
+  kanban_column: TodoColumn
+}>
+
 export async function updateTodoItem(
   id: string,
   patch: Partial<Omit<TodoItemRow, 'id'>>,
 ): Promise<void> {
-  const update: Record<string, unknown> = {}
+  const update: TodoUpdateRow = {}
   if (patch.label !== undefined) update.label = patch.label
   if (patch.platform !== undefined) update.platform = patch.platform
   if (patch.priority !== undefined) update.priority = patch.priority

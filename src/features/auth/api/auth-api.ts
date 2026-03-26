@@ -2,6 +2,7 @@ import { mapSupabaseUserToUserModel } from "../../../entities/user";
 import { upsertUserData } from "../../../entities/user/api";
 import { supabase } from "../../../shared/api/supabase/client";
 import type { AuthSession } from "../../../shared/model";
+import type { FlatUserMetadata } from "../../../shared/types/metadata";
 import type { ChangePasswordFormValues } from "../model/change-password.schema";
 import type { ForgotPasswordFormValues } from "../model/forgot-password.schema";
 import type { ResetPasswordFormValues } from "../model/reset-password.schema";
@@ -49,7 +50,7 @@ const toAuthSession = (
 });
 
 const readStringMetadata = (
-  metadata: Record<string, unknown> | undefined,
+  metadata: FlatUserMetadata | undefined,
   key: string,
 ): string => {
   const value = metadata?.[key];
@@ -67,7 +68,7 @@ const getPasswordResetRedirectUrl = (): string | undefined => {
 const syncUserDataFromMetadata = async (
   userId: string,
   email: string,
-  metadata: Record<string, unknown> | undefined,
+  metadata: FlatUserMetadata | undefined,
 ): Promise<void> => {
   const firstname = readStringMetadata(metadata, "firstname");
   const lastname = readStringMetadata(metadata, "lastname");
@@ -110,7 +111,7 @@ export const signInWithPassword = async (
   await syncUserDataFromMetadata(
     user.id,
     user.email ?? payload.email,
-    data.user.user_metadata as Record<string, unknown> | undefined,
+    data.user.user_metadata as FlatUserMetadata | undefined,
   );
 
   return toAuthSession(
