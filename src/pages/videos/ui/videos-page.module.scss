@@ -325,14 +325,31 @@
 }
 
 .videoLink {
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  background: #e6fffb;
   color: #0f766e;
+  display: inline-flex;
   font-weight: 700;
+  padding: 4px 10px;
   text-decoration: none;
   width: fit-content;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 
 .videoLink:hover {
-  text-decoration: underline;
+  background: #ccfbf1;
+  border-color: #5eead4;
+  text-decoration: none;
+}
+
+:global([data-theme="dark"]) .videoLink {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: #2b3950;
+  color: #9fb7ff;
 }
 
 .planningHint {
@@ -368,13 +385,15 @@
 .calendar {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--panel);
+  color: var(--ink);
   padding: 14px;
 }
 
 .calendar h2 {
   margin: 0 0 10px;
   font-size: 1rem;
+  color: var(--ink);
 }
 
 .calendarList {
@@ -389,8 +408,16 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  border-bottom: 1px dashed #d6dfec;
+  border-bottom: 1px dashed var(--line);
   padding-bottom: 6px;
+}
+
+.calendarItem strong {
+  color: var(--ink);
+}
+
+.calendarItem small {
+  color: var(--muted);
 }
 
 .calendarItem:last-child {

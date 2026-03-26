@@ -96,7 +96,11 @@ const syncUserDataFromMetadata = async (
 export const signInWithPassword = async (
   payload: SignInFormValues,
 ): Promise<AuthSession> => {
-  const { data, error } = await supabase.auth.signInWithPassword(payload);
+  const { email, password } = payload;
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
     throw new Error(mapSupabaseAuthErrorMessage(error.message));

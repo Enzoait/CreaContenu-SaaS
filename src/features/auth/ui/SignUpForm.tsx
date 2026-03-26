@@ -17,7 +17,8 @@ export const SignUpForm = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    watch,
+    formState: { errors, submitCount },
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -30,8 +31,11 @@ export const SignUpForm = () => {
       profilePicture: "",
       password: "",
       confirmPassword: "",
+      acceptTerms: false,
     },
   });
+
+  const isTermsAccepted = watch("acceptTerms");
 
   const onSubmit = async (values: SignUpFormValues) => {
     const result = await mutateAsync(values);
@@ -164,10 +168,17 @@ export const SignUpForm = () => {
         <p className="error">{errors.profilePicture.message}</p>
       ) : null}
 
-      <label className="checkbox-row">
-        <input type="checkbox" />
+      <label className="checkbox-row" htmlFor="sign-up-accept-terms">
+        <input
+          id="sign-up-accept-terms"
+          type="checkbox"
+          {...register("acceptTerms")}
+        />
         <span>{t("auth.acceptTerms")}</span>
       </label>
+      {submitCount > 0 && !isTermsAccepted ? (
+        <p className="error">{t("auth.acceptTermsSignUpHint")}</p>
+      ) : null}
 
       <button className="auth-primary" type="submit" disabled={isPending}>
         {isPending ? t("auth.signUpSubmitting") : t("auth.signUpSubmit")}

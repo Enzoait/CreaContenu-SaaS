@@ -21,14 +21,18 @@ export const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    watch,
+    formState: { errors, submitCount },
   } = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
       password: "",
+      acceptTerms: false,
     },
   });
+
+  const isTermsAccepted = watch("acceptTerms");
 
   const onSubmit = async (values: SignInFormValues) => {
     await mutateAsync(values);
@@ -73,10 +77,17 @@ export const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
         <p className="error">{errors.password.message}</p>
       ) : null}
 
-      <label className="checkbox-row">
-        <input type="checkbox" />
+      <label className="checkbox-row" htmlFor="sign-in-accept-terms">
+        <input
+          id="sign-in-accept-terms"
+          type="checkbox"
+          {...register("acceptTerms")}
+        />
         <span>{t("auth.acceptTerms")}</span>
       </label>
+      {submitCount > 0 && !isTermsAccepted ? (
+        <p className="error">{t("auth.acceptTermsSignInHint")}</p>
+      ) : null}
 
       <button className="auth-primary" type="submit" disabled={isPending}>
         {isPending ? t("auth.signInSubmitting") : t("auth.signInSubmit")}

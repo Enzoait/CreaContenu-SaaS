@@ -1090,6 +1090,27 @@
   align-items: flex-start;
 }
 
+.videoListRow a {
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  background: #e6fffb;
+  color: #0f766e;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  text-decoration: none;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.videoListRow a:hover {
+  background: #ccfbf1;
+  border-color: #5eead4;
+}
+
 .videoThumbMini {
   width: 72px;
   height: 48px;
@@ -2096,6 +2117,12 @@
 :global([data-theme="dark"]) .columnTitle,
 :global([data-theme="dark"]) .progressLabels span {
   color: #9aa3b2;
+}
+
+:global([data-theme="dark"]) .videoListRow a {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: #2b3950;
+  color: #9fb7ff;
 }
 
 :global([data-theme="dark"]) .searchInput,

@@ -33,12 +33,10 @@ const fr = {
   "auth.titleForgotPassword": "Mot de passe oublié",
   "auth.titleResetPassword": "Réinitialiser le mot de passe",
   "auth.subtitleSignIn": "Connectez-vous pour accéder à votre espace.",
-  "auth.subtitleSignUp":
-    "Rejoignez des milliers de créateurs de contenu.",
+  "auth.subtitleSignUp": "Rejoignez des milliers de créateurs de contenu.",
   "auth.subtitleForgotPassword":
     "Entrez votre e-mail pour recevoir un lien de réinitialisation.",
-  "auth.subtitleResetPassword":
-    "Choisissez un nouveau mot de passe sécurisé.",
+  "auth.subtitleResetPassword": "Choisissez un nouveau mot de passe sécurisé.",
   "auth.tabListAria": "Mode d'authentification",
   "auth.tabSignIn": "Connexion",
   "auth.tabSignUp": "Inscription",
@@ -59,6 +57,8 @@ const fr = {
   "auth.placeholderPasswordMin8": "min. 8 caractères",
   "auth.acceptTerms":
     "J'accepte les conditions et la politique de confidentialité",
+  "auth.acceptTermsSignInHint": "Veuillez accepter pour vous connecter.",
+  "auth.acceptTermsSignUpHint": "Veuillez accepter pour vous inscrire.",
   "auth.signInSubmitting": "Connexion en cours…",
   "auth.signInSubmit": "Se connecter",
 
@@ -78,8 +78,7 @@ const fr = {
   "auth.placeholderProfilePicture": "https://exemple.com/ma-photo.jpg",
   "auth.signUpSubmitting": "Inscription en cours…",
   "auth.signUpSubmit": "S'inscrire",
-  "auth.verifyEmailMessage":
-    "Vérifiez votre e-mail pour activer votre compte.",
+  "auth.verifyEmailMessage": "Vérifiez votre e-mail pour activer votre compte.",
 
   "auth.forgotSubmitting": "Envoi en cours…",
   "auth.forgotSendLink": "Envoyer le lien",
@@ -105,6 +104,8 @@ const fr = {
   "auth.validationConfirmPasswordMin8":
     "La confirmation doit contenir au moins 8 caractères",
   "auth.validationPasswordMismatch": "Les mots de passe ne correspondent pas",
+  "auth.validationAcceptTerms":
+    "Vous devez accepter les conditions et la politique de confidentialité",
   "auth.validationNewPasswordMin8":
     "Le nouveau mot de passe doit contenir au moins 8 caractères",
 
@@ -115,8 +116,7 @@ const fr = {
     "Filtres actifs sur toutes les sections + recherche globale.",
   "dashboard.periodAll": "Tout",
   "dashboard.allPlatforms": "Toutes plateformes",
-  "dashboard.searchPlaceholder":
-    "Rechercher dans planning, vidéos, to-do…",
+  "dashboard.searchPlaceholder": "Rechercher dans planning, vidéos, to-do…",
   "dashboard.noPlatformOption": "Pas de plateforme",
 
   "dashboard.panelPlanning": "Planning",
@@ -139,10 +139,8 @@ const fr = {
   "dashboard.statusPublished": "Publié",
 
   "dashboard.chartPublishedPeriod": "Publié sur la période",
-  "dashboard.chartSeriesPublications":
-    "Publications (statut publié, ce jour)",
-  "dashboard.chartSeriesAgendaSlots":
-    "Agenda (publiés + planifiés, ce jour)",
+  "dashboard.chartSeriesPublications": "Publications (statut publié, ce jour)",
+  "dashboard.chartSeriesAgendaSlots": "Agenda (publiés + planifiés, ce jour)",
   "dashboard.chartSeriesVideosDue": "Vidéos à l’échéance (ce jour)",
   "dashboard.chartViews": "Vues",
   "dashboard.chartEngagement": "Engagement %",
@@ -224,10 +222,13 @@ const fr = {
 
   "dashboard.confirmDelete": "Êtes-vous sûr de vouloir supprimer ?",
   "dashboard.confirmDeleteEvent": "Confirmation de suppression",
-  "dashboard.confirmDeletePlatform": "Confirmation de suppression de plateforme",
-  "dashboard.confirmDeleteVideo": "Êtes-vous sûr de vouloir supprimer ce suivi vidéo ?",
+  "dashboard.confirmDeletePlatform":
+    "Confirmation de suppression de plateforme",
+  "dashboard.confirmDeleteVideo":
+    "Êtes-vous sûr de vouloir supprimer ce suivi vidéo ?",
   "dashboard.confirmDeleteVideoLabel": "Confirmation de suppression de vidéo",
-  "dashboard.confirmDeleteTask": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
+  "dashboard.confirmDeleteTask":
+    "Êtes-vous sûr de vouloir supprimer cette tâche ?",
   "dashboard.confirmDeleteTaskLabel": "Confirmation de suppression de tâche",
 
   "dashboard.dragEventError": "Erreur déplacement événement :",
@@ -258,7 +259,8 @@ const fr = {
     "Aucune vidéo pour la période sélectionnée.",
   "dashboard.addVideoInline": "Ajouter une vidéo",
   "dashboard.hideFormShort": "Masquer",
-  "dashboard.videoSubmitRequired": "Titre, plateforme et deadline sont obligatoires.",
+  "dashboard.videoSubmitRequired":
+    "Titre, plateforme et deadline sont obligatoires.",
   "dashboard.userUnknown": "Utilisateur non identifié.",
   "dashboard.editTooltip": "Modifier",
   "dashboard.deleteTooltip": "Supprimer",
@@ -311,7 +313,8 @@ const fr = {
   "videos.errorSave": "Impossible d'enregistrer la vidéo.",
   "videos.errorDelete": "Suppression impossible.",
   "videos.errorStage": "Impossible de mettre à jour l'étape.",
-  "videos.loadError": "Une erreur est survenue pendant le chargement des vidéos.",
+  "videos.loadError":
+    "Une erreur est survenue pendant le chargement des vidéos.",
   "videos.reorderError": "Impossible de réordonner les vidéos.",
 
   "account.tabProfile": "Mon profil",
@@ -374,7 +377,8 @@ const fr = {
   "account.passwordSubmitting": "Mise à jour…",
   "account.passwordSubmit": "Mettre à jour le mot de passe",
   "account.passwordSavedAt": "Mis à jour à {time}",
-  "account.passwordChangeError": "Erreur lors de la mise à jour du mot de passe.",
+  "account.passwordChangeError":
+    "Erreur lors de la mise à jour du mot de passe.",
   "account.badgeGdpr": "RGPD",
   "account.validationFirstnameRequired": "Le prénom est obligatoire",
   "account.validationLastnameRequired": "Le nom est obligatoire",
@@ -389,7 +393,8 @@ const fr = {
     "Le nouveau mot de passe doit contenir au moins 8 caractères",
   "account.validationConfirmPasswordMin8":
     "La confirmation doit contenir au moins 8 caractères",
-  "account.validationPasswordMismatch": "Les mots de passe ne correspondent pas",
+  "account.validationPasswordMismatch":
+    "Les mots de passe ne correspondent pas",
   "account.validationPasswordNewMustDiffer":
     "Le nouveau mot de passe doit être différent de l'actuel",
 } as const;
@@ -430,8 +435,7 @@ const en: Record<MessageKey, string> = {
   "auth.titleResetPassword": "Reset your password",
   "auth.subtitleSignIn": "Sign in to access your workspace.",
   "auth.subtitleSignUp": "Join thousands of content creators.",
-  "auth.subtitleForgotPassword":
-    "Enter your email to receive a reset link.",
+  "auth.subtitleForgotPassword": "Enter your email to receive a reset link.",
   "auth.subtitleResetPassword": "Choose a secure new password.",
   "auth.tabListAria": "Authentication mode",
   "auth.tabSignIn": "Sign in",
@@ -450,8 +454,9 @@ const en: Record<MessageKey, string> = {
   "auth.fieldPassword": "Password",
   "auth.forgotPasswordLink": "Forgot password?",
   "auth.placeholderPasswordMin8": "min. 8 characters",
-  "auth.acceptTerms":
-    "I accept the terms and privacy policy",
+  "auth.acceptTerms": "I accept the terms and privacy policy",
+  "auth.acceptTermsSignInHint": "Please accept to sign in.",
+  "auth.acceptTermsSignUpHint": "Please accept to sign up.",
   "auth.signInSubmitting": "Signing in…",
   "auth.signInSubmit": "Sign in",
 
@@ -471,8 +476,7 @@ const en: Record<MessageKey, string> = {
   "auth.placeholderProfilePicture": "https://example.com/my-photo.jpg",
   "auth.signUpSubmitting": "Signing up…",
   "auth.signUpSubmit": "Sign up",
-  "auth.verifyEmailMessage":
-    "Check your email to activate your account.",
+  "auth.verifyEmailMessage": "Check your email to activate your account.",
 
   "auth.forgotSubmitting": "Sending…",
   "auth.forgotSendLink": "Send link",
@@ -483,12 +487,10 @@ const en: Record<MessageKey, string> = {
   "auth.fieldNewPassword": "New password",
   "auth.resetSubmitting": "Updating…",
   "auth.resetSubmit": "Reset password",
-  "auth.resetSuccessMessage":
-    "Password updated. You can sign in again.",
+  "auth.resetSuccessMessage": "Password updated. You can sign in again.",
 
   "auth.validationEmailInvalid": "Invalid email",
-  "auth.validationPasswordMin8":
-    "Password must be at least 8 characters",
+  "auth.validationPasswordMin8": "Password must be at least 8 characters",
   "auth.validationFirstNameRequired": "First name is required",
   "auth.validationLastNameRequired": "Last name is required",
   "auth.validationPhoneRequired": "Phone number is required",
@@ -498,14 +500,14 @@ const en: Record<MessageKey, string> = {
   "auth.validationConfirmPasswordMin8":
     "Confirmation must be at least 8 characters",
   "auth.validationPasswordMismatch": "Passwords do not match",
+  "auth.validationAcceptTerms": "You must accept the terms and privacy policy",
   "auth.validationNewPasswordMin8":
     "New password must be at least 8 characters",
 
   "dashboard.loading": "Loading dashboard…",
   "dashboard.loadError": "Something went wrong while loading.",
   "dashboard.title": "Creator dashboard — {suffix}",
-  "dashboard.bannerSubtitle":
-    "Active filters on all sections + global search.",
+  "dashboard.bannerSubtitle": "Active filters on all sections + global search.",
   "dashboard.periodAll": "All",
   "dashboard.allPlatforms": "All platforms",
   "dashboard.searchPlaceholder": "Search planning, videos, to-do…",
@@ -587,8 +589,7 @@ const en: Record<MessageKey, string> = {
   "dashboard.emptyDay": "No content",
   "dashboard.prevMonth": "Previous month",
   "dashboard.nextMonth": "Next month",
-  "dashboard.planningHint":
-    "Enter a title, date and platform to save.",
+  "dashboard.planningHint": "Enter a title, date and platform to save.",
   "dashboard.planningSubmitTitle": "Title, date and platform required",
 
   "dashboard.videosTitle": "Video tracking",
@@ -650,8 +651,7 @@ const en: Record<MessageKey, string> = {
   "dashboard.videoRecapEmptyPeriod": "No videos for the selected period.",
   "dashboard.addVideoInline": "Add a video",
   "dashboard.hideFormShort": "Hide",
-  "dashboard.videoSubmitRequired":
-    "Title, platform and deadline are required.",
+  "dashboard.videoSubmitRequired": "Title, platform and deadline are required.",
   "dashboard.userUnknown": "User not identified.",
   "dashboard.editTooltip": "Edit",
   "dashboard.deleteTooltip": "Delete",
@@ -689,8 +689,7 @@ const en: Record<MessageKey, string> = {
   "videos.cancel": "Cancel",
   "videos.deadlineLabel": "Due",
   "videos.openLink": "Open link",
-  "videos.planningSameDay":
-    "Calendar: {n} item(s) scheduled the same day",
+  "videos.planningSameDay": "Calendar: {n} item(s) scheduled the same day",
   "videos.stageLabel": "Stage",
   "videos.tableVideo": "Video",
   "videos.tableInfo": "Info",
@@ -717,8 +716,7 @@ const en: Record<MessageKey, string> = {
   "account.phoneUnavailable": "Phone unavailable",
   "account.countryUnavailable": "Country unavailable",
   "account.regionUnavailable": "Region unavailable",
-  "account.userNotIdentified":
-    "User not identified. Sign in again and retry.",
+  "account.userNotIdentified": "User not identified. Sign in again and retry.",
   "account.saveProfileError": "Error while saving profile.",
   "account.exportTitle": "Personal data export",
   "account.exportDate": "Date",
