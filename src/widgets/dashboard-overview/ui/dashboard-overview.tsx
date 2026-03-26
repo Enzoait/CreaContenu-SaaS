@@ -19,6 +19,7 @@ import {
   renamePlatformInVideos,
   deletePlatformInVideos,
 } from "../../../entities/dashboard/api/videos-api";
+import { planningStatusFromVideoStage } from "../../../entities/dashboard/api/video-planning-sync";
 import {
   addTodoItem,
   updateTodoItem,
@@ -68,6 +69,8 @@ import { useProfileTitleSuffix } from "../../../features/account-profile";
 import { useI18n } from "../../../shared/i18n";
 import { CreatorAppShell } from "../../creator-app-shell";
 import { AnimatedLoader } from "../../../shared/ui/AnimatedLoader";
+import { useQueryClient } from "@tanstack/react-query";
+import { toDateKey } from "../../../shared/lib/date-key";
 
 function BodyPortal({ children }: { children: ReactNode }) {
   if (typeof document === "undefined") {
@@ -94,6 +97,7 @@ type PlanningItem = {
   platform: string;
   publishAt: string;
   status: "draft" | "scheduled" | "published";
+  videoId?: string;
 };
 
 type PlanningDraft = {
@@ -109,6 +113,8 @@ type VideoItem = {
   platform: string;
   stage: VideoStage;
   deadline: string;
+  videoUrl?: string;
+  coverImageUrl?: string;
 };
 
 type VideoDraft = {
@@ -116,6 +122,8 @@ type VideoDraft = {
   platform: string;
   deadline: string;
   stage: VideoStage;
+  videoUrl: string;
+  coverImageUrl: string;
 };
 
 type ChecklistItem = {
@@ -196,14 +204,6 @@ function normalizePlatformLabel(value: string): string {
   return normalized || NO_PLATFORM_LABEL;
 }
 
-function toDateKey(dateInput: string | Date): string {
-  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function parseDateSafe(dateString: string): Date {
   const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(dateString);
   return new Date(isDateOnly ? `${dateString}T00:00:00` : dateString);
@@ -265,6 +265,7 @@ export function DashboardOverview() {
   const platform = useDashboardPlatform();
   const setPeriod = useSetDashboardPeriod();
   const setPlatform = useSetDashboardPlatform();
+  const queryClient = useQueryClient();
 
   const [focusedPanel, setFocusedPanel] = useState<null | PanelId>(null);
   const [highlightedPanel, setHighlightedPanel] = useState<null | PanelId>(
@@ -306,6 +307,8 @@ export function DashboardOverview() {
     platform: "",
     deadline: "",
     stage: "idea",
+    videoUrl: "",
+    coverImageUrl: "",
   });
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [isVideoFormOpen, setIsVideoFormOpen] = useState(false);
@@ -709,6 +712,14 @@ export function DashboardOverview() {
     setDragOverDateKey(null);
     try {
       await updatePlanningItem(itemId, { publishAt: dateKey });
+      if (item.videoId) {
+        setVideoData((prev) =>
+          prev.map((v) =>
+            v.id === item.videoId ? { ...v, deadline: dateKey } : v,
+          ),
+        );
+        await updateVideoItem(item.videoId, { deadline: dateKey });
+      }
     } catch (error) {
       console.error("Erreur déplacement événement :", error);
       setPlanningData((prev) =>
@@ -716,6 +727,13 @@ export function DashboardOverview() {
           p.id === itemId ? { ...p, publishAt: item.publishAt } : p,
         ),
       );
+      if (item.videoId) {
+        setVideoData((prev) =>
+          prev.map((v) =>
+            v.id === item.videoId ? { ...v, deadline: item.publishAt } : v,
+          ),
+        );
+      }
     }
   };
 
@@ -926,6 +944,18 @@ export function DashboardOverview() {
       ),
     );
     updateVideoItem(id, { stage: nextStage }).catch(console.error);
+    const linkedPlanning = planningData.find((p) => p.videoId === id);
+    if (linkedPlanning) {
+      const nextStatus = planningStatusFromVideoStage(nextStage);
+      setPlanningData((prev) =>
+        prev.map((p) =>
+          p.id === linkedPlanning.id ? { ...p, status: nextStatus } : p,
+        ),
+      );
+      updatePlanningItem(linkedPlanning.id, { status: nextStatus }).catch(
+        console.error,
+      );
+    }
   };
 
   const setVideoDraftField = <K extends keyof VideoDraft>(
@@ -941,6 +971,8 @@ export function DashboardOverview() {
       platform: platforms[0] ?? "",
       deadline: "",
       stage: "idea",
+      videoUrl: "",
+      coverImageUrl: "",
     });
     setEditingVideoId(null);
   };
@@ -968,6 +1000,12 @@ export function DashboardOverview() {
     };
 
     if (editingVideoId) {
+      const videoUrl =
+        videoDraft.stage === "published" ? videoDraft.videoUrl.trim() : "";
+      const coverImageUrl = videoDraft.coverImageUrl.trim();
+      const linkedPlanning = planningData.find(
+        (p) => p.videoId === editingVideoId,
+      );
       setVideoData((prev) =>
         prev.map((item) =>
           item.id === editingVideoId
@@ -977,6 +1015,8 @@ export function DashboardOverview() {
                 platform: videoDraft.platform,
                 deadline: normalizedDate,
                 stage: videoDraft.stage,
+                videoUrl: videoUrl || undefined,
+                coverImageUrl: coverImageUrl || undefined,
               }
             : item,
         ),
@@ -990,7 +1030,31 @@ export function DashboardOverview() {
         platform: videoDraft.platform,
         deadline: normalizedDate,
         stage: videoDraft.stage,
+        videoUrl,
+        coverImageUrl,
       }).catch(console.error);
+      if (linkedPlanning) {
+        const nextStatus = planningStatusFromVideoStage(videoDraft.stage);
+        setPlanningData((prev) =>
+          prev.map((p) =>
+            p.id === linkedPlanning.id
+              ? {
+                  ...p,
+                  title: videoDraft.title.trim(),
+                  platform: videoDraft.platform,
+                  publishAt: normalizedDate,
+                  status: nextStatus,
+                }
+              : p,
+          ),
+        );
+        updatePlanningItem(linkedPlanning.id, {
+          title: videoDraft.title.trim(),
+          platform: videoDraft.platform,
+          publishAt: normalizedDate,
+          status: nextStatus,
+        }).catch(console.error);
+      }
       ensureVisibility(videoDraft.platform, normalizedDate);
       resetVideoDraft();
       setIsVideoFormOpen(false);
@@ -999,20 +1063,24 @@ export function DashboardOverview() {
 
     if (!user?.id) return;
     try {
+      const videoUrl =
+        videoDraft.stage === "published" ? videoDraft.videoUrl.trim() : "";
+      const coverImageUrl = videoDraft.coverImageUrl.trim();
       const newVideo = await addVideoItem(user.id, {
         title: videoDraft.title.trim(),
         platform: videoDraft.platform,
         deadline: normalizedDate,
         stage: videoDraft.stage,
+        ...(videoUrl ? { videoUrl } : {}),
+        ...(coverImageUrl ? { coverImageUrl } : {}),
       });
 
-      const planningStatus: PlanningItem["status"] =
-        videoDraft.stage === "published" ? "published" : "scheduled";
       const newPlanningItem = await addPlanningItem(user.id, {
         title: newVideo.title,
         platform: newVideo.platform,
         publishAt: normalizedDate,
-        status: planningStatus,
+        status: planningStatusFromVideoStage(videoDraft.stage),
+        videoId: newVideo.id,
       });
 
       addUserPlatform(user.id, newVideo.platform).catch(console.error);
@@ -1020,6 +1088,9 @@ export function DashboardOverview() {
       setPlanningData((prev) => [...prev, newPlanningItem]);
       setVideoStages((prev) => ({ ...prev, [newVideo.id]: newVideo.stage }));
       ensureVisibility(newVideo.platform, newVideo.deadline);
+      void queryClient.invalidateQueries({
+        queryKey: ["dashboard", "overview", user.id],
+      });
     } catch (error) {
       console.error(error);
     }
@@ -1036,20 +1107,32 @@ export function DashboardOverview() {
       platform: item.platform,
       deadline: toDateKey(item.deadline),
       stage: videoStages[item.id] ?? item.stage,
+      videoUrl: item.videoUrl ?? "",
+      coverImageUrl: item.coverImageUrl ?? "",
     });
   };
 
   const deleteVideoItem = (id: string) => {
+    const linkedPlanning = planningData.find((p) => p.videoId === id);
     setVideoData((prev) => prev.filter((item) => item.id !== id));
     setVideoStages((prev) => {
       const next = { ...prev };
       delete next[id];
       return next;
     });
+    if (linkedPlanning) {
+      setPlanningData((prev) =>
+        prev.filter((item) => item.id !== linkedPlanning.id),
+      );
+      deletePlanningItemApi(linkedPlanning.id)
+        .then(() => deleteVideoItemApi(id))
+        .catch(console.error);
+    } else {
+      deleteVideoItemApi(id).catch(console.error);
+    }
     if (editingVideoId === id) {
       resetVideoDraft();
     }
-    deleteVideoItemApi(id).catch(console.error);
   };
 
   const createPlatform = () => {
@@ -1193,6 +1276,7 @@ export function DashboardOverview() {
     };
 
     if (editingPlanningId) {
+      const existing = planningData.find((p) => p.id === editingPlanningId);
       setPlanningData((prev) =>
         prev.map((item) =>
           item.id === editingPlanningId
@@ -1212,6 +1296,25 @@ export function DashboardOverview() {
         publishAt: normalizedDate,
         status: planningDraft.status,
       }).catch(console.error);
+      if (existing?.videoId) {
+        setVideoData((prev) =>
+          prev.map((v) =>
+            v.id === existing.videoId
+              ? {
+                  ...v,
+                  title: planningDraft.title.trim(),
+                  platform: planningDraft.platform,
+                  deadline: normalizedDate,
+                }
+              : v,
+          ),
+        );
+        updateVideoItem(existing.videoId, {
+          title: planningDraft.title.trim(),
+          platform: planningDraft.platform,
+          deadline: normalizedDate,
+        }).catch(console.error);
+      }
       ensureVisibility(planningDraft.platform, normalizedDate);
       resetPlanningDraft();
       setIsPlanningFormOpen(false);
@@ -1249,11 +1352,25 @@ export function DashboardOverview() {
   };
 
   const deletePlanningItem = (id: string) => {
-    setPlanningData((prev) => prev.filter((item) => item.id !== id));
+    const item = planningData.find((p) => p.id === id);
+    setPlanningData((prev) => prev.filter((p) => p.id !== id));
+    if (item?.videoId) {
+      const videoId = item.videoId;
+      setVideoData((prev) => prev.filter((v) => v.id !== videoId));
+      setVideoStages((prev) => {
+        const next = { ...prev };
+        delete next[videoId];
+        return next;
+      });
+      deletePlanningItemApi(id)
+        .then(() => deleteVideoItemApi(videoId))
+        .catch(console.error);
+    } else {
+      deletePlanningItemApi(id).catch(console.error);
+    }
     if (editingPlanningId === id) {
       resetPlanningDraft();
     }
-    deletePlanningItemApi(id).catch(console.error);
   };
 
   const askPlanningDelete = (item: PlanningItem) => {
@@ -2826,6 +2943,27 @@ export function DashboardOverview() {
                             <option value="editing">Montage</option>
                             <option value="published">Publié</option>
                           </select>
+                          <input
+                            type="url"
+                            placeholder="Image de couverture (URL, cover_image_url)"
+                            value={videoDraft.coverImageUrl}
+                            onChange={(event) =>
+                              setVideoDraftField(
+                                "coverImageUrl",
+                                event.target.value,
+                              )
+                            }
+                          />
+                          {videoDraft.stage === "published" ? (
+                            <input
+                              type="url"
+                              placeholder="Lien de la vidéo publiée"
+                              value={videoDraft.videoUrl}
+                              onChange={(event) =>
+                                setVideoDraftField("videoUrl", event.target.value)
+                              }
+                            />
+                          ) : null}
                         </div>
                         <div className={styles.videoFormActions}>
                           <button type="button" onClick={submitVideoDraft}>
@@ -2862,12 +3000,36 @@ export function DashboardOverview() {
                                 : ""
                             }
                           >
-                            <strong>{video.title}</strong>
-                            <span>
-                              Plateforme:{" "}
-                              {highlightMatch(video.platform, search)} -
-                              Deadline: {highlightMatch(video.deadline, search)}
-                            </span>
+                            <div className={styles.videoListRow}>
+                              {video.coverImageUrl ? (
+                                <img
+                                  className={styles.videoThumbMini}
+                                  src={video.coverImageUrl}
+                                  alt=""
+                                />
+                              ) : null}
+                              <div>
+                                <strong>{video.title}</strong>
+                                <span>
+                                  Plateforme:{" "}
+                                  {highlightMatch(video.platform, search)} -
+                                  Deadline:{" "}
+                                  {highlightMatch(video.deadline, search)}
+                                </span>
+                                {currentStage === "published" &&
+                                video.videoUrl ? (
+                                  <div>
+                                    <a
+                                      href={video.videoUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      Ouvrir la vidéo
+                                    </a>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
                             <div className={styles.inlineControls}>
                               <label htmlFor={`modal-stage-${video.id}`}>
                                 Étape :

@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { addPlanningItem } from "../../../entities/dashboard/api/planning-api";
+import { planningStatusFromVideoStage } from "../../../entities/dashboard/api/video-planning-sync";
 import {
   addVideoItem,
   deleteVideoItem,
   updateVideoItem,
 } from "../../../entities/dashboard/api/videos-api";
+import { toDateKey } from "../../../shared/lib/date-key";
 import { useDashboardData } from "../../../entities/dashboard/model/use-dashboard-data";
 import { selectAuthUser, useAuthStore } from "../../../shared/model/auth-store";
 import { AnimatedLoader } from "../../../shared/ui/AnimatedLoader";
@@ -20,7 +23,7 @@ type DisplayVideo = {
   platform: string;
   stage: VideoStage;
   deadline: string;
-  thumbnailUrl?: string;
+  coverImageUrl?: string;
   videoUrl?: string;
 };
 
@@ -90,7 +93,7 @@ export function VideosPage() {
         const enrichedVideo = video as DisplayVideo;
         return {
           ...video,
-          thumbnailUrl: enrichedVideo.thumbnailUrl,
+          coverImageUrl: enrichedVideo.coverImageUrl,
           videoUrl: enrichedVideo.videoUrl,
         };
       });
@@ -178,15 +181,23 @@ export function VideosPage() {
         await updateVideoItem(editingVideoId, {
           title: videoDraft.title.trim(),
           platform: videoDraft.platform.trim(),
-          deadline: videoDraft.deadline,
+          deadline: toDateKey(videoDraft.deadline),
           stage: videoDraft.stage,
         });
       } else {
-        await addVideoItem(user.id, {
+        const deadlineKey = toDateKey(videoDraft.deadline);
+        const newVideo = await addVideoItem(user.id, {
           title: videoDraft.title.trim(),
           platform: videoDraft.platform.trim(),
-          deadline: videoDraft.deadline,
+          deadline: deadlineKey,
           stage: videoDraft.stage,
+        });
+        await addPlanningItem(user.id, {
+          title: newVideo.title,
+          platform: newVideo.platform,
+          publishAt: deadlineKey,
+          status: planningStatusFromVideoStage(videoDraft.stage),
+          videoId: newVideo.id,
         });
       }
 
@@ -393,14 +404,14 @@ export function VideosPage() {
             </header>
             {videos.map((video) => {
               const videoUrl = video.videoUrl ?? getDefaultVideoUrl(video);
-              const thumbnailUrl =
-                video.thumbnailUrl ?? getDefaultThumbnailUrl(video);
+              const coverSrc =
+                video.coverImageUrl?.trim() || getDefaultThumbnailUrl(video);
 
               return (
                 <article key={video.id} className={styles.videoRow}>
                   <img
                     className={styles.thumb}
-                    src={thumbnailUrl}
+                    src={coverSrc}
                     alt={`Miniature de ${video.title}`}
                     loading="lazy"
                   />

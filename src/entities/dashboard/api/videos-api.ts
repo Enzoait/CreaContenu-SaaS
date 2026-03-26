@@ -10,31 +10,49 @@ function mapRow(row: {
   platform: string
   stage: string
   deadline: string
+  video_url?: string | null
+  cover_image_url?: string | null
 }): VideoItem {
+  const cover = row.cover_image_url?.trim() ?? ''
   return {
     id: row.id,
     title: row.title,
     platform: row.platform,
     stage: row.stage as VideoItem['stage'],
     deadline: row.deadline,
+    ...(row.video_url ? { videoUrl: row.video_url } : {}),
+    ...(cover ? { coverImageUrl: cover } : {}),
   }
 }
 
 export async function fetchVideoItems(userId: string): Promise<VideoItem[]> {
   const { data, error } = await supabase
     .from('video_items')
-    .select('id, title, platform, stage, deadline')
+    .select('*')
     .eq('user_id', userId)
     .order('deadline', { ascending: true })
 
   if (error) throw new Error(error.message)
-  return (data ?? []).map(mapRow)
+  return (data ?? []).map((row) =>
+    mapRow(
+      row as {
+        id: string
+        title: string
+        platform: string
+        stage: string
+        deadline: string
+        video_url?: string | null
+        cover_image_url?: string | null
+      },
+    ),
+  )
 }
 
 export async function addVideoItem(
   userId: string,
   item: Omit<VideoItem, 'id'>,
 ): Promise<VideoItem> {
+  const cover = item.coverImageUrl?.trim() ?? ''
   const { data, error } = await supabase
     .from('video_items')
     .insert({
@@ -43,12 +61,26 @@ export async function addVideoItem(
       platform: item.platform,
       stage: item.stage,
       deadline: item.deadline,
+      cover_image_url: cover,
+      ...(item.videoUrl !== undefined && item.videoUrl !== ''
+        ? { video_url: item.videoUrl }
+        : {}),
     })
-    .select('id, title, platform, stage, deadline')
+    .select('*')
     .single()
 
   if (error) throw new Error(error.message)
-  return mapRow(data)
+  return mapRow(
+    data as {
+      id: string
+      title: string
+      platform: string
+      stage: string
+      deadline: string
+      video_url?: string | null
+      cover_image_url?: string | null
+    },
+  )
 }
 
 export async function updateVideoItem(
@@ -60,6 +92,12 @@ export async function updateVideoItem(
   if (patch.platform !== undefined) update.platform = patch.platform
   if (patch.stage !== undefined) update.stage = patch.stage
   if (patch.deadline !== undefined) update.deadline = patch.deadline
+  if (patch.videoUrl !== undefined) {
+    update.video_url = patch.videoUrl === '' ? null : patch.videoUrl
+  }
+  if (patch.coverImageUrl !== undefined) {
+    update.cover_image_url = patch.coverImageUrl.trim()
+  }
 
   const { error } = await supabase.from('video_items').update(update).eq('id', id)
   if (error) throw new Error(error.message)

@@ -21,6 +21,10 @@ export const VideoItemSchema = z.object({
   platform: z.string().min(1),
   stage: z.enum(["idea", "scripting", "recording", "editing", "published"]),
   deadline: z.string().min(1),
+  /** Lien vers la vidéo publiée (colonne video_url) */
+  videoUrl: z.string().optional(),
+  /** Image de couverture (colonne cover_image_url, NOT NULL en BDD, chaîne vide si absent) */
+  coverImageUrl: z.string().optional(),
 });
 
 export const TodoItemSchema = z.object({
