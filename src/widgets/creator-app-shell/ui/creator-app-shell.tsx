@@ -26,6 +26,7 @@ import {
   useToggleAppTheme,
 } from "../../../shared/model";
 import { useI18n } from "../../../shared/i18n";
+import { LanguageSwitcher } from "../../language-switcher/ui/language-switcher";
 import styles from "./creator-app-shell.module.scss";
 
 type CreatorAppShellProps = {
@@ -221,7 +222,7 @@ export function CreatorAppShell({
           <span className={styles.brandIcon}>C</span>
           <span className={styles.brandText}>
             <strong>CreaContenu</strong>
-            <small>Creator workspace</small>
+            <small>{t("shell.brandSubtitle")}</small>
           </span>
         </div>
         <nav className={styles.menu} aria-label={t("shell.mainNav")}>
@@ -231,7 +232,7 @@ export function CreatorAppShell({
             onClick={goToDashboard}
           >
             <HiOutlineSquares2X2 aria-hidden="true" />
-            <span>Tableau de bord</span>
+            <span>{t("shell.dashboard")}</span>
           </button>
           <button
             type="button"
@@ -239,7 +240,7 @@ export function CreatorAppShell({
             onClick={goToAccount}
           >
             <HiOutlineUserCircle aria-hidden="true" />
-            <span>Gestion utilisateur</span>
+            <span>{t("shell.account")}</span>
           </button>
           <button
             type="button"
@@ -247,7 +248,7 @@ export function CreatorAppShell({
             onClick={goToVideos}
           >
             <HiOutlinePlayCircle aria-hidden="true" />
-            <span>Mes videos</span>
+            <span>{t("shell.videos")}</span>
           </button>
         </nav>
         <div className={styles.sidebarFooter}>
@@ -255,14 +256,17 @@ export function CreatorAppShell({
             type="button"
             className={styles.sidebarProfile}
             onClick={goToAccount}
-            aria-label="Ouvrir le profil"
+            aria-label={t("shell.openProfile")}
           >
             <span className={styles.sidebarAvatar}>
-              <img src={avatarUrl} alt={`Profil de ${displayName}`} />
+              <img
+                src={avatarUrl}
+                alt={t("shell.profileAlt", { name: displayName })}
+              />
             </span>
             <span className={styles.sidebarProfileMeta}>
               <strong>{displayName}</strong>
-              <small>{user?.email ?? "Compte connecté"}</small>
+              <small>{user?.email ?? t("shell.connectedAccount")}</small>
             </span>
           </button>
           <SignOutButton
@@ -278,21 +282,21 @@ export function CreatorAppShell({
               type="button"
               className={styles.burger}
               onClick={() => setIsMenuOpen((prev) => !prev)}
-              aria-label="Ouvrir le menu"
+              aria-label={t("shell.openMenu")}
             >
               <HiBars3 aria-hidden="true" />
             </button>
             <div className={styles.pageTitleBlock}>
               <span className={styles.pageEyebrow}>
                 <HiSparkles aria-hidden="true" />
-                Creator OS
+                {t("shell.brandEyebrow")}
               </span>
               <h2>
                 {location.pathname === "/account"
-                  ? "Mon profil"
+                  ? t("account.pageTitle")
                   : location.pathname === "/videos"
-                    ? "Mes videos"
-                    : "Tableau de bord"}
+                    ? t("shell.videos")
+                    : t("shell.dashboard")}
               </h2>
             </div>
           </div>
@@ -306,8 +310,8 @@ export function CreatorAppShell({
               onClick={toggleTheme}
               aria-label={
                 theme === "dark"
-                  ? "Activer le mode clair"
-                  : "Activer le mode sombre"
+                  ? t("shell.themeSwitchLight")
+                  : t("shell.themeSwitchDark")
               }
             >
               {theme === "dark" ? (
@@ -315,20 +319,28 @@ export function CreatorAppShell({
               ) : (
                 <HiMoon aria-hidden="true" />
               )}
-              <span>{theme === "dark" ? "Light" : "Dark"}</span>
+              <span>
+                {theme === "dark"
+                  ? t("shell.themeShortLight")
+                  : t("shell.themeShortDark")}
+              </span>
             </button>
+            <LanguageSwitcher />
             <button
               type="button"
               className={styles.profileButton}
               onClick={goToAccount}
-              aria-label="Gestion utilisateur"
+              aria-label={t("shell.goAccount")}
             >
               <span className={styles.profileAvatar}>
-                <img src={avatarUrl} alt={`Profil de ${displayName}`} />
+                <img
+                  src={avatarUrl}
+                  alt={t("shell.profileAlt", { name: displayName })}
+                />
               </span>
               <span className={styles.profileContent}>
                 <strong>{displayName}</strong>
-                <small>{user?.email ?? "Compte créateur"}</small>
+                <small>{user?.email ?? t("shell.creatorAccountHint")}</small>
               </span>
             </button>
           </div>

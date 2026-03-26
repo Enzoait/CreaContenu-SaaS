@@ -46,10 +46,12 @@ describe("CreatorAppShell", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Tableau de bord")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Tableau de bord" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("contenu")).toBeInTheDocument();
     expect(
-      screen.getByRole("combobox", { name: /langue/i }),
+      screen.getByRole("group", { name: /langue/i }),
     ).toBeInTheDocument();
   });
 });

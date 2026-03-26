@@ -1,24 +1,29 @@
 import { z } from "zod";
+import type { MessageKey } from "../../../shared/i18n/messages";
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z
-      .string()
-      .min(8, "Le mot de passe actuel doit contenir au moins 8 caracteres"),
-    newPassword: z
-      .string()
-      .min(8, "Le nouveau mot de passe doit contenir au moins 8 caracteres"),
-    confirmPassword: z
-      .string()
-      .min(8, "La confirmation doit contenir au moins 8 caracteres"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Les mots de passe ne correspondent pas",
-  })
-  .refine((data) => data.currentPassword !== data.newPassword, {
-    path: ["newPassword"],
-    message: "Le nouveau mot de passe doit etre different de l'actuel",
-  });
+type TFn = (key: MessageKey) => string;
 
-export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+export function createChangePasswordSchema(t: TFn) {
+  return z
+    .object({
+      currentPassword: z
+        .string()
+        .min(8, t("account.validationCurrentPasswordMin8")),
+      newPassword: z.string().min(8, t("account.validationNewPasswordMin8")),
+      confirmPassword: z
+        .string()
+        .min(8, t("account.validationConfirmPasswordMin8")),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      path: ["confirmPassword"],
+      message: t("account.validationPasswordMismatch"),
+    })
+    .refine((data) => data.currentPassword !== data.newPassword, {
+      path: ["newPassword"],
+      message: t("account.validationPasswordNewMustDiffer"),
+    });
+}
+
+export type ChangePasswordFormValues = z.infer<
+  ReturnType<typeof createChangePasswordSchema>
+>;

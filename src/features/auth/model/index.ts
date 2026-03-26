@@ -9,7 +9,7 @@ export {
   type ResetPasswordFormValues,
 } from "./reset-password.schema";
 export {
-  changePasswordSchema,
+  createChangePasswordSchema,
   type ChangePasswordFormValues,
 } from "./change-password.schema";
 export { useSignInMutation } from "./use-sign-in-mutation";

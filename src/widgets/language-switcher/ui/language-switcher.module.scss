@@ -1,33 +1,65 @@
-.wrap {
+.group {
   display: inline-flex;
-  align-items: center;
-}
-
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
+  align-items: stretch;
+  border: 1px solid #ebeef7;
+  border-radius: 999px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  background: #ffffff;
+  flex-shrink: 0;
 }
 
-.select {
-  border: 1px solid #d9deea;
-  background: #fff;
-  color: #334155;
-  border-radius: 8px;
-  padding: 4px 8px;
+.segment,
+.segmentActive {
+  border: none;
+  margin: 0;
+  padding: 8px 12px;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
-  min-width: 56px;
+  min-width: 44px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
-.select:focus {
+.segment {
+  background: #ffffff;
+  color: #64748b;
+}
+
+.segment:hover {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.segmentActive {
+  background: linear-gradient(145deg, #5b4fcf, #6d5de0);
+  color: #ffffff;
+}
+
+.segment:focus-visible {
   outline: 2px solid #818cf8;
-  outline-offset: 1px;
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+:global([data-theme="dark"]) .group {
+  background: #1a1f2b;
+  border-color: #2a2f3a;
+}
+
+:global([data-theme="dark"]) .segment {
+  background: #1a1f2b;
+  color: #9aa3b2;
+}
+
+:global([data-theme="dark"]) .segment:hover {
+  background: #232a38;
+  color: #e5e7eb;
+}
+
+:global([data-theme="dark"]) .segmentActive {
+  background: linear-gradient(145deg, #5b4fcf, #7a68dd);
+  color: #ffffff;
 }

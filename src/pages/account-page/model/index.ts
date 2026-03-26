@@ -7,6 +7,6 @@ export {
   type AccountTab,
 } from "./account-page-store";
 export {
-  accountProfileFormSchema,
+  createAccountProfileFormSchema,
   type AccountProfileFormValues,
 } from "./account-profile-form.schema";

@@ -12,14 +12,17 @@ describe("LanguageSwitcher", () => {
     });
   });
 
-  it("affiche le sélecteur et met à jour la locale", async () => {
+  it("affiche FR actif et passe à EN au clic", async () => {
     const user = userEvent.setup();
     render(<LanguageSwitcher />);
 
-    const select = screen.getByRole("combobox", { name: /langue/i });
-    expect(select).toHaveValue("fr");
+    const en = screen.getByRole("button", { name: /anglais/i });
+    expect(screen.getByRole("button", { name: /français/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
-    await user.selectOptions(select, "en");
+    await user.click(en);
     expect(useLocaleStore.getState().locale).toBe("en");
   });
 });

@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { changePasswordSchema } from "./change-password.schema";
+import { translate } from "../../../shared/i18n/messages";
+import { createChangePasswordSchema } from "./change-password.schema";
 
-describe("changePasswordSchema", () => {
+const schema = createChangePasswordSchema((key) => translate("fr", key));
+
+describe("createChangePasswordSchema", () => {
   it("valide un payload correct", () => {
-    const result = changePasswordSchema.safeParse({
+    const result = schema.safeParse({
       currentPassword: "password123",
       newPassword: "newpassword123",
       confirmPassword: "newpassword123",
@@ -13,7 +16,7 @@ describe("changePasswordSchema", () => {
   });
 
   it("rejette des mots de passe differents", () => {
-    const result = changePasswordSchema.safeParse({
+    const result = schema.safeParse({
       currentPassword: "password123",
       newPassword: "newpassword123",
       confirmPassword: "different123",
@@ -23,7 +26,7 @@ describe("changePasswordSchema", () => {
   });
 
   it("rejette le meme mot de passe", () => {
-    const result = changePasswordSchema.safeParse({
+    const result = schema.safeParse({
       currentPassword: "password123",
       newPassword: "password123",
       confirmPassword: "password123",

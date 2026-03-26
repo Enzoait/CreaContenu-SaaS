@@ -14,6 +14,7 @@ import { moveInArray } from "../../../shared/lib/reorder-list";
 import { useDashboardData } from "../../../entities/dashboard/model/use-dashboard-data";
 import { selectAuthUser, useAuthStore } from "../../../shared/model/auth-store";
 import { AnimatedLoader } from "../../../shared/ui/AnimatedLoader";
+import { useI18n } from "../../../shared/i18n/use-i18n";
 import { CreatorAppShell } from "../../../widgets/creator-app-shell";
 import styles from "./videos-page.module.scss";
 
@@ -37,14 +38,6 @@ function compareVideoOrder(a: DisplayVideo, b: DisplayVideo): number {
   return a.deadline.localeCompare(b.deadline);
 }
 
-const STAGE_LABEL: Record<VideoStage, string> = {
-  idea: "Idee",
-  scripting: "Script",
-  recording: "Tournage",
-  editing: "Montage",
-  published: "Publiee",
-};
-
 function getPlatformBaseUrl(platform: string): string {
   const key = platform.trim().toLowerCase();
   if (key === "youtube") return "https://www.youtube.com/results?search_query=";
@@ -63,11 +56,11 @@ function getDefaultThumbnailUrl(video: DisplayVideo): string {
   return `https://placehold.co/800x450/e2e8f0/0f172a?text=${encodeURIComponent(video.title)}`;
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string, locale: string): string {
   const date = new Date(
     /\d{4}-\d{2}-\d{2}/.test(value) ? `${value}T00:00:00` : value,
   );
-  return date.toLocaleDateString("fr-FR", {
+  return date.toLocaleDateString(locale, {
     weekday: "short",
     day: "2-digit",
     month: "long",
@@ -76,9 +69,21 @@ function formatDate(value: string): string {
 }
 
 export function VideosPage() {
+  const { t, localeTag } = useI18n();
   const user = useAuthStore(selectAuthUser);
   const queryClient = useQueryClient();
   const { data, isLoading, isFetching, isError } = useDashboardData();
+
+  const stageLabelMap = useMemo(
+    () => ({
+      idea: t("dashboard.stageIdea"),
+      scripting: t("dashboard.stageScripting"),
+      recording: t("dashboard.stageRecording"),
+      editing: t("dashboard.stageEditing"),
+      published: t("dashboard.stagePublished"),
+    }),
+    [t],
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -180,9 +185,7 @@ export function VideosPage() {
           });
         } catch (err) {
           setErrorMessage(
-            err instanceof Error
-              ? err.message
-              : "Réordonnancement impossible.",
+            err instanceof Error ? err.message : t("videos.reorderError"),
           );
         }
       })();
@@ -220,7 +223,7 @@ export function VideosPage() {
 
   const submitVideo = async () => {
     if (!user?.id) {
-      setErrorMessage("Utilisateur non identifie.");
+      setErrorMessage(t("videos.errorUser"));
       return;
     }
 
@@ -229,7 +232,7 @@ export function VideosPage() {
       !videoDraft.platform.trim() ||
       !videoDraft.deadline
     ) {
-      setErrorMessage("Titre, plateforme et deadline sont obligatoires.");
+      setErrorMessage(t("videos.errorRequired"));
       return;
     }
 
@@ -307,7 +310,7 @@ export function VideosPage() {
       }
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Suppression impossible.",
+        error instanceof Error ? error.message : t("videos.errorDelete"),
       );
     } finally {
       setIsSubmitting(false);
@@ -321,9 +324,7 @@ export function VideosPage() {
       await refreshVideos();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Impossible de mettre a jour l'etape.",
+        error instanceof Error ? error.message : t("videos.errorStage"),
       );
     }
   };
@@ -333,24 +334,21 @@ export function VideosPage() {
       <section className={styles.page}>
         <header className={styles.hero}>
           <div>
-            <h1>Mes videos</h1>
-            <p>
-              Toutes vos videos avec miniature, liens, informations de
-              production et calendrier.
-            </p>
+            <h1>{t("shell.videos")}</h1>
+            <p>{t("videos.heroSubtitle")}</p>
           </div>
           <Link className={styles.backLink} to="/dashboard">
-            Retour au tableau de bord
+            {t("videos.backDashboard")}
           </Link>
         </header>
 
         <section className={styles.metrics}>
           <article className={styles.metricCard}>
-            <span>Total videos</span>
+            <span>{t("videos.metricTotal")}</span>
             <strong>{videos.length}</strong>
           </article>
           <article className={styles.metricCard}>
-            <span>En production</span>
+            <span>{t("videos.metricProduction")}</span>
             <strong>
               {stageCounts.idea +
                 stageCounts.scripting +
@@ -359,14 +357,14 @@ export function VideosPage() {
             </strong>
           </article>
           <article className={styles.metricCard}>
-            <span>Publiees</span>
+            <span>{t("videos.metricPublished")}</span>
             <strong>{stageCounts.published}</strong>
           </article>
         </section>
 
         <section className={styles.formCard}>
           <div className={styles.formHeader}>
-            <h2>Gestion des videos</h2>
+            <h2>{t("videos.managementTitle")}</h2>
             <button
               type="button"
               className={styles.toggleFormButton}
@@ -377,14 +375,14 @@ export function VideosPage() {
                 setIsFormOpen((prev) => !prev);
               }}
             >
-              {isFormOpen ? "Masquer" : "Ajouter une video"}
+              {isFormOpen ? t("videos.hideForm") : t("videos.addVideo")}
             </button>
           </div>
 
           {isFormOpen ? (
             <div className={styles.formGrid}>
               <input
-                placeholder="Titre de la video"
+                placeholder={t("videos.placeholderTitle")}
                 value={videoDraft.title}
                 onChange={(event) =>
                   setVideoDraft((prev) => ({
@@ -412,7 +410,7 @@ export function VideosPage() {
                   }))
                 }
               >
-                <option value="">Plateforme</option>
+                <option value="">{t("videos.platformOption")}</option>
                 {platforms.map((item) => (
                   <option key={item} value={item}>
                     {item}
@@ -428,16 +426,16 @@ export function VideosPage() {
                   }))
                 }
               >
-                <option value="idea">Idee</option>
-                <option value="scripting">Script</option>
-                <option value="recording">Tournage</option>
-                <option value="editing">Montage</option>
-                <option value="published">Publiee</option>
+                <option value="idea">{stageLabelMap.idea}</option>
+                <option value="scripting">{stageLabelMap.scripting}</option>
+                <option value="recording">{stageLabelMap.recording}</option>
+                <option value="editing">{stageLabelMap.editing}</option>
+                <option value="published">{stageLabelMap.published}</option>
               </select>
               <input
                 type="url"
                 className={styles.formGridFieldFull}
-                placeholder="Image de couverture (URL)"
+                placeholder={t("videos.coverPlaceholder")}
                 value={videoDraft.coverImageUrl}
                 onChange={(event) =>
                   setVideoDraft((prev) => ({
@@ -466,7 +464,7 @@ export function VideosPage() {
                   onClick={submitVideo}
                   disabled={isSubmitting}
                 >
-                  {editingVideoId ? "Modifier" : "Ajouter"}
+                  {editingVideoId ? t("videos.modify") : t("videos.add")}
                 </button>
                 {editingVideoId ? (
                   <button
@@ -475,7 +473,7 @@ export function VideosPage() {
                     onClick={resetDraft}
                     disabled={isSubmitting}
                   >
-                    Annuler
+                    {t("videos.cancel")}
                   </button>
                 ) : null}
               </div>
@@ -494,9 +492,9 @@ export function VideosPage() {
         {videos.length > 0 ? (
           <section className={styles.videoBoard}>
             <header className={styles.videoBoardHeader}>
-              <span>Video</span>
-              <span>Infos</span>
-              <span>Actions</span>
+              <span>{t("videos.tableVideo")}</span>
+              <span>{t("videos.tableInfo")}</span>
+              <span>{t("videos.tableActions")}</span>
             </header>
             {videos.map((video, index) => {
               const videoUrl = video.videoUrl ?? getDefaultVideoUrl(video);
@@ -520,7 +518,7 @@ export function VideosPage() {
                   <img
                     className={styles.thumb}
                     src={coverSrc}
-                    alt={`Miniature de ${video.title}`}
+                    alt={t("videos.thumbAlt", { title: video.title })}
                     loading="lazy"
                     draggable={false}
                   />
@@ -529,11 +527,12 @@ export function VideosPage() {
                     <div className={styles.metaRow}>
                       <span className={styles.metaChip}>{video.platform}</span>
                       <span className={styles.metaChip}>
-                        {STAGE_LABEL[video.stage]}
+                        {stageLabelMap[video.stage]}
                       </span>
                     </div>
                     <p className={styles.deadline}>
-                      Deadline: {formatDate(video.deadline)}
+                      {t("videos.deadlineLabel")}:{" "}
+                      {formatDate(video.deadline, localeTag)}
                     </p>
                     <a
                       className={styles.videoLink}
@@ -541,21 +540,23 @@ export function VideosPage() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Ouvrir le lien
+                      {t("videos.openLink")}
                     </a>
                     <small className={styles.planningHint}>
-                      Calendrier:{" "}
-                      {
-                        data.planning.filter(
-                          (item) => item.publishAt === video.deadline,
-                        ).length
-                      }{" "}
-                      contenu(x) planifie(s) le meme jour
+                      {t("videos.planningSameDay", {
+                        n: String(
+                          data.planning.filter(
+                            (item) => item.publishAt === video.deadline,
+                          ).length,
+                        ),
+                      })}
                     </small>
                   </div>
                   <div className={styles.videoControls}>
                     <div className={styles.stageRow}>
-                      <label htmlFor={`video-stage-${video.id}`}>Etape</label>
+                      <label htmlFor={`video-stage-${video.id}`}>
+                        {t("videos.stageLabel")}
+                      </label>
                       <select
                         id={`video-stage-${video.id}`}
                         value={video.stage}
@@ -599,13 +600,17 @@ export function VideosPage() {
 
         {calendarItems.length > 0 ? (
           <section className={styles.calendar}>
-            <h2>Calendrier videos</h2>
+            <h2>{t("videos.calendarTitle")}</h2>
             <ul className={styles.calendarList}>
               {calendarItems.map((item) => (
                 <li key={item.id} className={styles.calendarItem}>
-                  <span>{formatDate(item.deadline)}</span>
+                  <span>{formatDate(item.deadline, localeTag)}</span>
                   <strong>{item.title}</strong>
-                  <small>{item.planningCount} slot(s) planning</small>
+                  <small>
+                    {t("videos.calendarSlots", {
+                      n: String(item.planningCount),
+                    })}
+                  </small>
                 </li>
               ))}
             </ul>

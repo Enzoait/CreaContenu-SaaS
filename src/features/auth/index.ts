@@ -14,7 +14,7 @@ export {
   type ResetPasswordFormValues,
 } from "./model/reset-password.schema";
 export {
-  changePasswordSchema,
+  createChangePasswordSchema,
   type ChangePasswordFormValues,
 } from "./model/change-password.schema";
 export { useSignInMutation } from "./model/use-sign-in-mutation";

@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jsPDF } from "jspdf";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   HiOutlineArrowDownTray,
@@ -13,24 +13,19 @@ import {
   useUpsertUserDataMutation,
 } from "../../../entities/user";
 import {
-  changePasswordSchema,
+  createChangePasswordSchema,
   useChangePasswordMutation,
   type ChangePasswordFormValues,
 } from "../../../features/auth";
 import {
-  accountProfileFormSchema,
+  createAccountProfileFormSchema,
   useAccountActiveTab,
   useSetAccountActiveTab,
   type AccountProfileFormValues,
   type AccountTab,
 } from "../model";
+import { useI18n, type MessageKey } from "../../../shared/i18n/use-i18n";
 import { CreatorAppShell } from "../../../widgets/creator-app-shell";
-
-const ACCOUNT_TABS: Array<{ id: AccountTab; label: string }> = [
-  { id: "profil", label: "Mon profil" },
-  { id: "securite", label: "Sécurité" },
-  { id: "export", label: "Export des données" },
-];
 
 const downloadBlob = (
   fileName: string,
@@ -48,8 +43,18 @@ const downloadBlob = (
 };
 
 export const AccountPage = () => {
+  const { t, localeTag } = useI18n();
   const activeTab = useAccountActiveTab();
   const setActiveTab = useSetAccountActiveTab();
+
+  const accountTabs = useMemo<Array<{ id: AccountTab; labelKey: MessageKey }>>(
+    () => [
+      { id: "profil", labelKey: "account.tabProfile" },
+      { id: "securite", labelKey: "account.tabSecurity" },
+      { id: "export", labelKey: "account.tabExport" },
+    ],
+    [],
+  );
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
   const {
@@ -68,22 +73,36 @@ export const AccountPage = () => {
     string | null
   >(null);
 
-  const displayFirstname = userData?.firstname || "Prénom";
-  const displayLastname = userData?.lastname || "Nom";
+  const displayFirstname =
+    userData?.firstname || t("account.defaultFirstname");
+  const displayLastname = userData?.lastname || t("account.defaultLastname");
   const displayFullName = `${displayFirstname} ${displayLastname}`;
   const displayEmail =
-    userData?.email || currentUser?.email || "Email indisponible";
-  const displayPhone = userData?.phoneNumber || "Téléphone indisponible";
-  const displayCountry = userData?.country || "Pays indisponible";
-  const displayRegion = userData?.region || "Région indisponible";
+    userData?.email || currentUser?.email || t("account.emailUnavailable");
+  const displayPhone =
+    userData?.phoneNumber || t("account.phoneUnavailable");
+  const displayCountry =
+    userData?.country || t("account.countryUnavailable");
+  const displayRegion =
+    userData?.region || t("account.regionUnavailable");
   const displayProfilePicture = userData?.profilePicture?.trim() || "";
+
+  const profileFormSchema = useMemo(
+    () => createAccountProfileFormSchema(t),
+    [t],
+  );
+  const passwordFormSchema = useMemo(
+    () => createChangePasswordSchema(t),
+    [t],
+  );
+
   const {
     register,
     handleSubmit: handleProfileSubmit,
     reset: resetProfileForm,
     formState: { errors },
   } = useForm<AccountProfileFormValues>({
-    resolver: zodResolver(accountProfileFormSchema),
+    resolver: zodResolver(profileFormSchema),
     defaultValues: {
       firstname: userData?.firstname ?? "",
       lastname: userData?.lastname ?? "",
@@ -123,7 +142,7 @@ export const AccountPage = () => {
     reset: resetPasswordForm,
     formState: { errors: passwordErrors },
   } = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(passwordFormSchema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -133,9 +152,7 @@ export const AccountPage = () => {
 
   const onSubmit = async (values: AccountProfileFormValues) => {
     if (!currentUser?.id) {
-      setSaveErrorMessage(
-        "Utilisateur non identifié. Reconnectez-vous puis réessayez.",
-      );
+      setSaveErrorMessage(t("account.userNotIdentified"));
       return;
     }
 
@@ -153,32 +170,30 @@ export const AccountPage = () => {
         profilePicture: values.profilePicture?.trim() ?? "",
       });
       setSavedAt(
-        new Date().toLocaleTimeString("fr-FR", {
+        new Date().toLocaleTimeString(localeTag, {
           hour: "2-digit",
           minute: "2-digit",
         }),
       );
     } catch (error) {
       setSaveErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Erreur pendant la sauvegarde du profil.",
+        error instanceof Error ? error.message : t("account.saveProfileError"),
       );
     }
   };
 
   const handleTextExport = () => {
     const payload = [
-      "Export des données personnelles",
-      `Date: ${new Date().toLocaleString("fr-FR")}`,
+      t("account.exportTitle"),
+      `${t("account.exportDate")}: ${new Date().toLocaleString(localeTag)}`,
       "",
-      `Prénom: ${displayFirstname}`,
-      `Nom: ${displayLastname}`,
-      `Email: ${displayEmail}`,
-      `Téléphone: ${displayPhone}`,
-      `Pays: ${displayCountry}`,
-      `Région: ${displayRegion}`,
-      `Identifiant utilisateur: ${currentUser?.id ?? "Inconnu"}`,
+      `${t("account.exportFieldFirstname")}: ${displayFirstname}`,
+      `${t("account.exportFieldLastname")}: ${displayLastname}`,
+      `${t("account.exportFieldEmail")}: ${displayEmail}`,
+      `${t("account.exportFieldPhone")}: ${displayPhone}`,
+      `${t("account.exportFieldCountry")}: ${displayCountry}`,
+      `${t("account.exportFieldRegion")}: ${displayRegion}`,
+      `${t("account.exportUserId")}: ${currentUser?.id ?? t("account.unknown")}`,
     ].join("\n");
 
     downloadBlob(
@@ -191,19 +206,19 @@ export const AccountPage = () => {
   const handlePdfExport = () => {
     const document = new jsPDF();
     document.setFontSize(16);
-    document.text("Export des données personnelles", 20, 20);
+    document.text(t("account.exportTitle"), 20, 20);
 
     document.setFontSize(11);
     const lines = [
-      `Date: ${new Date().toLocaleString("fr-FR")}`,
+      `${t("account.exportDate")}: ${new Date().toLocaleString(localeTag)}`,
       "",
-      `Prénom: ${displayFirstname}`,
-      `Nom: ${displayLastname}`,
-      `Email: ${displayEmail}`,
-      `Téléphone: ${displayPhone}`,
-      `Pays: ${displayCountry}`,
-      `Région: ${displayRegion}`,
-      `Identifiant utilisateur: ${currentUser?.id ?? "Inconnu"}`,
+      `${t("account.exportFieldFirstname")}: ${displayFirstname}`,
+      `${t("account.exportFieldLastname")}: ${displayLastname}`,
+      `${t("account.exportFieldEmail")}: ${displayEmail}`,
+      `${t("account.exportFieldPhone")}: ${displayPhone}`,
+      `${t("account.exportFieldCountry")}: ${displayCountry}`,
+      `${t("account.exportFieldRegion")}: ${displayRegion}`,
+      `${t("account.exportUserId")}: ${currentUser?.id ?? t("account.unknown")}`,
     ];
 
     document.text(lines, 20, 32);
@@ -217,7 +232,7 @@ export const AccountPage = () => {
       await changePassword(values);
       resetPasswordForm();
       setPasswordSavedAt(
-        new Date().toLocaleTimeString("fr-FR", {
+        new Date().toLocaleTimeString(localeTag, {
           hour: "2-digit",
           minute: "2-digit",
         }),
@@ -226,20 +241,20 @@ export const AccountPage = () => {
       setPasswordErrorMessage(
         error instanceof Error
           ? error.message
-          : "Erreur pendant la mise a jour du mot de passe.",
+          : t("account.passwordChangeError"),
       );
     }
   };
 
   const renderProfilePanel = () => {
     if (isUserDataPending) {
-      return <p>Chargement de vos informations...</p>;
+      return <p>{t("account.loadingProfile")}</p>;
     }
 
     if (isUserDataError) {
       return (
         <p className="error">
-          Erreur lors du chargement: {userDataError.message}
+          {t("account.loadErrorPrefix")} {userDataError.message}
         </p>
       );
     }
@@ -254,11 +269,11 @@ export const AccountPage = () => {
                 displayProfilePicture ||
                 `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(displayFullName)}&radius=50`
               }
-              alt="Photo de profil"
+              alt={t("account.profilePhotoAlt")}
             />
             <div>
               <h2 className="account-v2-name">{displayFullName}</h2>
-              <p className="account-v2-subtitle">Créateur de contenu</p>
+              <p className="account-v2-subtitle">{t("account.roleCreator")}</p>
               <p className="account-v2-meta">
                 {displayRegion}, {displayCountry} · {displayEmail}
               </p>
@@ -266,24 +281,26 @@ export const AccountPage = () => {
           </div>
           <div className="account-v2-kpis">
             <article>
-              <span>Identifiant</span>
+              <span>{t("account.kpiId")}</span>
               <strong>{currentUser?.id?.slice(0, 8) ?? "-"}</strong>
             </article>
             <article>
-              <span>Téléphone</span>
+              <span>{t("account.labelPhone")}</span>
               <strong>{displayPhone}</strong>
             </article>
             <article>
-              <span>Dernière mise à jour</span>
-              <strong>{savedAt ? `${savedAt}` : "Pas encore"}</strong>
+              <span>{t("account.kpiLastUpdated")}</span>
+              <strong>{savedAt ? `${savedAt}` : t("account.neverSaved")}</strong>
             </article>
           </div>
         </section>
 
         <section className="account-v2-card">
           <div className="account-v2-card-header">
-            <h3 className="account-section-title">Modifier mes informations</h3>
-            <span className="account-v2-badge">Profil public</span>
+            <h3 className="account-section-title">
+              {t("account.editInfoTitle")}
+            </h3>
+            <span className="account-v2-badge">{t("account.badgePublic")}</span>
           </div>
           <form
             className="account-v2-form"
@@ -291,7 +308,7 @@ export const AccountPage = () => {
           >
             <div className="account-v2-form-grid">
               <label className="field-label" htmlFor="account-firstname">
-                Prénom
+                {t("account.labelFirstname")}
               </label>
               <input
                 id="account-firstname"
@@ -305,7 +322,7 @@ export const AccountPage = () => {
               ) : null}
 
               <label className="field-label" htmlFor="account-lastname">
-                Nom
+                {t("account.labelLastname")}
               </label>
               <input
                 id="account-lastname"
@@ -319,7 +336,7 @@ export const AccountPage = () => {
               ) : null}
 
               <label className="field-label" htmlFor="account-email">
-                Adresse email
+                {t("account.labelEmail")}
               </label>
               <input
                 id="account-email"
@@ -333,7 +350,7 @@ export const AccountPage = () => {
               ) : null}
 
               <label className="field-label" htmlFor="account-phone">
-                Téléphone
+                {t("account.labelPhone")}
               </label>
               <input
                 id="account-phone"
@@ -347,7 +364,7 @@ export const AccountPage = () => {
               ) : null}
 
               <label className="field-label" htmlFor="account-country">
-                Pays
+                {t("account.labelCountry")}
               </label>
               <input
                 id="account-country"
@@ -361,7 +378,7 @@ export const AccountPage = () => {
               ) : null}
 
               <label className="field-label" htmlFor="account-region">
-                Ville / Région
+                {t("account.labelRegion")}
               </label>
               <input
                 id="account-region"
@@ -375,13 +392,13 @@ export const AccountPage = () => {
               ) : null}
 
               <label className="field-label" htmlFor="account-profile-picture">
-                Lien de photo de profil
+                {t("account.labelProfilePicture")}
               </label>
               <input
                 id="account-profile-picture"
                 className="field-input"
                 type="url"
-                placeholder="https://exemple.com/ma-photo.jpg"
+                placeholder={t("account.placeholderProfilePicture")}
                 {...register("profilePicture")}
               />
               {errors.profilePicture ? (
@@ -399,10 +416,12 @@ export const AccountPage = () => {
                 className="auth-primary"
                 disabled={isSavingProfile}
               >
-                {isSavingProfile ? "Enregistrement..." : "Sauvegarder"}
+                {isSavingProfile ? t("account.saving") : t("account.save")}
               </button>
               {savedAt ? (
-                <span className="muted">Enregistré à {savedAt}</span>
+                <span className="muted">
+                  {t("account.savedAt", { time: savedAt })}
+                </span>
               ) : null}
             </div>
           </form>
@@ -414,8 +433,8 @@ export const AccountPage = () => {
   const renderSecurityPanel = () => (
     <section className="account-v2-card">
       <div className="account-v2-card-header">
-        <h3 className="account-section-title">Sécurité</h3>
-        <span className="account-v2-badge">Mot de passe</span>
+        <h3 className="account-section-title">{t("account.tabSecurity")}</h3>
+        <span className="account-v2-badge">{t("account.badgePassword")}</span>
       </div>
       <form
         className="account-v2-form"
@@ -423,7 +442,7 @@ export const AccountPage = () => {
       >
         <div className="account-v2-form-grid">
           <label className="field-label" htmlFor="account-current-password">
-            Mot de passe actuel
+            {t("account.passwordCurrent")}
           </label>
           <input
             id="account-current-password"
@@ -437,7 +456,7 @@ export const AccountPage = () => {
           ) : null}
 
           <label className="field-label" htmlFor="account-new-password">
-            Nouveau mot de passe
+            {t("account.passwordNew")}
           </label>
           <input
             id="account-new-password"
@@ -451,7 +470,7 @@ export const AccountPage = () => {
           ) : null}
 
           <label className="field-label" htmlFor="account-confirm-password">
-            Confirmer le mot de passe
+            {t("account.passwordConfirm")}
           </label>
           <input
             id="account-confirm-password"
@@ -476,11 +495,13 @@ export const AccountPage = () => {
             disabled={isChangingPassword}
           >
             {isChangingPassword
-              ? "Mise a jour..."
-              : "Mettre a jour le mot de passe"}
+              ? t("account.passwordSubmitting")
+              : t("account.passwordSubmit")}
           </button>
           {passwordSavedAt ? (
-            <span className="muted">Mis a jour a {passwordSavedAt}</span>
+            <span className="muted">
+              {t("account.passwordSavedAt", { time: passwordSavedAt })}
+            </span>
           ) : null}
         </div>
       </form>
@@ -490,13 +511,11 @@ export const AccountPage = () => {
   const renderExportPanel = () => (
     <section className="account-v2-card">
       <div className="account-v2-card-header">
-        <h3 className="account-section-title">
-          Export des données personnelles
-        </h3>
-        <span className="account-v2-badge">RGPD</span>
+        <h3 className="account-section-title">{t("account.exportPanelTitle")}</h3>
+        <span className="account-v2-badge">{t("account.badgeGdpr")}</span>
       </div>
       <p className="muted account-v2-export-text">
-        Téléchargez vos informations de profil au format texte ou PDF.
+        {t("account.exportDescription")}
       </p>
       <div className="account-v2-export-actions">
         <button
@@ -505,7 +524,7 @@ export const AccountPage = () => {
           onClick={handleTextExport}
         >
           <HiOutlineArrowDownTray aria-hidden="true" />
-          Exporter en .txt
+          {t("account.exportTxt")}
         </button>
         <button
           type="button"
@@ -513,7 +532,7 @@ export const AccountPage = () => {
           onClick={handlePdfExport}
         >
           <HiOutlineArrowDownTray aria-hidden="true" />
-          Exporter en .pdf
+          {t("account.exportPdf")}
         </button>
       </div>
     </section>
@@ -523,11 +542,11 @@ export const AccountPage = () => {
     <CreatorAppShell accountTopBar>
       <div className="account-v2-layout">
         <aside className="account-v2-sidebar">
-          <h1 className="account-v2-title">Gestion utilisateur</h1>
+          <h1 className="account-v2-title">{t("shell.account")}</h1>
           <p className="account-v2-description">
-            Centralisez votre identité, sécurité et export de données.
+            {t("account.sidebarDescription")}
           </p>
-          {ACCOUNT_TABS.map((tab) => (
+          {accountTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -543,7 +562,7 @@ export const AccountPage = () => {
               {tab.id === "export" ? (
                 <HiOutlineArrowDownTray aria-hidden="true" />
               ) : null}
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </aside>

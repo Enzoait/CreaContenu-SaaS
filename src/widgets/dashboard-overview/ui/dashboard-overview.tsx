@@ -36,10 +36,12 @@ import {
 } from "../../../entities/dashboard/api/platforms-api";
 import styles from "./dashboard-overview.module.scss";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type DragEvent,
   type ReactNode,
   type TouchEvent,
@@ -167,42 +169,15 @@ type TodoDraft = {
   column: TodoColumn;
 };
 
-const PANEL_LABEL: Record<PanelId, string> = {
-  planning: "Planning",
-  videos: "Vidéos",
-  todo: "Todo",
-  chart: "Stats",
-};
-
-const COLUMN_LABEL: Record<string, string> = {
-  todo: "À faire",
-  doing: "En cours",
-  done: "Terminé",
-};
-
-const STAGE_LABEL: Record<string, string> = {
-  idea: "Idée",
-  scripting: "Script",
-  recording: "Tournage",
-  editing: "Montage",
-  published: "Publié",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: "Brouillon",
-  scheduled: "Planifié",
-  published: "Publié",
-};
-
 const NO_PLATFORM_LABEL = "general";
 
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("fr-FR").format(value);
+function formatNumber(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale).format(value);
 }
 
-function formatDateLabel(dateString: string): string {
+function formatDateLabel(dateString: string, locale: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString("fr-FR", {
+  return date.toLocaleDateString(locale, {
     weekday: "short",
     day: "2-digit",
     month: "2-digit",
@@ -231,8 +206,8 @@ function toSearchTargetId(prefix: string, value: string): string {
   return `${prefix}-${encodeURIComponent(value)}`;
 }
 
-function toMonthLabel(date: Date): string {
-  return date.toLocaleDateString("fr-FR", {
+function toMonthLabel(date: Date, locale: string): string {
+  return date.toLocaleDateString(locale, {
     month: "long",
     year: "numeric",
   });
@@ -397,7 +372,100 @@ export function DashboardOverview() {
   const contentGridRef = useRef<HTMLElement | null>(null);
   const hasPlayedBentoIntro = useRef(false);
 
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
+
+  const statusLabel = useMemo(
+    () => ({
+      draft: t("dashboard.statusDraft"),
+      scheduled: t("dashboard.statusScheduled"),
+      published: t("dashboard.statusPublished"),
+    }),
+    [t],
+  );
+
+  const stageLabelMap = useMemo(
+    () => ({
+      idea: t("dashboard.stageIdea"),
+      scripting: t("dashboard.stageScripting"),
+      recording: t("dashboard.stageRecording"),
+      editing: t("dashboard.stageEditing"),
+      published: t("dashboard.stagePublished"),
+    }),
+    [t],
+  );
+
+  const columnLabel = useMemo(
+    () => ({
+      todo: t("dashboard.colTodo"),
+      doing: t("dashboard.colDoing"),
+      done: t("dashboard.colDone"),
+    }),
+    [t],
+  );
+
+  const panelLabels = useMemo(
+    () => ({
+      planning: t("dashboard.panelPlanning"),
+      videos: t("dashboard.panelVideos"),
+      todo: t("dashboard.panelTodo"),
+      chart: t("dashboard.panelChart"),
+    }),
+    [t],
+  );
+
+  const priorityLabel = useMemo(
+    () => ({
+      low: t("dashboard.todoPriorityLow"),
+      medium: t("dashboard.todoPriorityMedium"),
+      high: t("dashboard.todoPriorityHigh"),
+    }),
+    [t],
+  );
+
+  /** Déduplique série Area + Line (même série) et affiche les noms i18n du graphique. */
+  const chartTooltipContent = useCallback(
+    (props: {
+      active?: boolean;
+      payload?: ReadonlyArray<{
+        name?: string;
+        dataKey?: string | number;
+        value?: string | number;
+      }>;
+      label?: ReactNode;
+    }) => {
+      const { active, payload, label } = props;
+      if (!active || !payload?.length) return null;
+      const unique = new Map<string, (typeof payload)[number]>();
+      for (const p of payload) {
+        const key = String(p.name ?? p.dataKey);
+        if (!unique.has(key)) unique.set(key, p);
+      }
+      return (
+        <div
+          style={{
+            background: "#fff",
+            padding: "8px 12px",
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+        >
+          <p style={{ margin: "0 0 6px", fontWeight: 600 }}>{label}</p>
+          {Array.from(unique.values()).map((p) => (
+            <p
+              key={`${String(p.dataKey)}-${String(p.name)}`}
+              style={{ margin: "4px 0 0" }}
+            >
+              <span style={{ color: "#6b7280" }}>{p.name}</span>
+              {": "}
+              {p.value}
+            </p>
+          ))}
+        </div>
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!data) return;
@@ -518,15 +586,15 @@ export function DashboardOverview() {
 
     const push = (item: SuggestionItem) => candidates.push(item);
 
-    push({ label: "planning", panel: "planning", targetId: null });
-    push({ label: "agenda", panel: "planning", targetId: null });
-    push({ label: "suivi des vidéos", panel: "videos", targetId: null });
-    push({ label: "vidéos", panel: "videos", targetId: null });
-    push({ label: "to-do list", panel: "todo", targetId: null });
-    push({ label: "todo list", panel: "todo", targetId: null });
-    push({ label: "tâches", panel: "todo", targetId: null });
-    push({ label: "plateformes", panel: "planning", targetId: null });
-    push({ label: "stats", panel: "planning", targetId: null });
+    push({ label: t("dashboard.searchKwPlanning"), panel: "planning", targetId: null });
+    push({ label: t("dashboard.searchKwAgenda"), panel: "planning", targetId: null });
+    push({ label: t("dashboard.searchKwVideoTracking"), panel: "videos", targetId: null });
+    push({ label: t("dashboard.searchKwVideosShort"), panel: "videos", targetId: null });
+    push({ label: t("dashboard.searchKwTodoList"), panel: "todo", targetId: null });
+    push({ label: t("dashboard.searchKwTodoListAlt"), panel: "todo", targetId: null });
+    push({ label: t("dashboard.searchKwTasks"), panel: "todo", targetId: null });
+    push({ label: t("dashboard.searchKwPlatforms"), panel: "planning", targetId: null });
+    push({ label: t("dashboard.searchKwStats"), panel: "planning", targetId: null });
 
     for (const item of planningData) {
       const targetId = toSearchTargetId("planning", item.id);
@@ -534,13 +602,13 @@ export function DashboardOverview() {
         label: item.title,
         panel: "planning",
         targetId,
-        detail: STATUS_LABEL[item.status] ?? item.status,
+        detail: statusLabel[item.status as keyof typeof statusLabel] ?? item.status,
       });
       push({
         label: item.platform,
         panel: "planning",
         targetId,
-        detail: STATUS_LABEL[item.status] ?? item.status,
+        detail: statusLabel[item.status as keyof typeof statusLabel] ?? item.status,
       });
       push({ label: item.status, panel: "planning", targetId });
     }
@@ -550,13 +618,13 @@ export function DashboardOverview() {
         label: item.title,
         panel: "videos",
         targetId,
-        detail: STAGE_LABEL[item.stage] ?? item.stage,
+        detail: stageLabelMap[item.stage as keyof typeof stageLabelMap] ?? item.stage,
       });
       push({
         label: item.platform,
         panel: "videos",
         targetId,
-        detail: STAGE_LABEL[item.stage] ?? item.stage,
+        detail: stageLabelMap[item.stage as keyof typeof stageLabelMap] ?? item.stage,
       });
       push({ label: item.stage, panel: "videos", targetId });
     }
@@ -566,13 +634,13 @@ export function DashboardOverview() {
         label: item.label,
         panel: "todo",
         targetId,
-        detail: COLUMN_LABEL[item.column] ?? item.column,
+        detail: columnLabel[item.column as keyof typeof columnLabel] ?? item.column,
       });
       push({
         label: item.platform,
         panel: "todo",
         targetId,
-        detail: COLUMN_LABEL[item.column] ?? item.column,
+        detail: columnLabel[item.column as keyof typeof columnLabel] ?? item.column,
       });
       push({ label: item.priority, panel: "todo", targetId });
     }
@@ -616,7 +684,7 @@ export function DashboardOverview() {
       }
 
       const panels = labelPanels.get(norm)!;
-      const panelLabel = PANEL_LABEL[s.panel];
+      const panelLabel = panelLabels[s.panel];
       const rawLabel = s.label;
 
       const enrichedLabel =
@@ -639,7 +707,18 @@ export function DashboardOverview() {
       })),
     });
     return result;
-  }, [planningData, videoData, todoBoard, platforms, search]);
+  }, [
+    planningData,
+    videoData,
+    todoBoard,
+    platforms,
+    search,
+    t,
+    statusLabel,
+    stageLabelMap,
+    columnLabel,
+    panelLabels,
+  ]);
 
   const ratio = filteredPlanning.length / Math.max(1, planningData.length);
   const periodWeight =
@@ -660,7 +739,7 @@ export function DashboardOverview() {
     (item) => item.status === "published" || item.status === "scheduled",
   ).length;
 
-  const displayedMonthLabel = toMonthLabel(displayedMonthStart);
+  const displayedMonthLabel = toMonthLabel(displayedMonthStart, localeTag);
 
   const goToPreviousMonth = () => {
     setDisplayedMonthStart(
@@ -681,9 +760,9 @@ export function DashboardOverview() {
     return Array.from({ length: daysInMonth }, (_, index) => {
       const slot = new Date(year, month, index + 1);
       const key = toDateKey(slot);
-      return { key, label: formatDateLabel(key) };
+      return { key, label: formatDateLabel(key, localeTag) };
     });
-  }, [displayedMonthStart]);
+  }, [displayedMonthStart, localeTag]);
 
   const planningByDate = useMemo(() => {
     const map = new Map<string, PlanningItem[]>();
@@ -752,7 +831,7 @@ export function DashboardOverview() {
         await updateVideoItem(item.videoId, { deadline: dateKey });
       }
     } catch (error) {
-      console.error("Erreur déplacement événement :", error);
+      console.error(t("dashboard.dragEventError"), error);
       setPlanningData((prev) =>
         prev.map((p) =>
           p.id === itemId ? { ...p, publishAt: item.publishAt } : p,
@@ -1064,9 +1143,7 @@ export function DashboardOverview() {
       !videoDraft.platform ||
       !videoDraft.deadline
     ) {
-      setVideoSubmitError(
-        "Titre, plateforme et deadline sont obligatoires.",
-      );
+      setVideoSubmitError(t("dashboard.videoSubmitRequired"));
       return;
     }
     const normalizedDate = toDateKey(videoDraft.deadline);
@@ -1148,7 +1225,7 @@ export function DashboardOverview() {
     }
 
     if (!user?.id) {
-      setVideoSubmitError("Utilisateur non identifié.");
+      setVideoSubmitError(t("dashboard.userUnknown"));
       return;
     }
     try {
@@ -1186,9 +1263,7 @@ export function DashboardOverview() {
     } catch (error) {
       console.error(error);
       setVideoSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Impossible d'enregistrer la vidéo.",
+        error instanceof Error ? error.message : t("videos.errorSave"),
       );
     }
   };
@@ -1515,14 +1590,6 @@ export function DashboardOverview() {
     setPlanningToDelete(null);
   };
 
-  const stageLabelMap: Record<VideoStage, string> = {
-    idea: "Idée",
-    scripting: "Script",
-    recording: "Tournage",
-    editing: "Montage",
-    published: "Publié",
-  };
-
   const closeFocusedPanel = () => {
     setFocusedPanel(null);
     resetPlanningDraft();
@@ -1605,7 +1672,7 @@ export function DashboardOverview() {
         videosForDay * 2 + Math.round((index + 1) * 0.6),
       );
       return {
-        label: formatDateLabel(slot.key),
+        label: formatDateLabel(slot.key, localeTag),
         activityScore,
         engagement: engagementJour,
         publies: publishedForDay,
@@ -1621,12 +1688,19 @@ export function DashboardOverview() {
 
     return rawChartData.map((item) => ({
       ...item,
-      vues: Math.max(
+      views: Math.max(
         1,
         Math.round((safeTotalViews * item.activityScore) / safeTotalScore),
       ),
     }));
-  }, [dateSlots, filteredPlanning, filteredVideos, totalViews, engagement]);
+  }, [
+    dateSlots,
+    filteredPlanning,
+    filteredVideos,
+    totalViews,
+    engagement,
+    localeTag,
+  ]);
 
   const growthRatio = Number(
     (
@@ -1802,11 +1876,8 @@ export function DashboardOverview() {
     >
       <>
         <section className={styles.banner}>
-          <h1>Dashboard créateur — {profileTitleSuffix}</h1>
-          <p>
-            Filtres actifs sur toutes les sections et suivi global de
-            performance.
-          </p>
+          <h1>{t("dashboard.title", { suffix: profileTitleSuffix })}</h1>
+          <p>{t("dashboard.bannerSubtitle")}</p>
           <div className={styles.bannerActions}>
             {(["7d", "30d", "90d", "all"] as const).map((item) => (
               <button
@@ -1818,7 +1889,7 @@ export function DashboardOverview() {
                 type="button"
               >
                 <HiOutlineCalendarDays aria-hidden="true" />
-                {item === "all" ? "Tout" : item}
+                {item === "all" ? t("dashboard.periodAll") : item}
               </button>
             ))}
             <button
@@ -1945,20 +2016,24 @@ export function DashboardOverview() {
             <span className={`${styles.statIcon} ${styles.statIconPurple}`}>
               <HiOutlineClock aria-hidden="true" />
             </span>
-            <strong>{formatNumber(totalViews)}</strong>
-            <p>Vues totales</p>
+            <strong>{formatNumber(totalViews, localeTag)}</strong>
+            <p>{t("dashboard.totalViews")}</p>
           </article>
           <article className={styles.statCard}>
             <span className={`${styles.statIcon} ${styles.statIconPink}`}>
               <HiOutlineCheckCircle aria-hidden="true" />
             </span>
             <strong>{publishedCount}</strong>
-            <p>Contenus publiés</p>
+            <p>{t("dashboard.statPublishedContent")}</p>
           </article>
           <article className={styles.statCard}>
             <div className={styles.cardTopRow}>
-              <p>Engagement moyen</p>
-              <span className={styles.positiveBadge}>+{growthRatio}%</span>
+              <p>{t("dashboard.statEngagementCardTitle")}</p>
+              <span className={styles.positiveBadge}>
+                {t("dashboard.statGrowthBadge", {
+                  n: String(growthRatio),
+                })}
+              </span>
             </div>
             <strong>{engagement}%</strong>
             <div className={styles.dualProgress} role="presentation">
@@ -1972,12 +2047,20 @@ export function DashboardOverview() {
               />
             </div>
             <div className={styles.progressLabels}>
-              <span>{publishingProgress}% publié</span>
-              <span>{deliveryProgress}% livré</span>
+              <span>
+                {t("dashboard.statPctPublished", {
+                  n: String(publishingProgress),
+                })}
+              </span>
+              <span>
+                {t("dashboard.statPctDelivered", {
+                  n: String(deliveryProgress),
+                })}
+              </span>
             </div>
           </article>
           <article className={`${styles.statCard} ${styles.platformCard}`}>
-            <h3>By platform</h3>
+            <h3>{t("dashboard.byPlatform")}</h3>
             <ul className={styles.platformList}>
               {platformBreakdown.map((item) => (
                 <li key={item.name}>
@@ -1986,7 +2069,11 @@ export function DashboardOverview() {
                   </span>
                   <span className={styles.platformMeta}>
                     <strong>{item.name}</strong>
-                    <small>{item.lessons} lessons</small>
+                    <small>
+                      {t("dashboard.platformLessons", {
+                        n: String(item.lessons),
+                      })}
+                    </small>
                   </span>
                   <span className={styles.platformHours}>{item.hours}h</span>
                 </li>
@@ -2027,8 +2114,8 @@ export function DashboardOverview() {
                     onClick={() => togglePanelCollapsed("planning")}
                     aria-label={
                       collapsedPanels.planning
-                        ? "Déplier le planning"
-                        : "Réduire le planning"
+                        ? t("dashboard.expandPlanning")
+                        : t("dashboard.collapsePlanning")
                     }
                   >
                     <HiChevronDown
@@ -2044,7 +2131,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel("planning")}
-                    aria-label="Agrandir le planning"
+                    aria-label={t("dashboard.expandPlanningFull")}
                   >
                     ⤢
                   </button>
@@ -2059,15 +2146,15 @@ export function DashboardOverview() {
                       onClick={() => setIsPlanningFormOpen((prev) => !prev)}
                     >
                       {isPlanningFormOpen
-                        ? "Masquer ajout événement"
-                        : "Ajouter un événement"}
+                        ? t("dashboard.hideEventForm")
+                        : t("dashboard.addEvent")}
                     </button>
                     <div className={styles.monthNavigation}>
                       <button
                         type="button"
                         className={styles.monthNavButton}
                         onClick={goToPreviousMonth}
-                        aria-label="Mois précédent"
+                        aria-label={t("dashboard.prevMonth")}
                       >
                         ←
                       </button>
@@ -2078,7 +2165,7 @@ export function DashboardOverview() {
                         type="button"
                         className={styles.monthNavButton}
                         onClick={goToNextMonth}
-                        aria-label="Mois suivant"
+                        aria-label={t("dashboard.nextMonth")}
                       >
                         →
                       </button>
@@ -2088,7 +2175,7 @@ export function DashboardOverview() {
                     <div className={styles.planningForm}>
                       <div className={styles.planningFormFields}>
                         <input
-                          placeholder="Titre de l'événement"
+                          placeholder={t("dashboard.eventTitlePlaceholder")}
                           value={planningDraft.title}
                           onChange={(event) =>
                             setPlanningDraftField("title", event.target.value)
@@ -2113,7 +2200,7 @@ export function DashboardOverview() {
                             )
                           }
                         >
-                          <option value="">Plateforme</option>
+                          <option value="">{t("dashboard.platformSelect")}</option>
                           {platforms.map((item) => (
                             <option
                               key={`planning-platform-${item}`}
@@ -2135,16 +2222,20 @@ export function DashboardOverview() {
                             )
                           }
                         >
-                          <option value="draft">draft</option>
-                          <option value="scheduled">scheduled</option>
-                          <option value="published">published</option>
+                          <option value="draft">{statusLabel.draft}</option>
+                          <option value="scheduled">
+                            {statusLabel.scheduled}
+                          </option>
+                          <option value="published">
+                            {statusLabel.published}
+                          </option>
                         </select>
                       </div>
                       <div className={styles.planningFormActions}>
                         <button type="button" onClick={submitPlanningDraft}>
                           {editingPlanningId
-                            ? "Modifier l'événement"
-                            : "Ajouter un événement"}
+                            ? t("dashboard.editEvent")
+                            : t("dashboard.addEvent")}
                         </button>
                         {editingPlanningId ? (
                           <button
@@ -2154,7 +2245,7 @@ export function DashboardOverview() {
                               setIsPlanningFormOpen(false);
                             }}
                           >
-                            Annuler
+                            {t("dashboard.cancel")}
                           </button>
                         ) : null}
                       </div>
@@ -2176,7 +2267,7 @@ export function DashboardOverview() {
                           <p className={styles.agendaDate}>{slot.label}</p>
                           {dayItems.length === 0 ? (
                             <small className={styles.emptyText}>
-                              Aucun contenu
+                              {t("dashboard.emptyDay")}
                             </small>
                           ) : (
                             <ul className={styles.miniList}>
@@ -2206,14 +2297,19 @@ export function DashboardOverview() {
                                     </strong>
                                     <small>
                                       {highlightMatch(item.platform, search)} -{" "}
-                                      {highlightMatch(item.status, search)}
+                                      {highlightMatch(
+                                        statusLabel[
+                                          item.status as keyof typeof statusLabel
+                                        ] ?? item.status,
+                                        search,
+                                      )}
                                     </small>
                                     <div className={styles.planningItemActions}>
                                       <button
                                         type="button"
                                         className={styles.iconActionButton}
-                                        data-tooltip="Modifier"
-                                        aria-label="Modifier l'événement"
+                                        data-tooltip={t("dashboard.editTooltip")}
+                                        aria-label={t("dashboard.editPlanningAria")}
                                         onClick={() => startPlanningEdit(item)}
                                       >
                                         <AiOutlineEdit aria-hidden="true" />
@@ -2221,8 +2317,8 @@ export function DashboardOverview() {
                                       <button
                                         type="button"
                                         className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                        data-tooltip="Supprimer"
-                                        aria-label="Supprimer l'événement"
+                                        data-tooltip={t("dashboard.deleteTooltip")}
+                                        aria-label={t("dashboard.deletePlanningAria")}
                                         onClick={() => askPlanningDelete(item)}
                                       >
                                         <AiOutlineDelete aria-hidden="true" />
@@ -2265,7 +2361,7 @@ export function DashboardOverview() {
           >
             <div className={styles.panelContent}>
               <div className={styles.panelHeader}>
-                <h3>Mes videos</h3>
+                <h3>{t("dashboard.panelVideosHeading")}</h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
@@ -2273,8 +2369,8 @@ export function DashboardOverview() {
                     onClick={() => togglePanelCollapsed("videos")}
                     aria-label={
                       collapsedPanels.videos
-                        ? "Déplier le suivi vidéos"
-                        : "Réduire le suivi vidéos"
+                        ? t("dashboard.expandVideosPanel")
+                        : t("dashboard.collapseVideosPanel")
                     }
                   >
                     <HiChevronDown
@@ -2290,7 +2386,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel("videos")}
-                    aria-label="Agrandir le suivi vidéos"
+                    aria-label={t("dashboard.expandVideosFull")}
                   >
                     ⤢
                   </button>
@@ -2300,16 +2396,19 @@ export function DashboardOverview() {
                 <>
                   <div className={styles.videoRecapHeader}>
                     <p>
-                      {filteredVideos.length} video(s), dont{" "}
-                      {videoStageRecap.published} publiee(s) et{" "}
-                      {videoStageRecap.editing +
-                        videoStageRecap.recording +
-                        videoStageRecap.scripting +
-                        videoStageRecap.idea}{" "}
-                      en cours.
+                      {t("dashboard.videoRecapSummary", {
+                        total: String(filteredVideos.length),
+                        published: String(videoStageRecap.published),
+                        inProgress: String(
+                          videoStageRecap.editing +
+                            videoStageRecap.recording +
+                            videoStageRecap.scripting +
+                            videoStageRecap.idea,
+                        ),
+                      })}
                     </p>
                     <Link to="/videos" className={styles.videoRecapLink}>
-                      Ouvrir Mes videos
+                      {t("dashboard.openVideosLink")}
                     </Link>
                   </div>
                   <div className={styles.dropdownRow}>
@@ -2324,15 +2423,15 @@ export function DashboardOverview() {
                       }}
                     >
                       {isDashboardVideoFormOpen
-                        ? "Masquer"
-                        : "Ajouter une vidéo"}
+                        ? t("dashboard.hideFormShort")
+                        : t("dashboard.addVideoInline")}
                     </button>
                   </div>
                   {isDashboardVideoFormOpen ? (
                     <div className={styles.videoForm}>
                       <div className={styles.videoFormFields}>
                         <input
-                          placeholder="Titre de la vidéo"
+                          placeholder={t("dashboard.videoTitlePlaceholder")}
                           value={videoDraft.title}
                           onChange={(event) =>
                             setVideoDraftField("title", event.target.value)
@@ -2351,7 +2450,7 @@ export function DashboardOverview() {
                             setVideoDraftField("platform", event.target.value)
                           }
                         >
-                          <option value="">Plateforme</option>
+                          <option value="">{t("dashboard.platformSelect")}</option>
                           {platforms.map((item) => (
                             <option
                               key={`dash-videos-platform-${item}`}
@@ -2370,16 +2469,24 @@ export function DashboardOverview() {
                             )
                           }
                         >
-                          <option value="idea">Idée</option>
-                          <option value="scripting">Script</option>
-                          <option value="recording">Tournage</option>
-                          <option value="editing">Montage</option>
-                          <option value="published">Publié</option>
+                          <option value="idea">{stageLabelMap.idea}</option>
+                          <option value="scripting">
+                            {stageLabelMap.scripting}
+                          </option>
+                          <option value="recording">
+                            {stageLabelMap.recording}
+                          </option>
+                          <option value="editing">
+                            {stageLabelMap.editing}
+                          </option>
+                          <option value="published">
+                            {stageLabelMap.published}
+                          </option>
                         </select>
                         <input
                           type="url"
                           className={styles.videoFormFieldFull}
-                          placeholder="Image de couverture (URL)"
+                          placeholder={t("videos.coverPlaceholder")}
                           value={videoDraft.coverImageUrl}
                           onChange={(event) =>
                             setVideoDraftField(
@@ -2392,7 +2499,7 @@ export function DashboardOverview() {
                           <input
                             type="url"
                             className={styles.videoFormFieldFull}
-                            placeholder="Lien de la vidéo publiée"
+                            placeholder={t("videos.publishedUrlPlaceholder")}
                             value={videoDraft.videoUrl}
                             onChange={(event) =>
                               setVideoDraftField("videoUrl", event.target.value)
@@ -2402,7 +2509,9 @@ export function DashboardOverview() {
                       </div>
                       <div className={styles.videoFormActions}>
                         <button type="button" onClick={submitVideoDraft}>
-                          {editingVideoId ? "Modifier" : "Ajouter"}
+                          {editingVideoId
+                            ? t("videos.modify")
+                            : t("videos.add")}
                         </button>
                         {editingVideoId ? (
                           <button
@@ -2413,7 +2522,7 @@ export function DashboardOverview() {
                               setVideoSubmitError(null);
                             }}
                           >
-                            Annuler
+                            {t("dashboard.cancel")}
                           </button>
                         ) : null}
                       </div>
@@ -2481,8 +2590,8 @@ export function DashboardOverview() {
                               <button
                                 type="button"
                                 className={styles.iconActionButton}
-                                data-tooltip="Modifier"
-                                aria-label="Modifier la vidéo"
+                                data-tooltip={t("dashboard.editTooltip")}
+                                aria-label={t("dashboard.editVideoAria")}
                                 onClick={() => startVideoEditInline(video)}
                               >
                                 <AiOutlineEdit aria-hidden="true" />
@@ -2490,8 +2599,8 @@ export function DashboardOverview() {
                               <button
                                 type="button"
                                 className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                data-tooltip="Supprimer"
-                                aria-label="Supprimer la vidéo"
+                                data-tooltip={t("dashboard.deleteTooltip")}
+                                aria-label={t("dashboard.deleteVideoAriaShort")}
                                 onClick={() => deleteVideoItem(video.id)}
                               >
                                 <AiOutlineDelete aria-hidden="true" />
@@ -2504,7 +2613,7 @@ export function DashboardOverview() {
                     </ul>
                   ) : (
                     <p className={styles.videoRecapEmpty}>
-                      Aucune video dans la periode selectionnee.
+                      {t("dashboard.videoRecapEmptyPeriod")}
                     </p>
                   )}
                 </>
@@ -2543,8 +2652,8 @@ export function DashboardOverview() {
                     onClick={() => togglePanelCollapsed("todo")}
                     aria-label={
                       collapsedPanels.todo
-                        ? "Déplier la to-do list"
-                        : "Réduire la to-do list"
+                        ? t("dashboard.expandTodoPanel")
+                        : t("dashboard.collapseTodoPanel")
                     }
                   >
                     <HiChevronDown
@@ -2560,7 +2669,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel("todo")}
-                    aria-label="Agrandir la todo list"
+                    aria-label={t("dashboard.expandTodoFull")}
                   >
                     ⤢
                   </button>
@@ -2575,15 +2684,15 @@ export function DashboardOverview() {
                       onClick={() => setIsTodoFormOpen((prev) => !prev)}
                     >
                       {isTodoFormOpen
-                        ? "Masquer ajout tâche"
-                        : "Ajouter une tâche"}
+                        ? t("dashboard.hideTaskForm")
+                        : t("dashboard.addTask")}
                     </button>
                   </div>
                   {isTodoFormOpen ? (
                     <div className={styles.todoForm}>
                       <div className={styles.todoFormFields}>
                         <input
-                          placeholder="Titre de la tâche"
+                          placeholder={t("dashboard.taskTitlePlaceholder")}
                           value={todoDraft.label}
                           onChange={(event) =>
                             setTodoDraftField("label", event.target.value)
@@ -2595,7 +2704,7 @@ export function DashboardOverview() {
                             setTodoDraftField("platform", event.target.value)
                           }
                         >
-                          <option value="">Plateforme</option>
+                          <option value="">{t("dashboard.platformSelect")}</option>
                           {platforms.map((item) => (
                             <option key={`todo-platform-${item}`} value={item}>
                               {item}
@@ -2611,9 +2720,9 @@ export function DashboardOverview() {
                             )
                           }
                         >
-                          <option value="low">low</option>
-                          <option value="medium">medium</option>
-                          <option value="high">high</option>
+                          <option value="low">{priorityLabel.low}</option>
+                          <option value="medium">{priorityLabel.medium}</option>
+                          <option value="high">{priorityLabel.high}</option>
                         </select>
                         <select
                           value={todoDraft.column}
@@ -2624,16 +2733,16 @@ export function DashboardOverview() {
                             )
                           }
                         >
-                          <option value="todo">A faire</option>
-                          <option value="doing">En cours</option>
-                          <option value="done">Termine</option>
+                          <option value="todo">{columnLabel.todo}</option>
+                          <option value="doing">{columnLabel.doing}</option>
+                          <option value="done">{columnLabel.done}</option>
                         </select>
                       </div>
                       <div className={styles.todoFormActions}>
                         <button type="button" onClick={submitTodoDraft}>
                           {editingTodoId
-                            ? "Modifier tâche"
-                            : "Ajouter une tâche"}
+                            ? t("dashboard.editTask")
+                            : t("dashboard.addTask")}
                         </button>
                         {editingTodoId ? (
                           <button
@@ -2643,7 +2752,7 @@ export function DashboardOverview() {
                               setIsTodoFormOpen(false);
                             }}
                           >
-                            Annuler
+                            {t("dashboard.cancel")}
                           </button>
                         ) : null}
                       </div>
@@ -2667,11 +2776,7 @@ export function DashboardOverview() {
                         onDrop={() => handleColumnDrop(column)}
                       >
                         <p className={styles.columnTitle}>
-                          {column === "todo"
-                            ? "A faire"
-                            : column === "doing"
-                              ? "En cours"
-                              : "Termine"}
+                          {columnLabel[column]}
                         </p>
                         {filteredBoard
                           .filter((task) => task.column === column)
@@ -2708,8 +2813,8 @@ export function DashboardOverview() {
                                 <button
                                   type="button"
                                   className={styles.iconActionButton}
-                                  data-tooltip="Modifier"
-                                  aria-label="Modifier la tâche"
+                                  data-tooltip={t("dashboard.editTooltip")}
+                                  aria-label={t("dashboard.editTaskAria")}
                                   onClick={() => startTodoEdit(task)}
                                 >
                                   <AiOutlineEdit aria-hidden="true" />
@@ -2717,8 +2822,8 @@ export function DashboardOverview() {
                                 <button
                                   type="button"
                                   className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                  data-tooltip="Supprimer"
-                                  aria-label="Supprimer la tâche"
+                                  data-tooltip={t("dashboard.deleteTooltip")}
+                                  aria-label={t("dashboard.deleteTaskAriaShort")}
                                   onClick={() => deleteTodoItem(task.id)}
                                 >
                                   <AiOutlineDelete aria-hidden="true" />
@@ -2729,7 +2834,12 @@ export function DashboardOverview() {
                               </p>
                               <small>
                                 {highlightMatch(task.platform, search)} -{" "}
-                                {highlightMatch(task.priority, search)}
+                                {highlightMatch(
+                                  priorityLabel[
+                                    task.priority as keyof typeof priorityLabel
+                                  ] ?? task.priority,
+                                  search,
+                                )}
                               </small>
                               <div className={styles.checklistBox}>
                                 {task.checklist.map((item) => (
@@ -2755,7 +2865,9 @@ export function DashboardOverview() {
                                 ))}
                                 <div className={styles.checklistInputRow}>
                                   <input
-                                    placeholder="Ajouter une checklist..."
+                                    placeholder={t(
+                                      "dashboard.addChecklistPlaceholder",
+                                    )}
                                     value={task.newChecklistText}
                                     onChange={(event) =>
                                       setTaskDraftChecklist(
@@ -2773,7 +2885,7 @@ export function DashboardOverview() {
                                 </div>
                               </div>
                               <small className={styles.dragHint}>
-                                Glisser pour déplacer la carte
+                                {t("dashboard.dragCardHint")}
                               </small>
                             </div>
                           ))}
@@ -2816,8 +2928,8 @@ export function DashboardOverview() {
                     onClick={() => togglePanelCollapsed("chart")}
                     aria-label={
                       collapsedPanels.chart
-                        ? "Déplier le graphique"
-                        : "Réduire le graphique"
+                        ? t("dashboard.expandChartPanel")
+                        : t("dashboard.collapseChartPanel")
                     }
                   >
                     <HiChevronDown
@@ -2833,7 +2945,7 @@ export function DashboardOverview() {
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={() => toggleFocusedPanel("chart")}
-                    aria-label="Agrandir le graphique"
+                    aria-label={t("dashboard.expandChartFull")}
                   >
                     ⤢
                   </button>
@@ -2888,19 +3000,26 @@ export function DashboardOverview() {
                           orientation="right"
                           tick={{ fontSize: 11, fill: "#9ca3af" }}
                         />
-                        <Tooltip />
+                        <Tooltip
+                          content={
+                            chartTooltipContent as ComponentProps<
+                              typeof Tooltip
+                            >["content"]
+                          }
+                        />
                         <Area
                           yAxisId="left"
                           type="monotone"
-                          dataKey="vues"
+                          dataKey="views"
+                          name={t("dashboard.totalViews")}
                           stroke="none"
                           fill="url(#viewsAreaGradient)"
                         />
                         <Line
                           yAxisId="left"
                           type="monotone"
-                          dataKey="vues"
-                          name="Vues totales"
+                          dataKey="views"
+                          name={t("dashboard.totalViews")}
                           stroke="#5b4fcf"
                           strokeWidth={3}
                           dot={false}
@@ -2909,7 +3028,7 @@ export function DashboardOverview() {
                           yAxisId="right"
                           type="monotone"
                           dataKey="engagement"
-                          name="Engagement moyen"
+                          name={t("dashboard.avgEngagement")}
                           stroke="#7a68dd"
                           strokeWidth={2}
                           dot={false}
@@ -2917,7 +3036,7 @@ export function DashboardOverview() {
                         <Bar
                           yAxisId="left"
                           dataKey="publies"
-                          name="Publié"
+                          name={t("dashboard.statusPublished")}
                           radius={[8, 8, 0, 0]}
                           barSize={14}
                         >
@@ -2935,7 +3054,7 @@ export function DashboardOverview() {
                         <Bar
                           yAxisId="right"
                           dataKey="received"
-                          name="Received"
+                          name={t("dashboard.chartBarReceived")}
                           fill="#e8a0d0"
                           radius={[8, 8, 0, 0]}
                           barSize={10}
@@ -2973,19 +3092,19 @@ export function DashboardOverview() {
               <div className={styles.panelHeader}>
                 <h3>
                   {focusedPanel === "planning"
-                    ? "Planning (agenda)"
+                    ? t("dashboard.planningTitle")
                     : focusedPanel === "videos"
-                      ? "Suivi des vidéos"
+                      ? t("dashboard.videosTitle")
                       : focusedPanel === "todo"
-                        ? "To-do list (Trello)"
-                        : "Tendances des stats"}
+                        ? t("dashboard.todoTitle")
+                        : t("dashboard.statsTitle")}
                 </h3>
                 <div className={styles.calendarHeaderActions}>
                   <button
                     type="button"
                     className={styles.panelExpandButton}
                     onClick={closeFocusedPanel}
-                    aria-label="Fermer la modale"
+                    aria-label={t("dashboard.closeModal")}
                   >
                     ×
                   </button>
@@ -3002,15 +3121,15 @@ export function DashboardOverview() {
                         onClick={() => setIsPlanningFormOpen((prev) => !prev)}
                       >
                         {isPlanningFormOpen
-                          ? "Masquer ajout événement"
-                          : "Ajouter un événement"}
+                          ? t("dashboard.hideEventForm")
+                          : t("dashboard.addEvent")}
                       </button>
                       <div className={styles.monthNavigation}>
                         <button
                           type="button"
                           className={styles.monthNavButton}
                           onClick={goToPreviousMonth}
-                          aria-label="Mois précédent"
+                          aria-label={t("dashboard.prevMonth")}
                         >
                           ←
                         </button>
@@ -3021,7 +3140,7 @@ export function DashboardOverview() {
                           type="button"
                           className={styles.monthNavButton}
                           onClick={goToNextMonth}
-                          aria-label="Mois suivant"
+                          aria-label={t("dashboard.nextMonth")}
                         >
                           →
                         </button>
@@ -3031,7 +3150,7 @@ export function DashboardOverview() {
                       <div className={styles.planningForm}>
                         <div className={styles.planningFormFields}>
                           <input
-                            placeholder="Titre de l'événement"
+                            placeholder={t("dashboard.eventTitlePlaceholder")}
                             value={planningDraft.title}
                             onChange={(event) =>
                               setPlanningDraftField("title", event.target.value)
@@ -3056,7 +3175,7 @@ export function DashboardOverview() {
                               )
                             }
                           >
-                            <option value="">Plateforme</option>
+                            <option value="">{t("dashboard.platformSelect")}</option>
                             {platforms.map((item) => (
                               <option
                                 key={`modal-planning-platform-${item}`}
@@ -3078,16 +3197,20 @@ export function DashboardOverview() {
                               )
                             }
                           >
-                            <option value="draft">draft</option>
-                            <option value="scheduled">scheduled</option>
-                            <option value="published">published</option>
+                            <option value="draft">{statusLabel.draft}</option>
+                            <option value="scheduled">
+                              {statusLabel.scheduled}
+                            </option>
+                            <option value="published">
+                              {statusLabel.published}
+                            </option>
                           </select>
                         </div>
                         <div className={styles.planningFormActions}>
                           <button type="button" onClick={submitPlanningDraft}>
                             {editingPlanningId
-                              ? "Modifier l'événement"
-                              : "Ajouter un événement"}
+                              ? t("dashboard.editEvent")
+                              : t("dashboard.addEvent")}
                           </button>
                           {editingPlanningId ? (
                             <button
@@ -3097,7 +3220,7 @@ export function DashboardOverview() {
                                 setIsPlanningFormOpen(false);
                               }}
                             >
-                              Annuler
+                              {t("dashboard.cancel")}
                             </button>
                           ) : null}
                         </div>
@@ -3119,7 +3242,7 @@ export function DashboardOverview() {
                             <p className={styles.agendaDate}>{slot.label}</p>
                             {dayItems.length === 0 ? (
                               <small className={styles.emptyText}>
-                                Aucun contenu
+                                {t("dashboard.emptyDay")}
                               </small>
                             ) : (
                               <ul className={styles.miniList}>
@@ -3149,7 +3272,13 @@ export function DashboardOverview() {
                                       </strong>
                                       <small>
                                         {highlightMatch(item.platform, search)}{" "}
-                                        - {highlightMatch(item.status, search)}
+                                        -{" "}
+                                        {highlightMatch(
+                                          statusLabel[
+                                            item.status as keyof typeof statusLabel
+                                          ] ?? item.status,
+                                          search,
+                                        )}
                                       </small>
                                       <div
                                         className={styles.planningItemActions}
@@ -3157,8 +3286,12 @@ export function DashboardOverview() {
                                         <button
                                           type="button"
                                           className={styles.iconActionButton}
-                                          data-tooltip="Modifier"
-                                          aria-label="Modifier l'événement"
+                                          data-tooltip={t(
+                                            "dashboard.editTooltip",
+                                          )}
+                                          aria-label={t(
+                                            "dashboard.editPlanningAria",
+                                          )}
                                           onClick={() =>
                                             startPlanningEdit(item)
                                           }
@@ -3168,8 +3301,12 @@ export function DashboardOverview() {
                                         <button
                                           type="button"
                                           className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                          data-tooltip="Supprimer"
-                                          aria-label="Supprimer l'événement"
+                                          data-tooltip={t(
+                                            "dashboard.deleteTooltip",
+                                          )}
+                                          aria-label={t(
+                                            "dashboard.deletePlanningAria",
+                                          )}
                                           onClick={() =>
                                             askPlanningDelete(item)
                                           }
@@ -3205,15 +3342,15 @@ export function DashboardOverview() {
                         }}
                       >
                         {isVideoFormOpen
-                          ? "Masquer ajout de suivi vidéo"
-                          : "Ajouter un suivi vidéo"}
+                          ? t("dashboard.hideVideoForm")
+                          : t("dashboard.addVideoTracking")}
                       </button>
                     </div>
                     {isVideoFormOpen ? (
                       <div className={styles.videoForm}>
                         <div className={styles.videoFormFields}>
                           <input
-                            placeholder="Titre de la vidéo"
+                            placeholder={t("dashboard.videoTitlePlaceholder")}
                             value={videoDraft.title}
                             onChange={(event) =>
                               setVideoDraftField("title", event.target.value)
@@ -3232,7 +3369,7 @@ export function DashboardOverview() {
                               setVideoDraftField("platform", event.target.value)
                             }
                           >
-                            <option value="">Plateforme</option>
+                            <option value="">{t("dashboard.platformSelect")}</option>
                             {platforms.map((item) => (
                               <option
                                 key={`modal-videos-platform-${item}`}
@@ -3251,16 +3388,24 @@ export function DashboardOverview() {
                               )
                             }
                           >
-                            <option value="idea">Idée</option>
-                            <option value="scripting">Script</option>
-                            <option value="recording">Tournage</option>
-                            <option value="editing">Montage</option>
-                            <option value="published">Publié</option>
+                            <option value="idea">{stageLabelMap.idea}</option>
+                            <option value="scripting">
+                              {stageLabelMap.scripting}
+                            </option>
+                            <option value="recording">
+                              {stageLabelMap.recording}
+                            </option>
+                            <option value="editing">
+                              {stageLabelMap.editing}
+                            </option>
+                            <option value="published">
+                              {stageLabelMap.published}
+                            </option>
                           </select>
                           <input
                             type="url"
                             className={styles.videoFormFieldFull}
-                            placeholder="Image de couverture (URL)"
+                            placeholder={t("videos.coverPlaceholder")}
                             value={videoDraft.coverImageUrl}
                             onChange={(event) =>
                               setVideoDraftField(
@@ -3273,7 +3418,7 @@ export function DashboardOverview() {
                             <input
                               type="url"
                               className={styles.videoFormFieldFull}
-                              placeholder="Lien de la vidéo publiée"
+                              placeholder={t("videos.publishedUrlPlaceholder")}
                               value={videoDraft.videoUrl}
                               onChange={(event) =>
                                 setVideoDraftField("videoUrl", event.target.value)
@@ -3284,8 +3429,8 @@ export function DashboardOverview() {
                         <div className={styles.videoFormActions}>
                           <button type="button" onClick={submitVideoDraft}>
                             {editingVideoId
-                              ? "Modifier le suivi vidéo"
-                              : "Ajouter un suivi vidéo"}
+                              ? t("dashboard.editVideo")
+                              : t("dashboard.addVideoTracking")}
                           </button>
                           {editingVideoId ? (
                             <button
@@ -3296,7 +3441,7 @@ export function DashboardOverview() {
                                 setVideoSubmitError(null);
                               }}
                             >
-                              Annuler
+                              {t("dashboard.cancel")}
                             </button>
                           ) : null}
                         </div>
@@ -3345,9 +3490,9 @@ export function DashboardOverview() {
                               <div>
                                 <strong>{video.title}</strong>
                                 <span>
-                                  Plateforme:{" "}
-                                  {highlightMatch(video.platform, search)} -
-                                  Deadline:{" "}
+                                  {t("dashboard.labelPlatform")}:{" "}
+                                  {highlightMatch(video.platform, search)} -{" "}
+                                  {t("dashboard.labelDeadline")}:{" "}
                                   {highlightMatch(video.deadline, search)}
                                 </span>
                                 {currentStage === "published" &&
@@ -3359,7 +3504,7 @@ export function DashboardOverview() {
                                       rel="noreferrer"
                                       draggable={false}
                                     >
-                                      Ouvrir la vidéo
+                                      {t("videos.openLink")}
                                     </a>
                                   </div>
                                 ) : null}
@@ -3384,18 +3529,26 @@ export function DashboardOverview() {
                                   )
                                 }
                               >
-                                <option value="idea">Idée</option>
-                                <option value="scripting">Script</option>
-                                <option value="recording">Tournage</option>
-                                <option value="editing">Montage</option>
-                                <option value="published">Publié</option>
+                                <option value="idea">{stageLabelMap.idea}</option>
+                                <option value="scripting">
+                                  {stageLabelMap.scripting}
+                                </option>
+                                <option value="recording">
+                                  {stageLabelMap.recording}
+                                </option>
+                                <option value="editing">
+                                  {stageLabelMap.editing}
+                                </option>
+                                <option value="published">
+                                  {stageLabelMap.published}
+                                </option>
                               </select>
                               <div className={styles.videoItemActions}>
                                 <button
                                   type="button"
                                   className={styles.iconActionButton}
-                                  data-tooltip="Modifier"
-                                  aria-label="Modifier la vidéo"
+                                  data-tooltip={t("dashboard.editTooltip")}
+                                  aria-label={t("dashboard.editVideoAria")}
                                   onClick={() => startVideoEdit(video)}
                                 >
                                   <AiOutlineEdit aria-hidden="true" />
@@ -3403,8 +3556,8 @@ export function DashboardOverview() {
                                 <button
                                   type="button"
                                   className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                  data-tooltip="Supprimer"
-                                  aria-label="Supprimer la vidéo"
+                                  data-tooltip={t("dashboard.deleteTooltip")}
+                                  aria-label={t("dashboard.deleteVideoAriaShort")}
                                   onClick={() => deleteVideoItem(video.id)}
                                 >
                                   <AiOutlineDelete aria-hidden="true" />
@@ -3427,15 +3580,15 @@ export function DashboardOverview() {
                         onClick={() => setIsTodoFormOpen((prev) => !prev)}
                       >
                         {isTodoFormOpen
-                          ? "Masquer ajout tâche"
-                          : "Ajouter une tâche"}
+                          ? t("dashboard.hideTaskForm")
+                          : t("dashboard.addTask")}
                       </button>
                     </div>
                     {isTodoFormOpen ? (
                       <div className={styles.todoForm}>
                         <div className={styles.todoFormFields}>
                           <input
-                            placeholder="Titre de la tâche"
+                            placeholder={t("dashboard.taskTitlePlaceholder")}
                             value={todoDraft.label}
                             onChange={(event) =>
                               setTodoDraftField("label", event.target.value)
@@ -3447,7 +3600,7 @@ export function DashboardOverview() {
                               setTodoDraftField("platform", event.target.value)
                             }
                           >
-                            <option value="">Plateforme</option>
+                            <option value="">{t("dashboard.platformSelect")}</option>
                             {platforms.map((item) => (
                               <option
                                 key={`modal-todo-platform-${item}`}
@@ -3466,9 +3619,9 @@ export function DashboardOverview() {
                               )
                             }
                           >
-                            <option value="low">low</option>
-                            <option value="medium">medium</option>
-                            <option value="high">high</option>
+                            <option value="low">{priorityLabel.low}</option>
+                            <option value="medium">{priorityLabel.medium}</option>
+                            <option value="high">{priorityLabel.high}</option>
                           </select>
                           <select
                             value={todoDraft.column}
@@ -3479,16 +3632,16 @@ export function DashboardOverview() {
                               )
                             }
                           >
-                            <option value="todo">A faire</option>
-                            <option value="doing">En cours</option>
-                            <option value="done">Termine</option>
+                            <option value="todo">{columnLabel.todo}</option>
+                            <option value="doing">{columnLabel.doing}</option>
+                            <option value="done">{columnLabel.done}</option>
                           </select>
                         </div>
                         <div className={styles.todoFormActions}>
                           <button type="button" onClick={submitTodoDraft}>
                             {editingTodoId
-                              ? "Modifier tâche"
-                              : "Ajouter une tâche"}
+                              ? t("dashboard.editTask")
+                              : t("dashboard.addTask")}
                           </button>
                           {editingTodoId ? (
                             <button
@@ -3498,7 +3651,7 @@ export function DashboardOverview() {
                                 setIsTodoFormOpen(false);
                               }}
                             >
-                              Annuler
+                              {t("dashboard.cancel")}
                             </button>
                           ) : null}
                         </div>
@@ -3522,11 +3675,7 @@ export function DashboardOverview() {
                           onDrop={() => handleColumnDrop(column)}
                         >
                           <p className={styles.columnTitle}>
-                            {column === "todo"
-                              ? "A faire"
-                              : column === "doing"
-                                ? "En cours"
-                                : "Termine"}
+                            {columnLabel[column]}
                           </p>
                           {filteredBoard
                             .filter((task) => task.column === column)
@@ -3568,8 +3717,8 @@ export function DashboardOverview() {
                                   <button
                                     type="button"
                                     className={styles.iconActionButton}
-                                    data-tooltip="Modifier"
-                                    aria-label="Modifier la tâche"
+                                    data-tooltip={t("dashboard.editTooltip")}
+                                    aria-label={t("dashboard.editTaskAria")}
                                     onClick={() => startTodoEdit(task)}
                                   >
                                     <AiOutlineEdit aria-hidden="true" />
@@ -3577,8 +3726,8 @@ export function DashboardOverview() {
                                   <button
                                     type="button"
                                     className={`${styles.iconActionButton} ${styles.deleteAction}`}
-                                    data-tooltip="Supprimer"
-                                    aria-label="Supprimer la tâche"
+                                    data-tooltip={t("dashboard.deleteTooltip")}
+                                    aria-label={t("dashboard.deleteTaskAriaShort")}
                                     onClick={() => deleteTodoItem(task.id)}
                                   >
                                     <AiOutlineDelete aria-hidden="true" />
@@ -3586,10 +3735,15 @@ export function DashboardOverview() {
                                 </div>
                                 <small>
                                   {highlightMatch(task.platform, search)} -{" "}
-                                  {highlightMatch(task.priority, search)}
+                                  {highlightMatch(
+                                    priorityLabel[
+                                      task.priority as keyof typeof priorityLabel
+                                    ] ?? task.priority,
+                                    search,
+                                  )}
                                 </small>
                                 <small className={styles.dragHint}>
-                                  Glisser pour déplacer la carte
+                                  {t("dashboard.dragCardHint")}
                                 </small>
                               </div>
                             ))}
@@ -3618,12 +3772,18 @@ export function DashboardOverview() {
                           orientation="right"
                           tick={{ fontSize: 11, fill: "#475569" }}
                         />
-                        <Tooltip />
+                        <Tooltip
+                          content={
+                            chartTooltipContent as ComponentProps<
+                              typeof Tooltip
+                            >["content"]
+                          }
+                        />
                         <Line
                           yAxisId="left"
                           type="monotone"
-                          dataKey="vues"
-                          name="Vues totales"
+                          dataKey="views"
+                          name={t("dashboard.totalViews")}
                           stroke="#2563eb"
                           strokeWidth={2}
                           dot={false}
@@ -3632,7 +3792,7 @@ export function DashboardOverview() {
                           yAxisId="right"
                           type="monotone"
                           dataKey="engagement"
-                          name="Engagement moyen"
+                          name={t("dashboard.avgEngagement")}
                           stroke="#7c3aed"
                           strokeWidth={2}
                           dot={false}
@@ -3640,7 +3800,7 @@ export function DashboardOverview() {
                         <Bar
                           yAxisId="left"
                           dataKey="publies"
-                          name="Publié sur la période"
+                          name={t("dashboard.chartPublishedPeriod")}
                           fill="#14b8a6"
                           radius={[4, 4, 0, 0]}
                         />
@@ -3665,18 +3825,18 @@ export function DashboardOverview() {
               onClick={(event) => event.stopPropagation()}
               role="dialog"
               aria-modal="true"
-              aria-label="Confirmation de suppression"
+              aria-label={t("dashboard.confirmDeleteEvent")}
             >
               <p className={styles.confirmText}>
-                Êtes-vous sûr de vouloir supprimer ?
+                {t("dashboard.confirmDelete")}
               </p>
               <p className={styles.confirmSubtext}>{planningToDelete.title}</p>
               <div className={styles.confirmActions}>
                 <button type="button" onClick={cancelPlanningDelete}>
-                  Annuler
+                  {t("dashboard.cancel")}
                 </button>
                 <button type="button" onClick={confirmPlanningDelete}>
-                  Supprimer
+                  {t("dashboard.delete")}
                 </button>
               </div>
             </div>
@@ -3695,18 +3855,18 @@ export function DashboardOverview() {
               onClick={(event) => event.stopPropagation()}
               role="dialog"
               aria-modal="true"
-              aria-label="Confirmation de suppression de plateforme"
+              aria-label={t("dashboard.confirmDeletePlatform")}
             >
               <p className={styles.confirmText}>
-                Êtes-vous sûr de vouloir supprimer ?
+                {t("dashboard.confirmDelete")}
               </p>
               <p className={styles.confirmSubtext}>{platformToDelete}</p>
               <div className={styles.confirmActions}>
                 <button type="button" onClick={cancelPlatformDelete}>
-                  Annuler
+                  {t("dashboard.cancel")}
                 </button>
                 <button type="button" onClick={confirmPlatformDelete}>
-                  Supprimer
+                  {t("dashboard.delete")}
                 </button>
               </div>
             </div>
