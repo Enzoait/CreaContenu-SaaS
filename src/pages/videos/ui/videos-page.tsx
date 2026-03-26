@@ -91,11 +91,15 @@ export function VideosPage() {
     platform: string;
     deadline: string;
     stage: VideoStage;
+    coverImageUrl: string;
+    videoUrl: string;
   }>({
     title: "",
     platform: "",
     deadline: "",
     stage: "idea",
+    coverImageUrl: "",
+    videoUrl: "",
   });
 
   const videos = useMemo<DisplayVideo[]>(() => {
@@ -201,6 +205,8 @@ export function VideosPage() {
       platform: platforms[0] ?? "",
       deadline: "",
       stage: "idea",
+      coverImageUrl: "",
+      videoUrl: "",
     });
     setEditingVideoId(null);
   };
@@ -231,12 +237,18 @@ export function VideosPage() {
     setIsSubmitting(true);
 
     try {
+      const coverImageUrl = videoDraft.coverImageUrl.trim();
+      const videoUrl =
+        videoDraft.stage === "published" ? videoDraft.videoUrl.trim() : "";
+
       if (editingVideoId) {
         await updateVideoItem(editingVideoId, {
           title: videoDraft.title.trim(),
           platform: videoDraft.platform.trim(),
           deadline: toDateKey(videoDraft.deadline),
           stage: videoDraft.stage,
+          coverImageUrl,
+          videoUrl,
         });
       } else {
         const deadlineKey = toDateKey(videoDraft.deadline);
@@ -245,6 +257,8 @@ export function VideosPage() {
           platform: videoDraft.platform.trim(),
           deadline: deadlineKey,
           stage: videoDraft.stage,
+          ...(coverImageUrl ? { coverImageUrl } : {}),
+          ...(videoUrl ? { videoUrl } : {}),
         });
         await addPlanningItem(user.id, {
           title: newVideo.title,
@@ -276,6 +290,8 @@ export function VideosPage() {
       platform: video.platform,
       deadline: video.deadline,
       stage: video.stage,
+      coverImageUrl: video.coverImageUrl ?? "",
+      videoUrl: video.videoUrl ?? "",
     });
     setIsFormOpen(true);
   };
@@ -418,7 +434,33 @@ export function VideosPage() {
                 <option value="editing">Montage</option>
                 <option value="published">Publiee</option>
               </select>
-              <div className={styles.formActions}>
+              <input
+                type="url"
+                className={styles.formGridFieldFull}
+                placeholder="Image de couverture (URL)"
+                value={videoDraft.coverImageUrl}
+                onChange={(event) =>
+                  setVideoDraft((prev) => ({
+                    ...prev,
+                    coverImageUrl: event.target.value,
+                  }))
+                }
+              />
+              {videoDraft.stage === "published" ? (
+                <input
+                  type="url"
+                  className={styles.formGridFieldFull}
+                  placeholder="Lien de la video publiee"
+                  value={videoDraft.videoUrl}
+                  onChange={(event) =>
+                    setVideoDraft((prev) => ({
+                      ...prev,
+                      videoUrl: event.target.value,
+                    }))
+                  }
+                />
+              ) : null}
+              <div className={`${styles.formActions} ${styles.formGridFieldFull}`}>
                 <button
                   type="button"
                   onClick={submitVideo}

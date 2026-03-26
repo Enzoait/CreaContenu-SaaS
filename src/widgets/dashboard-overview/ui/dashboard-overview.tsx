@@ -127,6 +127,14 @@ function compareVideoOrder(a: VideoItem, b: VideoItem): number {
   return a.deadline.localeCompare(b.deadline);
 }
 
+function getVideoThumbnailSrc(video: VideoItem): string {
+  const trimmed = video.coverImageUrl?.trim();
+  if (trimmed) return trimmed;
+  return `https://placehold.co/144x96/e2e8f0/0f172a?text=${encodeURIComponent(
+    video.title.slice(0, 14) || "Video",
+  )}`;
+}
+
 type VideoDraft = {
   title: string;
   platform: string;
@@ -325,6 +333,11 @@ export function DashboardOverview() {
   });
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [isVideoFormOpen, setIsVideoFormOpen] = useState(false);
+  const [isDashboardVideoFormOpen, setIsDashboardVideoFormOpen] =
+    useState(false);
+  const [videoSubmitError, setVideoSubmitError] = useState<string | null>(
+    null,
+  );
   const [todoBoard, setTodoBoard] = useState<BoardTask[]>([]);
   const [todoDraft, setTodoDraft] = useState<TodoDraft>({
     label: "",
@@ -1045,12 +1058,17 @@ export function DashboardOverview() {
   };
 
   const submitVideoDraft = async () => {
+    setVideoSubmitError(null);
     if (
       !videoDraft.title.trim() ||
       !videoDraft.platform ||
       !videoDraft.deadline
-    )
+    ) {
+      setVideoSubmitError(
+        "Titre, plateforme et deadline sont obligatoires.",
+      );
       return;
+    }
     const normalizedDate = toDateKey(videoDraft.deadline);
     const ensureVisibility = (eventPlatform: string, eventDate: string) => {
       const eventDateObj = parseDateSafe(eventDate);
@@ -1125,10 +1143,14 @@ export function DashboardOverview() {
       ensureVisibility(videoDraft.platform, normalizedDate);
       resetVideoDraft();
       setIsVideoFormOpen(false);
+      setIsDashboardVideoFormOpen(false);
       return;
     }
 
-    if (!user?.id) return;
+    if (!user?.id) {
+      setVideoSubmitError("Utilisateur non identifié.");
+      return;
+    }
     try {
       const videoUrl =
         videoDraft.stage === "published" ? videoDraft.videoUrl.trim() : "";
@@ -1158,17 +1180,40 @@ export function DashboardOverview() {
       void queryClient.invalidateQueries({
         queryKey: ["dashboard", "overview", user.id],
       });
+      resetVideoDraft();
+      setIsVideoFormOpen(false);
+      setIsDashboardVideoFormOpen(false);
     } catch (error) {
       console.error(error);
+      setVideoSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'enregistrer la vidéo.",
+      );
     }
-    resetVideoDraft();
-    setIsVideoFormOpen(false);
   };
 
   const startVideoEdit = (item: VideoItem) => {
     setFocusedPanel("videos");
+    setIsDashboardVideoFormOpen(false);
     setIsVideoFormOpen(true);
     setEditingVideoId(item.id);
+    setVideoDraft({
+      title: item.title,
+      platform: item.platform,
+      deadline: toDateKey(item.deadline),
+      stage: videoStages[item.id] ?? item.stage,
+      videoUrl: item.videoUrl ?? "",
+      coverImageUrl: item.coverImageUrl ?? "",
+    });
+  };
+
+  const startVideoEditInline = (item: VideoItem) => {
+    setFocusedPanel(null);
+    setIsVideoFormOpen(false);
+    setIsDashboardVideoFormOpen(true);
+    setEditingVideoId(item.id);
+    setVideoSubmitError(null);
     setVideoDraft({
       title: item.title,
       platform: item.platform,
@@ -1193,12 +1238,28 @@ export function DashboardOverview() {
       );
       deletePlanningItemApi(linkedPlanning.id)
         .then(() => deleteVideoItemApi(id))
+        .then(() => {
+          if (user?.id) {
+            void queryClient.invalidateQueries({
+              queryKey: ["dashboard", "overview", user.id],
+            });
+          }
+        })
         .catch(console.error);
     } else {
-      deleteVideoItemApi(id).catch(console.error);
+      deleteVideoItemApi(id)
+        .then(() => {
+          if (user?.id) {
+            void queryClient.invalidateQueries({
+              queryKey: ["dashboard", "overview", user.id],
+            });
+          }
+        })
+        .catch(console.error);
     }
     if (editingVideoId === id) {
       resetVideoDraft();
+      setIsDashboardVideoFormOpen(false);
     }
   };
 
@@ -1468,6 +1529,8 @@ export function DashboardOverview() {
     setIsPlanningFormOpen(false);
     resetVideoDraft();
     setIsVideoFormOpen(false);
+    setIsDashboardVideoFormOpen(false);
+    setVideoSubmitError(null);
     resetTodoDraft();
     setIsTodoFormOpen(false);
   };
@@ -1476,6 +1539,8 @@ export function DashboardOverview() {
     if (focusedPanel === panel) {
       closeFocusedPanel();
     } else {
+      setVideoSubmitError(null);
+      setIsDashboardVideoFormOpen(false);
       setFocusedPanel(panel);
     }
   };
@@ -2247,6 +2312,118 @@ export function DashboardOverview() {
                       Ouvrir Mes videos
                     </Link>
                   </div>
+                  <div className={styles.dropdownRow}>
+                    <button
+                      type="button"
+                      className={styles.dropdownTrigger}
+                      onClick={() => {
+                        setVideoSubmitError(null);
+                        resetVideoDraft();
+                        setIsDashboardVideoFormOpen((prev) => !prev);
+                        setIsVideoFormOpen(false);
+                      }}
+                    >
+                      {isDashboardVideoFormOpen
+                        ? "Masquer"
+                        : "Ajouter une vidéo"}
+                    </button>
+                  </div>
+                  {isDashboardVideoFormOpen ? (
+                    <div className={styles.videoForm}>
+                      <div className={styles.videoFormFields}>
+                        <input
+                          placeholder="Titre de la vidéo"
+                          value={videoDraft.title}
+                          onChange={(event) =>
+                            setVideoDraftField("title", event.target.value)
+                          }
+                        />
+                        <input
+                          type="date"
+                          value={videoDraft.deadline}
+                          onChange={(event) =>
+                            setVideoDraftField("deadline", event.target.value)
+                          }
+                        />
+                        <select
+                          value={videoDraft.platform}
+                          onChange={(event) =>
+                            setVideoDraftField("platform", event.target.value)
+                          }
+                        >
+                          <option value="">Plateforme</option>
+                          {platforms.map((item) => (
+                            <option
+                              key={`dash-videos-platform-${item}`}
+                              value={item}
+                            >
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={videoDraft.stage}
+                          onChange={(event) =>
+                            setVideoDraftField(
+                              "stage",
+                              event.target.value as VideoStage,
+                            )
+                          }
+                        >
+                          <option value="idea">Idée</option>
+                          <option value="scripting">Script</option>
+                          <option value="recording">Tournage</option>
+                          <option value="editing">Montage</option>
+                          <option value="published">Publié</option>
+                        </select>
+                        <input
+                          type="url"
+                          className={styles.videoFormFieldFull}
+                          placeholder="Image de couverture (URL)"
+                          value={videoDraft.coverImageUrl}
+                          onChange={(event) =>
+                            setVideoDraftField(
+                              "coverImageUrl",
+                              event.target.value,
+                            )
+                          }
+                        />
+                        {videoDraft.stage === "published" ? (
+                          <input
+                            type="url"
+                            className={styles.videoFormFieldFull}
+                            placeholder="Lien de la vidéo publiée"
+                            value={videoDraft.videoUrl}
+                            onChange={(event) =>
+                              setVideoDraftField("videoUrl", event.target.value)
+                            }
+                          />
+                        ) : null}
+                      </div>
+                      <div className={styles.videoFormActions}>
+                        <button type="button" onClick={submitVideoDraft}>
+                          {editingVideoId ? "Modifier" : "Ajouter"}
+                        </button>
+                        {editingVideoId ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetVideoDraft();
+                              setIsDashboardVideoFormOpen(false);
+                              setVideoSubmitError(null);
+                            }}
+                          >
+                            Annuler
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+                  {isDashboardVideoFormOpen && videoSubmitError ? (
+                    <p className={styles.videoInlineError}>
+                      {videoSubmitError}
+                    </p>
+                  ) : null}
                   {videoRecapItems.length > 0 ? (
                     <ul
                       className={styles.videoRecapList}
@@ -2278,11 +2455,50 @@ export function DashboardOverview() {
                               : ""
                           }`.trim()}
                         >
-                          <strong>{video.title}</strong>
-                          <span>
-                            {video.platform} - {stageLabelMap[video.stage]} -{" "}
-                            {video.deadline}
-                          </span>
+                          <div className={styles.videoRecapRow}>
+                            <img
+                              className={styles.videoThumbMini}
+                              src={getVideoThumbnailSrc(video)}
+                              alt=""
+                              draggable={false}
+                              loading="lazy"
+                            />
+                            <div className={styles.videoRecapRowBody}>
+                              <div className={styles.videoRecapRowText}>
+                                <strong>{video.title}</strong>
+                                <span>
+                                  {video.platform} -{" "}
+                                  {stageLabelMap[video.stage]} -{" "}
+                                  {video.deadline}
+                                </span>
+                              </div>
+                              <div
+                                className={styles.videoRecapRowActions}
+                                onPointerDown={(event) =>
+                                  event.stopPropagation()
+                                }
+                              >
+                              <button
+                                type="button"
+                                className={styles.iconActionButton}
+                                data-tooltip="Modifier"
+                                aria-label="Modifier la vidéo"
+                                onClick={() => startVideoEditInline(video)}
+                              >
+                                <AiOutlineEdit aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.iconActionButton} ${styles.deleteAction}`}
+                                data-tooltip="Supprimer"
+                                aria-label="Supprimer la vidéo"
+                                onClick={() => deleteVideoItem(video.id)}
+                              >
+                                <AiOutlineDelete aria-hidden="true" />
+                              </button>
+                            </div>
+                            </div>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -2979,7 +3195,14 @@ export function DashboardOverview() {
                       <button
                         type="button"
                         className={styles.dropdownTrigger}
-                        onClick={() => setIsVideoFormOpen((prev) => !prev)}
+                        onClick={() => {
+                          setVideoSubmitError(null);
+                          if (!isVideoFormOpen) {
+                            resetVideoDraft();
+                          }
+                          setIsVideoFormOpen((prev) => !prev);
+                          setIsDashboardVideoFormOpen(false);
+                        }}
                       >
                         {isVideoFormOpen
                           ? "Masquer ajout de suivi vidéo"
@@ -3036,7 +3259,8 @@ export function DashboardOverview() {
                           </select>
                           <input
                             type="url"
-                            placeholder="Image de couverture (URL, cover_image_url)"
+                            className={styles.videoFormFieldFull}
+                            placeholder="Image de couverture (URL)"
                             value={videoDraft.coverImageUrl}
                             onChange={(event) =>
                               setVideoDraftField(
@@ -3048,6 +3272,7 @@ export function DashboardOverview() {
                           {videoDraft.stage === "published" ? (
                             <input
                               type="url"
+                              className={styles.videoFormFieldFull}
                               placeholder="Lien de la vidéo publiée"
                               value={videoDraft.videoUrl}
                               onChange={(event) =>
@@ -3068,6 +3293,7 @@ export function DashboardOverview() {
                               onClick={() => {
                                 resetVideoDraft();
                                 setIsVideoFormOpen(false);
+                                setVideoSubmitError(null);
                               }}
                             >
                               Annuler
@@ -3075,6 +3301,11 @@ export function DashboardOverview() {
                           ) : null}
                         </div>
                       </div>
+                    ) : null}
+                    {videoSubmitError ? (
+                      <p className={styles.videoInlineError}>
+                        {videoSubmitError}
+                      </p>
                     ) : null}
                     <ul className={styles.list}>
                       {sortedFilteredVideos.map((video, videoRowIndex) => {
@@ -3104,14 +3335,13 @@ export function DashboardOverview() {
                             }`}
                           >
                             <div className={styles.videoListRow}>
-                              {video.coverImageUrl ? (
-                                <img
-                                  className={styles.videoThumbMini}
-                                  src={video.coverImageUrl}
-                                  alt=""
-                                  draggable={false}
-                                />
-                              ) : null}
+                              <img
+                                className={styles.videoThumbMini}
+                                src={getVideoThumbnailSrc(video)}
+                                alt=""
+                                draggable={false}
+                                loading="lazy"
+                              />
                               <div>
                                 <strong>{video.title}</strong>
                                 <span>

@@ -416,13 +416,42 @@
   cursor: grabbing;
 }
 
-.videoRecapList strong {
+.videoRecapRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.videoRecapRowBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.videoRecapRowText {
+  min-width: 0;
+  flex: 1;
+}
+
+.videoRecapRowActions {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.videoRecapList strong,
+.videoRecapRowText strong {
   display: block;
   font-size: 0.9rem;
   color: #0f172a;
 }
 
-.videoRecapList span {
+.videoRecapList span,
+.videoRecapRowText span {
   color: #475569;
   font-size: 0.78rem;
 }
@@ -798,6 +827,12 @@
   margin-bottom: 10px;
 }
 
+.videoInlineError {
+  margin: 0 0 10px;
+  color: #9a3412;
+  font-size: 0.8rem;
+}
+
 .todoForm {
   display: grid;
   gap: 8px;
@@ -814,6 +849,10 @@
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 6px;
+}
+
+.videoFormFieldFull {
+  grid-column: 1 / -1;
 }
 
 .todoFormFields {

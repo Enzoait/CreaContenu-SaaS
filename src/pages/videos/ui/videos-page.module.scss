@@ -135,6 +135,10 @@
   gap: 8px;
 }
 
+.formGridFieldFull {
+  grid-column: 1 / -1;
+}
+
 .formGrid input,
 .formGrid select {
   border: 1px solid #c7d3e5;
