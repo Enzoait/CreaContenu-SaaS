@@ -64,6 +64,7 @@ const syncUserDataFromMetadata = async (
   const phoneNumber = readStringMetadata(metadata, "phone_number");
   const country = readStringMetadata(metadata, "country");
   const region = readStringMetadata(metadata, "region");
+  const profilePicture = readStringMetadata(metadata, "profile_picture");
 
   if (!firstname || !lastname || !phoneNumber || !country || !region) {
     return;
@@ -77,6 +78,7 @@ const syncUserDataFromMetadata = async (
     country,
     region,
     email,
+    profilePicture,
   });
 };
 
@@ -122,6 +124,7 @@ export const signUpWithEmail = async (
         phone_number: payload.phoneNumber,
         country: payload.country,
         region: payload.region,
+        profile_picture: payload.profilePicture?.trim() || "",
       },
     },
   });
@@ -151,6 +154,7 @@ export const signUpWithEmail = async (
     country: payload.country,
     region: payload.region,
     email: payload.email,
+    profilePicture: payload.profilePicture?.trim() || "",
   });
 
   return {

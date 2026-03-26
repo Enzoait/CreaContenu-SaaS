@@ -15,7 +15,6 @@ import {
 import {
   accountProfileFormSchema,
   useAccountActiveTab,
-  useAccountAvatarDataUrl,
   useSetAccountActiveTab,
   type AccountProfileFormValues,
   type AccountTab,
@@ -45,7 +44,6 @@ const downloadBlob = (
 
 export const AccountPage = () => {
   const activeTab = useAccountActiveTab();
-  const avatarDataUrl = useAccountAvatarDataUrl();
   const setActiveTab = useSetAccountActiveTab();
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
@@ -67,6 +65,7 @@ export const AccountPage = () => {
   const displayPhone = userData?.phoneNumber || "Téléphone indisponible";
   const displayCountry = userData?.country || "Pays indisponible";
   const displayRegion = userData?.region || "Région indisponible";
+  const displayProfilePicture = userData?.profilePicture?.trim() || "";
   const {
     register,
     handleSubmit: handleProfileSubmit,
@@ -81,6 +80,7 @@ export const AccountPage = () => {
       phoneNumber: userData?.phoneNumber ?? "",
       country: userData?.country ?? "",
       region: userData?.region ?? "",
+      profilePicture: userData?.profilePicture ?? "",
     },
   });
 
@@ -92,6 +92,7 @@ export const AccountPage = () => {
       phoneNumber: userData?.phoneNumber ?? "",
       country: userData?.country ?? "",
       region: userData?.region ?? "",
+      profilePicture: userData?.profilePicture ?? "",
     });
   }, [
     currentUser?.email,
@@ -101,6 +102,7 @@ export const AccountPage = () => {
     userData?.firstname,
     userData?.lastname,
     userData?.phoneNumber,
+    userData?.profilePicture,
     userData?.region,
   ]);
 
@@ -123,6 +125,7 @@ export const AccountPage = () => {
         phoneNumber: values.phoneNumber.trim(),
         country: values.country.trim(),
         region: values.region.trim(),
+        profilePicture: values.profilePicture?.trim() ?? "",
       });
       setSavedAt(
         new Date().toLocaleTimeString("fr-FR", {
@@ -202,7 +205,7 @@ export const AccountPage = () => {
             <img
               className="account-v2-photo"
               src={
-                avatarDataUrl ??
+                displayProfilePicture ||
                 `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(displayFullName)}&radius=50`
               }
               alt="Photo de profil"
@@ -323,6 +326,20 @@ export const AccountPage = () => {
               />
               {errors.region ? (
                 <p className="error">{errors.region.message}</p>
+              ) : null}
+
+              <label className="field-label" htmlFor="account-profile-picture">
+                Lien de photo de profil
+              </label>
+              <input
+                id="account-profile-picture"
+                className="field-input"
+                type="url"
+                placeholder="https://exemple.com/ma-photo.jpg"
+                {...register("profilePicture")}
+              />
+              {errors.profilePicture ? (
+                <p className="error">{errors.profilePicture.message}</p>
               ) : null}
             </div>
 

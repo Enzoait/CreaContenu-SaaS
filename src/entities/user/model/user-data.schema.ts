@@ -10,6 +10,7 @@ export const userDataSchema = z.object({
   country: z.string(),
   region: z.string(),
   email: z.string().email(),
+  profilePicture: z.string().trim().url().or(z.literal("")),
 });
 
 export const userDataUpsertSchema = z.object({
@@ -23,6 +24,12 @@ export const userDataUpsertSchema = z.object({
   country: z.string().trim().min(1, "Le pays est obligatoire"),
   region: z.string().trim().min(1, "La région est obligatoire"),
   email: z.string().trim().email("Email invalide"),
+  profilePicture: z
+    .string()
+    .trim()
+    .url("URL invalide")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type UserDataModel = z.infer<typeof userDataSchema>;
@@ -38,6 +45,7 @@ type SupabaseUserDataRow = {
   country: string | null;
   region: string | null;
   email: string | null;
+  profile_picture: string | null;
 };
 
 export const mapSupabaseUserDataToModel = (
@@ -53,6 +61,7 @@ export const mapSupabaseUserDataToModel = (
     country: row.country ?? "",
     region: row.region ?? "",
     email: row.email ?? "",
+    profilePicture: row.profile_picture ?? "",
   });
 
 export const mapUserDataUpsertInputToSupabase = (
@@ -65,4 +74,5 @@ export const mapUserDataUpsertInputToSupabase = (
   country: input.country,
   region: input.region,
   email: input.email,
+  profile_picture: input.profilePicture?.trim() ? input.profilePicture.trim() : null,
 });

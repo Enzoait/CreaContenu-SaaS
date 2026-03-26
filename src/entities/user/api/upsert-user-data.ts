@@ -30,7 +30,7 @@ export const upsertUserData = async (
     .from("user_data")
     .upsert(mutation)
     .select(
-      "id, created_at, user_id, firstname, lastname, phone_number, country, region, email",
+      "id, created_at, user_id, firstname, lastname, phone_number, country, region, email, profile_picture",
     )
     .single();
 

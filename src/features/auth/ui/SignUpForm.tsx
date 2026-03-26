@@ -1,20 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useSetAccountAvatarDataUrl } from "../../../pages/account-page/model";
 import { signUpSchema, type SignUpFormValues } from "../model/sign-up.schema";
 import { useSignUpMutation } from "../model/use-sign-up-mutation";
 
 export const SignUpForm = () => {
   const navigate = useNavigate();
-  const setAvatarDataUrl = useSetAccountAvatarDataUrl();
   const { mutateAsync, isPending, isError, error, data } = useSignUpMutation();
-  const [avatarLabel, setAvatarLabel] = useState<string>(
-    "Aucune photo sélectionnée",
-  );
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     register,
     handleSubmit,
@@ -28,58 +20,11 @@ export const SignUpForm = () => {
       country: "",
       region: "",
       email: "",
+      profilePicture: "",
       password: "",
       confirmPassword: "",
     },
   });
-
-  const readFileAsDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-          return;
-        }
-
-        reject(new Error("Impossible de lire le fichier image."));
-      };
-      reader.onerror = () =>
-        reject(new Error("Impossible de lire le fichier image."));
-      reader.readAsDataURL(file);
-    });
-
-  const handleAvatarFile = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setAvatarLabel("Format invalide. Utilisez une image JPG, PNG ou WebP.");
-      return;
-    }
-
-    const dataUrl = await readFileAsDataUrl(file);
-    setAvatarDataUrl(dataUrl);
-    setAvatarLabel(file.name);
-  };
-
-  const onDrop = async (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-
-    const file = event.dataTransfer.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    await handleAvatarFile(file);
-  };
-
-  const onInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    await handleAvatarFile(file);
-  };
 
   const onSubmit = async (values: SignUpFormValues) => {
     const result = await mutateAsync(values);
@@ -199,45 +144,18 @@ export const SignUpForm = () => {
       ) : null}
 
       <label className="field-label" htmlFor="sign-up-avatar">
-        Photo de profil
+        Lien de photo de profil
       </label>
-      <div
-        className={`dropzone ${isDragging ? "is-dragging" : ""}`}
-        onDrop={(event) => {
-          void onDrop(event);
-        }}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onClick={() => fileInputRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            fileInputRef.current?.click();
-          }
-        }}
-        aria-label="Déposer une photo de profil ou cliquer pour sélectionner"
-      >
-        <p className="dropzone-title">Glissez-déposez votre photo ici</p>
-        <p className="dropzone-subtitle">
-          ou cliquez pour sélectionner une image
-        </p>
-        <p className="dropzone-file">{avatarLabel}</p>
-      </div>
       <input
-        ref={fileInputRef}
         id="sign-up-avatar"
-        type="file"
-        accept="image/*"
-        onChange={(event) => {
-          void onInputChange(event);
-        }}
-        style={{ display: "none" }}
+        className="field-input"
+        type="url"
+        placeholder="https://exemple.com/ma-photo.jpg"
+        {...register("profilePicture")}
       />
+      {errors.profilePicture ? (
+        <p className="error">{errors.profilePicture.message}</p>
+      ) : null}
 
       <label className="checkbox-row">
         <input type="checkbox" />

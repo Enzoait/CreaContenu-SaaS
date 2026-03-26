@@ -55,8 +55,8 @@ vi.mock("../../../features/account-profile", () => ({
   useProfileTitleSuffix: () => "Test",
 }));
 
-vi.mock("../../../pages/account-page/model", () => ({
-  useAccountAvatarDataUrl: () => null,
+vi.mock("../../../entities/user", () => ({
+  useCurrentUserDataQuery: () => ({ data: null }),
 }));
 
 const session: AuthSession = {

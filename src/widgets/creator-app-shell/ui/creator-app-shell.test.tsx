@@ -15,8 +15,8 @@ function renderShell(ui: ReactElement) {
   );
 }
 
-vi.mock("../../../pages/account-page/model", () => ({
-  useAccountAvatarDataUrl: () => null,
+vi.mock("../../../entities/user", () => ({
+  useCurrentUserDataQuery: () => ({ data: null }),
 }));
 
 const session: AuthSession = {

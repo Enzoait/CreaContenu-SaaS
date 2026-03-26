@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
-import { useAccountAvatarDataUrl } from "../../../pages/account-page/model";
+import { useCurrentUserDataQuery } from "../../../entities/user";
 import {
   HiBars3,
   HiMoon,
@@ -50,12 +50,12 @@ export function CreatorAppShell({
   const user = useAuthStore(selectAuthUser);
   const theme = useAppTheme();
   const toggleTheme = useToggleAppTheme();
-  const uploadedAvatarUrl = useAccountAvatarDataUrl();
+  const { data: userData } = useCurrentUserDataQuery();
   const displayName = user?.email?.split("@")[0] ?? "Creator";
   const generatedAvatarUrl = `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(
     displayName,
   )}&radius=50`;
-  const avatarUrl = uploadedAvatarUrl ?? generatedAvatarUrl;
+  const avatarUrl = userData?.profilePicture?.trim() || generatedAvatarUrl;
 
   const goToDashboard = () => {
     setIsMenuOpen(false);

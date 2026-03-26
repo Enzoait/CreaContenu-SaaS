@@ -21,7 +21,7 @@ export const getCurrentUserData = async (): Promise<UserDataModel | null> => {
   const { data, error } = await supabase
     .from("user_data")
     .select(
-      "id, created_at, user_id, firstname, lastname, phone_number, country, region, email",
+      "id, created_at, user_id, firstname, lastname, phone_number, country, region, email, profile_picture",
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })

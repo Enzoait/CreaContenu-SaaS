@@ -10,6 +10,12 @@ export const accountProfileFormSchema = z.object({
     .min(1, "Le numéro de téléphone est obligatoire"),
   country: z.string().trim().min(1, "Le pays est obligatoire"),
   region: z.string().trim().min(1, "La région est obligatoire"),
+  profilePicture: z
+    .string()
+    .trim()
+    .url("URL invalide")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type AccountProfileFormValues = z.infer<typeof accountProfileFormSchema>;

@@ -11,6 +11,12 @@ export const signUpSchema = z
     country: z.string().trim().min(1, "Le pays est obligatoire"),
     region: z.string().trim().min(1, "La région est obligatoire"),
     email: z.string().email("Email invalide"),
+    profilePicture: z
+      .string()
+      .trim()
+      .url("URL invalide")
+      .optional()
+      .or(z.literal("")),
     password: z
       .string()
       .min(8, "Le mot de passe doit contenir au moins 8 caracteres"),
