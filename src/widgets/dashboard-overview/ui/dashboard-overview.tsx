@@ -206,6 +206,14 @@ function toSearchTargetId(prefix: string, value: string): string {
   return `${prefix}-${encodeURIComponent(value)}`;
 }
 
+function findElementByDataSearchId(targetId: string): HTMLElement | null {
+  const nodes = document.querySelectorAll<HTMLElement>("[data-search-id]");
+  for (const el of nodes) {
+    if (el.getAttribute("data-search-id") === targetId) return el;
+  }
+  return null;
+}
+
 function toMonthLabel(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, {
     month: "long",
@@ -695,18 +703,7 @@ export function DashboardOverview() {
       pool.set(dedupeKey, { ...s, label: enrichedLabel, searchTerm: rawLabel });
     }
 
-    const result = Array.from(pool.values()).slice(0, 8);
-    console.log("[search]", {
-      query,
-      matchingCount: matching.length,
-      labelCount: Object.fromEntries(labelCount),
-      result: result.map((r) => ({
-        label: r.label,
-        searchTerm: r.searchTerm,
-        panel: r.panel,
-      })),
-    });
-    return result;
+    return Array.from(pool.values()).slice(0, 8);
   }, [
     planningData,
     videoData,
@@ -1802,29 +1799,44 @@ export function DashboardOverview() {
 
   const focusPanelFromSuggestion = (suggestion: SuggestionItem) => {
     const { panel, targetId } = suggestion;
-    if (targetId) {
-      const target = document.querySelector<HTMLElement>(
-        `[data-search-id="${targetId}"]`,
-      );
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
-        setHighlightedItemId(targetId);
-        window.setTimeout(() => {
-          setHighlightedItemId((current) =>
-            current === targetId ? null : current,
-          );
-        }, 3600);
-        return;
-      }
-    }
 
-    const element = panelCardRefs.current[panel];
-    if (!element) return;
-    element.scrollIntoView({ behavior: "smooth", block: "center" });
-    setHighlightedPanel(panel);
-    window.setTimeout(() => {
-      setHighlightedPanel((current) => (current === panel ? null : current));
-    }, 3600);
+    const HIGHLIGHT_MS = 4000;
+
+    const scrollToTargetOrPanel = () => {
+      if (targetId) {
+        const target = findElementByDataSearchId(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          setHighlightedItemId(null);
+          requestAnimationFrame(() => {
+            setHighlightedItemId(targetId);
+          });
+          window.setTimeout(() => {
+            setHighlightedItemId((current) =>
+              current === targetId ? null : current,
+            );
+          }, HIGHLIGHT_MS);
+          return;
+        }
+      }
+
+      const element = panelCardRefs.current[panel];
+      if (!element) return;
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedPanel(null);
+      requestAnimationFrame(() => {
+        setHighlightedPanel(panel);
+      });
+      window.setTimeout(() => {
+        setHighlightedPanel((current) => (current === panel ? null : current));
+      }, HIGHLIGHT_MS);
+    };
+
+    setCollapsedPanels((prev) =>
+      prev[panel] ? { ...prev, [panel]: false } : prev,
+    );
+
+    window.setTimeout(scrollToTargetOrPanel, 100);
   };
 
   const shouldShowLoader =
