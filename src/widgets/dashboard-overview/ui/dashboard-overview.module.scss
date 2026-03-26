@@ -2050,6 +2050,10 @@
   color: #f3f4f6;
 }
 
+:global([data-theme="dark"]) .platformCard h3 {
+  color: #f7fafc;
+}
+
 :global([data-theme="dark"]) .banner p,
 :global([data-theme="dark"]) .statCard p,
 :global([data-theme="dark"]) .platformMeta small,
@@ -2095,9 +2099,65 @@
   color: #c5bdf5;
 }
 
+/* Améliorations d'accessibilité pour l'agenda en mode sombre */
+:global([data-theme="dark"]) .agendaDate {
+  /* Date des journées : augmenter le contraste contre le fond sombre */
+  color: #f3f4f6;
+  font-weight: 600;
+}
+
+:global([data-theme="dark"]) .agendaDay {
+  /* Légère nuance de fond pour mieux séparer les cases */
+  background: #171a22;
+  border-color: #2f3745;
+}
+
+:global([data-theme="dark"]) .agendaDay .emptyText {
+  /* Texte 'Aucun contenu' : rendre plus lisible */
+  color: #cfd8e3;
+}
+
 :global([data-theme="dark"]) .positiveBadge {
   background: #1d3528;
   color: #79d6a3;
+}
+
+/* Dark-mode: panel Videos specific fixes */
+:global([data-theme="dark"]) .panelVideos {
+  background: #0f1620;
+  border-color: #232a33;
+  color: #e6eef8;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+:global([data-theme="dark"]) .panelVideos .panelHeader h3 {
+  color: #f7fafc;
+}
+
+:global([data-theme="dark"]) .panelVideos .videoRecapSection,
+:global([data-theme="dark"]) .panelVideos .videoRecapList li {
+  background: #0b1116;
+  border-color: #1a2328;
+}
+
+:global([data-theme="dark"]) .panelVideos .videoRecapHeader p,
+:global([data-theme="dark"]) .panelVideos .videoRecapList span,
+:global([data-theme="dark"]) .panelVideos .videoRecapEmpty {
+  color: #9aa3b2;
+}
+
+:global([data-theme="dark"]) .panelVideos .videoRecapLink {
+  background: transparent;
+  border-color: #2b3950;
+  color: #9fb7ff;
+}
+
+/* Dark-mode: ensure strong text is visible in panelVideos */
+:global([data-theme="dark"]) .panelVideos strong,
+:global([data-theme="dark"]) .panelVideos .videoRecapList strong,
+:global([data-theme="dark"]) .panelVideos .videoRecapHeader h2 {
+  color: #f7fafc;
+  font-weight: 700;
 }
 
 .banner,

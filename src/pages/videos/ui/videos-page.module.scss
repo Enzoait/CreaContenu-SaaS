@@ -9,19 +9,7 @@
   --muted: #51607a;
   --line: #d6dfec;
   --panel: #ffffff;
-  --accent: #00a3a3;
-  --accent-2: #f97316;
-}
-
-.hero {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background:
+  --hero-background:
     radial-gradient(
       circle at 88% 0%,
       rgba(249, 115, 22, 0.14),
@@ -33,6 +21,34 @@
       transparent 44%
     ),
     linear-gradient(120deg, #fffdf8, #f7fbff);
+  --accent: #00a3a3;
+  --accent-2: #f97316;
+}
+
+/* Dark-mode: override page variables so components using them inherit correct dark colors */
+:global([data-theme="dark"]) .page {
+  --ink: #e6eef8;
+  --muted: #9aa3b2;
+  --line: #263238;
+  --panel: #0f1620;
+  --hero-background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
+  --accent: #7a68dd;
+  --accent-2: #f97316;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--hero-background);
   padding: 18px;
   box-shadow: 0 8px 30px rgba(20, 33, 61, 0.08);
 }
@@ -51,9 +67,9 @@
 }
 
 .backLink {
-  border: 1px solid rgba(20, 33, 61, 0.2);
+  border: 1px solid var(--line);
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--panel);
   color: var(--ink);
   padding: 9px 14px;
   text-decoration: none;
@@ -121,9 +137,9 @@
 }
 
 .toggleFormButton {
-  border: 1px solid #b9c6db;
+  border: 1px solid var(--line);
   border-radius: 999px;
-  background: linear-gradient(120deg, #ffffff, #f3f7ff);
+  background: var(--panel);
   color: var(--ink);
   padding: 7px 10px;
   font-weight: 700;
@@ -157,18 +173,35 @@
 .formActions button,
 .secondaryButton,
 .dangerButton {
-  border: 1px solid #c7d3e5;
+  border: 1px solid var(--line);
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--panel);
   color: var(--ink);
   padding: 6px 10px;
   font-weight: 700;
 }
 
 .dangerButton {
-  border-color: #f8c8ab;
-  color: #9a3412;
-  background: #fff7ed;
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: var(--panel);
+}
+
+/* Ensure row action buttons use theme variables too */
+.rowActions .secondaryButton,
+.rowActions .dangerButton {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 6px 10px;
+  font-weight: 700;
+}
+
+.rowActions .dangerButton {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: var(--panel);
 }
 
 .errorMessage {
@@ -199,7 +232,7 @@
 .videoRow {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--panel);
   padding: 10px;
   display: grid;
   grid-template-columns: minmax(280px, 1.3fr) minmax(260px, 1fr) minmax(
@@ -274,9 +307,9 @@
   border-radius: 999px;
   padding: 4px 8px;
   font-size: 0.75rem;
-  background: #f4f8ff;
+  background: var(--panel);
   color: var(--ink);
-  border: 1px solid #d4e0f3;
+  border: 1px solid var(--line);
 }
 
 .deadline {
@@ -382,24 +415,138 @@
     grid-template-columns: 1fr;
   }
 
-  .videoBoardHeader {
-    display: none;
+  .formActions button,
+  .secondaryButton,
+  .dangerButton {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--ink);
+    padding: 6px 10px;
+    font-weight: 700;
   }
-
-  .videoRow {
-    grid-template-columns: 1fr;
+  .dangerButton {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+    background: var(--panel);
   }
-
-  .videoMain {
-    grid-template-columns: 1fr;
-  }
-
-  .videoMain > div,
-  .videoMain > a,
-  .videoMain > p,
   .videoMain > small,
   .videoMain > h3 {
     grid-column: 1;
+  }
+
+  /* Dark-mode overrides for Mes vidéos page */
+  :global([data-theme="dark"]) .page,
+  :global([data-theme="dark"]) .hero,
+  :global([data-theme="dark"]) .metricCard,
+  :global([data-theme="dark"]) .formCard,
+  :global([data-theme="dark"]) .videoBoard,
+  :global([data-theme="dark"]) .videoRow,
+  :global([data-theme="dark"]) .videoBoardHeader,
+  :global([data-theme="dark"]) .videoRow,
+  :global([data-theme="dark"]) .calendar,
+  :global([data-theme="dark"]) .empty {
+    background: #0f1620;
+    color: #e6eef8;
+    border-color: #232a33;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  }
+
+  :global([data-theme="dark"]) .hero {
+    background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.01)
+    );
+    border-color: #24303a;
+  }
+
+  :global([data-theme="dark"]) .hero h1,
+  :global([data-theme="dark"]) .formHeader h2,
+  :global([data-theme="dark"]) .metricCard strong,
+  :global([data-theme="dark"]) .videoTitle {
+    color: #f7fafc;
+  }
+
+  :global([data-theme="dark"]) .hero p,
+  :global([data-theme="dark"]) .metricCard span,
+  :global([data-theme="dark"]) .formHeader p,
+  :global([data-theme="dark"]) .deadline,
+  :global([data-theme="dark"]) .videoRecapList span {
+    color: #9aa3b2;
+  }
+
+  :global([data-theme="dark"]) .formGrid input,
+  :global([data-theme="dark"]) .formGrid select,
+  :global([data-theme="dark"]) .stageRow select {
+    background: #0b1116;
+    border-color: #1a2328;
+    color: #e6eef8;
+  }
+
+  :global([data-theme="dark"]) .formActions button,
+  :global([data-theme="dark"]) .secondaryButton,
+  :global([data-theme="dark"]) .dangerButton {
+    background: #0b1116;
+    border-color: #23303a;
+    color: #e6eef8;
+  }
+
+  :global([data-theme="dark"]) .videoRow {
+    background: #0b1116;
+    border-color: #1a2328;
+  }
+
+  :global([data-theme="dark"]) .thumb {
+    background: #12151a;
+    border-color: #1f2730;
+  }
+
+  :global([data-theme="dark"]) .metaChip {
+    background: #0f1720;
+    border-color: #232a33;
+    color: #cbd6e6;
+  }
+
+  :global([data-theme="dark"]) .videoLink {
+    color: #9fb7ff;
+  }
+
+  :global([data-theme="dark"]) .calendar h2 {
+    color: #f3f7fb;
+  }
+
+  /* Additional targeted dark overrides for leftover white elements */
+  :global([data-theme="dark"]) .backLink,
+  :global([data-theme="dark"]) .toggleFormButton,
+  :global([data-theme="dark"]) .formGrid input,
+  :global([data-theme="dark"]) .formGrid select,
+  :global([data-theme="dark"]) .formActions button,
+  :global([data-theme="dark"]) .secondaryButton,
+  :global([data-theme="dark"]) .dangerButton,
+  :global([data-theme="dark"]) .metaChip,
+  :global([data-theme="dark"]) .empty {
+    background: var(--panel) !important;
+    border-color: #232a33 !important;
+    color: var(--text) !important;
+  }
+
+  :global([data-theme="dark"]) .toggleFormButton {
+    background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.01)
+    ) !important;
+  }
+
+  :global([data-theme="dark"]) .videoRow:hover {
+    border-color: #394556 !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  :global([data-theme="dark"]) .thumb {
+    background: #0d1115 !important;
+    border-color: #1b252a !important;
   }
 
   .thumb {

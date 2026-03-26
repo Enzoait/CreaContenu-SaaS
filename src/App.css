@@ -509,6 +509,92 @@ button.active {
   }
 }
 
+/* Dark theme global overrides: improve contrast for dark mode */
+:root[data-theme="dark"] {
+  --bg: #07101a;
+  --surface: #0e1721;
+  --muted: #9aa6b2;
+  --text: #e6eef8;
+  --border: #22303a;
+  --card-shadow: 0 10px 30px rgba(2, 8, 23, 0.6);
+  --accent: #7a68dd;
+}
+
+:root[data-theme="dark"] body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme="dark"] .surface,
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] .account-card,
+:root[data-theme="dark"] .simpleModalCard,
+:root[data-theme="dark"] .confirmCard,
+:root[data-theme="dark"] .header,
+:root[data-theme="dark"] .topBar {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--card-shadow) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  background: rgba(255, 255, 255, 0.02) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+
+:root[data-theme="dark"] .searchSuggestions {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.02)
+  ) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+:root[data-theme="dark"] button,
+:root[data-theme="dark"] a {
+  color: var(--text) !important;
+}
+
+:root[data-theme="dark"] .muted {
+  color: var(--muted) !important;
+}
+
+/* Global card overrides for dark mode (force where component styles are specific) */
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] .surface,
+:root[data-theme="dark"] .panelCard,
+:root[data-theme="dark"] .metricCard,
+:root[data-theme="dark"] .formCard,
+:root[data-theme="dark"] .videoRow,
+:root[data-theme="dark"] .videoRecapList li,
+:root[data-theme="dark"] .videoRecapSection,
+:root[data-theme="dark"] .preview-card,
+:root[data-theme="dark"] .account-card,
+:root[data-theme="dark"] .panelVideos,
+:root[data-theme="dark"] .panelChart,
+:root[data-theme="dark"] .panelPlanning,
+:root[data-theme="dark"] .panelTodo {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+:root[data-theme="dark"] .panelCard h3,
+:root[data-theme="dark"] .metricCard strong,
+:root[data-theme="dark"] .videoRecapList strong,
+:root[data-theme="dark"] .account-card h2,
+:root[data-theme="dark"] .preview-card h3 {
+  color: var(--text) !important;
+}
+
 .account-v2-layout {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);

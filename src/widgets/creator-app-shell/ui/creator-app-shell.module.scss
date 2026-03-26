@@ -128,7 +128,7 @@
   border: 1px solid #eceef6;
   box-shadow: none;
   position: relative;
-  z-index: 1300;
+  z-index: 50;
 }
 
 .topBarStart {
@@ -357,12 +357,13 @@
     top: 0;
     bottom: 0;
     width: min(88vw, 310px);
-    transform: translateX(-100%);
     z-index: 120;
+    will-change: transform;
   }
 
   .sidebarOpen {
-    transform: translateX(0);
+    /* open state is handled by JS animation; enable pointer events when open */
+    pointer-events: auto;
   }
 
   .topBar {
@@ -390,6 +391,15 @@
     border: 0;
     background: rgba(15, 23, 42, 0.38);
     z-index: 110;
+  }
+
+  /* When sidebar is closed on mobile, prevent it from intercepting clicks */
+  .sidebar {
+    pointer-events: none;
+  }
+
+  .sidebarOpen {
+    pointer-events: auto;
   }
 
   .mobileNavClose {

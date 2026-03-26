@@ -73,6 +73,11 @@ export function CreatorAppShell({
     navigate("/videos");
   };
 
+  const [isMobileView, setIsMobileView] = useState<boolean>(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(max-width: 1100px)").matches;
+  });
+
   useLayoutEffect(() => {
     if (!shellRef.current) {
       return;
@@ -181,17 +186,72 @@ export function CreatorAppShell({
     if (isReducedMotion) {
       return;
     }
+    // use isMobileView state so changes in viewport trigger the effect
+    const isMobile = isMobileView;
 
-    gsap.fromTo(
-      "." + styles.sidebar,
-      { x: isMenuOpen ? -12 : 0, opacity: isMenuOpen ? 0.9 : 1 },
-      {
-        x: 0,
-        opacity: 1,
-        duration: 0.25,
-        ease: "power2.out",
-      },
+    // On desktop: ensure no transform remains from GSAP so sidebar sits in layout
+    if (!isMobile) {
+      if (sidebarRef.current) {
+        gsap.set(sidebarRef.current, { x: 0, opacity: 1, overwrite: true });
+        // remove inline transform to avoid subpixel offsets
+        gsap.set(sidebarRef.current, { clearProps: "transform,opacity" });
+      }
+      return;
+    }
+
+    if (!sidebarRef.current) return;
+
+    // Use pixel translation on mobile to guarantee full hidden state
+    const sidebarWidth = Math.ceil(
+      sidebarRef.current.getBoundingClientRect().width || 0,
     );
+
+    gsap.set(sidebarRef.current, {
+      x: isMenuOpen ? 0 : -sidebarWidth,
+      opacity: isMenuOpen ? 1 : 0.9,
+    });
+
+    gsap.to(sidebarRef.current, {
+      x: isMenuOpen ? 0 : -sidebarWidth,
+      opacity: isMenuOpen ? 1 : 0.9,
+      duration: 0.25,
+      ease: "power2.out",
+      overwrite: true,
+    });
+  }, [isMenuOpen, isMobileView]);
+
+  // keep isMobileView in sync with viewport changes
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+
+    const mq = window.matchMedia("(max-width: 1100px)");
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobileView(Boolean((e as any).matches));
+    };
+
+    // set initial
+    setIsMobileView(Boolean(mq.matches));
+
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else mq.addListener(onChange);
+
+    const onResize = () => {
+      // recalc sidebar position/width when resizing on mobile
+      if (!sidebarRef.current) return;
+      if (!mq.matches) return;
+      const sidebarWidth = Math.ceil(
+        sidebarRef.current.getBoundingClientRect().width || 0,
+      );
+      gsap.set(sidebarRef.current, { x: isMenuOpen ? 0 : -sidebarWidth });
+    };
+
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+      else mq.removeListener(onChange);
+      window.removeEventListener("resize", onResize);
+    };
   }, [isMenuOpen]);
 
   const resolvedTrailing = accountTopBar ? null : topBarTrailing;
