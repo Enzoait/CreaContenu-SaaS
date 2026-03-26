@@ -13,6 +13,11 @@ import {
   useUpsertUserDataMutation,
 } from "../../../entities/user";
 import {
+  changePasswordSchema,
+  useChangePasswordMutation,
+  type ChangePasswordFormValues,
+} from "../../../features/auth";
+import {
   accountProfileFormSchema,
   useAccountActiveTab,
   useSetAccountActiveTab,
@@ -56,6 +61,12 @@ export const AccountPage = () => {
   const { data: currentUser } = useCurrentUserQuery();
   const { mutateAsync: upsertUserData, isPending: isSavingProfile } =
     useUpsertUserDataMutation();
+  const { mutateAsync: changePassword, isPending: isChangingPassword } =
+    useChangePasswordMutation();
+  const [passwordSavedAt, setPasswordSavedAt] = useState<string | null>(null);
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState<
+    string | null
+  >(null);
 
   const displayFirstname = userData?.firstname || "Prénom";
   const displayLastname = userData?.lastname || "Nom";
@@ -105,6 +116,20 @@ export const AccountPage = () => {
     userData?.profilePicture,
     userData?.region,
   ]);
+
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    reset: resetPasswordForm,
+    formState: { errors: passwordErrors },
+  } = useForm<ChangePasswordFormValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
   const onSubmit = async (values: AccountProfileFormValues) => {
     if (!currentUser?.id) {
@@ -183,6 +208,27 @@ export const AccountPage = () => {
 
     document.text(lines, 20, 32);
     document.save("donnees-personnelles.pdf");
+  };
+
+  const onChangePassword = async (values: ChangePasswordFormValues) => {
+    setPasswordErrorMessage(null);
+
+    try {
+      await changePassword(values);
+      resetPasswordForm();
+      setPasswordSavedAt(
+        new Date().toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    } catch (error) {
+      setPasswordErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Erreur pendant la mise a jour du mot de passe.",
+      );
+    }
   };
 
   const renderProfilePanel = () => {
@@ -369,27 +415,75 @@ export const AccountPage = () => {
     <section className="account-v2-card">
       <div className="account-v2-card-header">
         <h3 className="account-section-title">Sécurité</h3>
-        <span className="account-v2-badge">Bientôt</span>
+        <span className="account-v2-badge">Mot de passe</span>
       </div>
-      <div className="account-v2-security-list">
-        <article>
-          <h4>Mot de passe</h4>
-          <p>
-            La gestion et rotation sécurisée du mot de passe sera ajoutée ici.
-          </p>
-        </article>
-        <article>
-          <h4>Double authentification</h4>
-          <p>Activez la 2FA pour renforcer la sécurité de votre compte.</p>
-        </article>
-        <article>
-          <h4>Sessions actives</h4>
-          <p>
-            Consultez les appareils connectés et déconnectez les sessions
-            inconnues.
-          </p>
-        </article>
-      </div>
+      <form
+        className="account-v2-form"
+        onSubmit={handlePasswordSubmit(onChangePassword)}
+      >
+        <div className="account-v2-form-grid">
+          <label className="field-label" htmlFor="account-current-password">
+            Mot de passe actuel
+          </label>
+          <input
+            id="account-current-password"
+            className="field-input"
+            type="password"
+            autoComplete="current-password"
+            {...registerPassword("currentPassword")}
+          />
+          {passwordErrors.currentPassword ? (
+            <p className="error">{passwordErrors.currentPassword.message}</p>
+          ) : null}
+
+          <label className="field-label" htmlFor="account-new-password">
+            Nouveau mot de passe
+          </label>
+          <input
+            id="account-new-password"
+            className="field-input"
+            type="password"
+            autoComplete="new-password"
+            {...registerPassword("newPassword")}
+          />
+          {passwordErrors.newPassword ? (
+            <p className="error">{passwordErrors.newPassword.message}</p>
+          ) : null}
+
+          <label className="field-label" htmlFor="account-confirm-password">
+            Confirmer le mot de passe
+          </label>
+          <input
+            id="account-confirm-password"
+            className="field-input"
+            type="password"
+            autoComplete="new-password"
+            {...registerPassword("confirmPassword")}
+          />
+          {passwordErrors.confirmPassword ? (
+            <p className="error">{passwordErrors.confirmPassword.message}</p>
+          ) : null}
+        </div>
+
+        {passwordErrorMessage ? (
+          <p className="error">{passwordErrorMessage}</p>
+        ) : null}
+
+        <div className="account-v2-form-actions">
+          <button
+            type="submit"
+            className="auth-primary"
+            disabled={isChangingPassword}
+          >
+            {isChangingPassword
+              ? "Mise a jour..."
+              : "Mettre a jour le mot de passe"}
+          </button>
+          {passwordSavedAt ? (
+            <span className="muted">Mis a jour a {passwordSavedAt}</span>
+          ) : null}
+        </div>
+      </form>
     </section>
   );
 

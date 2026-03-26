@@ -4,7 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { signInSchema, type SignInFormValues } from "../model/sign-in.schema";
 import { useSignInMutation } from "../model/use-sign-in-mutation";
 
-export const SignInForm = () => {
+type SignInFormProps = {
+  onForgotPassword?: () => void;
+};
+
+export const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
   const navigate = useNavigate();
   const { mutateAsync, isPending, isError, error } = useSignInMutation();
   const {
@@ -25,11 +29,7 @@ export const SignInForm = () => {
   };
 
   return (
-    <form
-      className="auth-form"
-      noValidate
-      onSubmit={handleSubmit(onSubmit)}
-    >
+    <form className="auth-form" noValidate onSubmit={handleSubmit(onSubmit)}>
       <label className="field-label" htmlFor="sign-in-email">
         Adresse email
       </label>
@@ -46,7 +46,12 @@ export const SignInForm = () => {
         <label className="field-label" htmlFor="sign-in-password">
           Mot de passe
         </label>
-        <button type="button" className="text-action" tabIndex={-1}>
+        <button
+          type="button"
+          className="text-action"
+          tabIndex={-1}
+          onClick={onForgotPassword}
+        >
           Mot de passe oublie ?
         </button>
       </div>

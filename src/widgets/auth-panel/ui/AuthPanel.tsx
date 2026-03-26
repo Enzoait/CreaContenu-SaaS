@@ -1,10 +1,23 @@
-import { useState } from "react";
-import { SignInForm, SignUpForm } from "../../../features/auth";
+import { useEffect, useState } from "react";
+import {
+  ForgotPasswordForm,
+  ResetPasswordForm,
+  SignInForm,
+  SignUpForm,
+} from "../../../features/auth";
 
-type AuthTab = "sign-in" | "sign-up";
+type AuthTab = "sign-in" | "sign-up" | "forgot-password" | "reset-password";
 
-export const AuthPanel = () => {
-  const [tab, setTab] = useState<AuthTab>("sign-in");
+type AuthPanelProps = {
+  initialTab?: AuthTab;
+};
+
+export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
+  const [tab, setTab] = useState<AuthTab>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   return (
     <section className="auth-shell">
@@ -39,7 +52,16 @@ export const AuthPanel = () => {
           </button>
         </div>
 
-        {tab === "sign-in" ? <SignInForm /> : <SignUpForm />}
+        {tab === "sign-in" ? (
+          <SignInForm onForgotPassword={() => setTab("forgot-password")} />
+        ) : null}
+        {tab === "sign-up" ? <SignUpForm /> : null}
+        {tab === "forgot-password" ? (
+          <ForgotPasswordForm onBackToSignIn={() => setTab("sign-in")} />
+        ) : null}
+        {tab === "reset-password" ? (
+          <ResetPasswordForm onBackToSignIn={() => setTab("sign-in")} />
+        ) : null}
 
         <p className="auth-footer-note">
           2026 CreaContenu. Tous droits reserves.
@@ -70,7 +92,9 @@ export const AuthPanel = () => {
         </div>
 
         <div className="brand-row">
-          <p>CreaContenu, la solution de référence pour les créateurs en ligne.</p>
+          <p>
+            CreaContenu, la solution de référence pour les créateurs en ligne.
+          </p>
         </div>
       </aside>
     </section>

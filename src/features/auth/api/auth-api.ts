@@ -3,6 +3,8 @@ import { upsertUserData } from "../../../entities/user/api";
 import { supabase } from "../../../shared/api/supabase/client";
 import type { AuthSession } from "../../../shared/model";
 import type { ChangePasswordFormValues } from "../model/change-password.schema";
+import type { ForgotPasswordFormValues } from "../model/forgot-password.schema";
+import type { ResetPasswordFormValues } from "../model/reset-password.schema";
 import type { SignInFormValues } from "../model/sign-in.schema";
 import type { SignUpFormValues } from "../model/sign-up.schema";
 
@@ -52,6 +54,14 @@ const readStringMetadata = (
 ): string => {
   const value = metadata?.[key];
   return typeof value === "string" ? value.trim() : "";
+};
+
+const getPasswordResetRedirectUrl = (): string | undefined => {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  return `${window.location.origin}/auth/reset-password`;
 };
 
 const syncUserDataFromMetadata = async (
@@ -206,5 +216,35 @@ export const changePassword = async (
 
   if (updateError) {
     throw new Error(mapSupabaseAuthErrorMessage(updateError.message));
+  }
+};
+
+export const requestPasswordReset = async (
+  payload: ForgotPasswordFormValues,
+): Promise<void> => {
+  const { error } = await supabase.auth.resetPasswordForEmail(payload.email, {
+    redirectTo: getPasswordResetRedirectUrl(),
+  });
+
+  if (error) {
+    throw new Error(mapSupabaseAuthErrorMessage(error.message));
+  }
+};
+
+export const resetPassword = async (
+  payload: ResetPasswordFormValues,
+): Promise<void> => {
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: payload.newPassword,
+  });
+
+  if (updateError) {
+    throw new Error(mapSupabaseAuthErrorMessage(updateError.message));
+  }
+
+  const { error: signOutError } = await supabase.auth.signOut();
+
+  if (signOutError) {
+    throw new Error(mapSupabaseAuthErrorMessage(signOutError.message));
   }
 };

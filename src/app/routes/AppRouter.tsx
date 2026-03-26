@@ -9,6 +9,7 @@ export const AppRouter = () => {
   return (
     <Routes>
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/auth/reset-password" element={<AuthPage />} />
       <Route
         path="/dashboard"
         element={
