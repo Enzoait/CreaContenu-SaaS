@@ -616,10 +616,6 @@
   border-color: #8de4bf;
 }
 
-/*
- * Highlight recherche : un seul contour animé (outline uniquement — pas de border
- * en plus, sinon double trait). box-shadow est neutralisé plus bas sur ces blocs.
- */
 .panelPulse {
   animation: search-target-bounce 3.4s ease-in-out 1;
   outline: 2px solid transparent;
@@ -634,7 +630,6 @@
   outline-offset: 0;
 }
 
-/* Un seul « souffle » : montée douce, plateau, descente (pas de triple pic sec) */
 @keyframes search-target-bounce {
   0% {
     outline-color: transparent;
@@ -2216,21 +2211,17 @@
   color: #c5bdf5;
 }
 
-/* Améliorations d'accessibilité pour l'agenda en mode sombre */
 :global([data-theme="dark"]) .agendaDate {
-  /* Date des journées : augmenter le contraste contre le fond sombre */
   color: #f3f4f6;
   font-weight: 600;
 }
 
 :global([data-theme="dark"]) .agendaDay {
-  /* Légère nuance de fond pour mieux séparer les cases */
   background: #171a22;
   border-color: #2f3745;
 }
 
 :global([data-theme="dark"]) .agendaDay .emptyText {
-  /* Texte 'Aucun contenu' : rendre plus lisible */
   color: #cfd8e3;
 }
 
@@ -2239,7 +2230,6 @@
   color: #79d6a3;
 }
 
-/* Dark-mode: panel Videos specific fixes */
 :global([data-theme="dark"]) .panelVideos {
   background: #0f1620;
   border-color: #232a33;
@@ -2269,7 +2259,6 @@
   color: #9fb7ff;
 }
 
-/* Dark-mode: ensure strong text is visible in panelVideos */
 :global([data-theme="dark"]) .panelVideos strong,
 :global([data-theme="dark"]) .panelVideos .videoRecapList strong,
 :global([data-theme="dark"]) .panelVideos .videoRecapHeader h2 {

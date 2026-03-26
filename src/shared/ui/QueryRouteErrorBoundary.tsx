@@ -47,10 +47,6 @@ type QueryRouteErrorBoundaryProps = {
   fallbackRender: (props: FallbackProps) => ReactNode;
 };
 
-/**
- * QueryErrorResetBoundary + Error Boundary pour les routes avec useSuspenseQuery :
- * en cas d’échec sans données en cache, l’erreur est affichée ici (bannière + réessai).
- */
 export function QueryRouteErrorBoundary({
   children,
   fallbackRender,

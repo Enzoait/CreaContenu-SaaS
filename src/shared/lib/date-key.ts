@@ -1,8 +1,3 @@
-/**
- * Produit une clé `YYYY-MM-DD` stable pour comparer dates agenda / deadlines.
- * Ne pas utiliser `new Date("YYYY-MM-DD")` seul : selon le fuseau, le jour peut
- * glisser d’une unité (Postgres `date`, réponses Supabase).
- */
 export function toDateKey(dateInput: string | Date): string {
   if (typeof dateInput === "string") {
     const m = dateInput.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);

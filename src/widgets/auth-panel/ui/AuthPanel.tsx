@@ -60,7 +60,6 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
         <LanguageSwitcher />
       </div>
 
-      {/* ── Panneau gauche ── */}
       <article className={styles["auth-left"]}>
         <div className={styles["auth-logo"]}>
           <span className={styles["auth-logo-icon"]}>✦</span>
@@ -132,7 +131,6 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
         <p className={styles["auth-footer-note"]}>{t("auth.footerCopyright")}</p>
       </article>
 
-      {/* ── Panneau droit (décoratif) ── */}
       <aside className={styles["auth-right"]} aria-hidden="true">
         <div className={styles["auth-right-inner"]}>
           <div className={styles["auth-right-badge"]}>{t("auth.promoBadge")}</div>
@@ -143,7 +141,6 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
             {t("auth.promoSubtitle")}
           </p>
 
-          {/* Mock UI Card */}
           <div className={styles["preview-card"]}>
             <div className={styles["preview-topbar"]}>
               <div className={styles["preview-dots"]}>
@@ -163,7 +160,6 @@ export const AuthPanel = ({ initialTab = "sign-in" }: AuthPanelProps) => {
             </div>
           </div>
 
-          {/* Stats row */}
           <div className={styles["auth-stats-row"]}>
             <div className={styles["auth-stat"]}>
               <span className={styles["auth-stat-value"]}>12k+</span>

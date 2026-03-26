@@ -431,7 +431,6 @@ export function DashboardOverview() {
     [t],
   );
 
-  /** Déduplique série Area + Line (même série) et affiche les noms i18n du graphique. */
   const chartTooltipContent = useCallback(
     (props: {
       active?: boolean;
@@ -718,7 +717,6 @@ export function DashboardOverview() {
     panelLabels,
   ]);
 
-  /** Contenus au statut « publié » (agenda + suivi vidéo), selon filtres période / plateforme. */
   const totalViews =
     filteredPlanning.filter((i) => i.status === "published").length +
     filteredVideos.filter((v) => v.stage === "published").length;
@@ -736,7 +734,6 @@ export function DashboardOverview() {
     return Math.round((num / denom) * 1000) / 10;
   }, [filteredBoard, filteredPlanning, filteredVideos]);
 
-  /** Créneaux agenda au statut publié ou planifié (filtres appliqués). */
   const publishedCount = filteredPlanning.filter(
     (item) => item.status === "published" || item.status === "scheduled",
   ).length;
@@ -1631,7 +1628,6 @@ export function DashboardOverview() {
   const isLastPanelSingle = panelOrder.length % 2 === 1;
   const lastPanel = panelOrder[panelOrder.length - 1];
 
-  /** Séries du graphique : uniquement des comptages réels par jour (mois affiché). */
   const chartData = useMemo(() => {
     return dateSlots.map((slot) => {
       const publishedForDay = filteredPlanning.filter(

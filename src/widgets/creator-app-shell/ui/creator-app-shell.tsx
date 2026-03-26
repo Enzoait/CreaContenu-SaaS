@@ -186,14 +186,11 @@ export function CreatorAppShell({
     if (isReducedMotion) {
       return;
     }
-    // use isMobileView state so changes in viewport trigger the effect
     const isMobile = isMobileView;
 
-    // On desktop: ensure no transform remains from GSAP so sidebar sits in layout
     if (!isMobile) {
       if (sidebarRef.current) {
         gsap.set(sidebarRef.current, { x: 0, opacity: 1, overwrite: true });
-        // remove inline transform to avoid subpixel offsets
         gsap.set(sidebarRef.current, { clearProps: "transform,opacity" });
       }
       return;
@@ -201,7 +198,6 @@ export function CreatorAppShell({
 
     if (!sidebarRef.current) return;
 
-    // Use pixel translation on mobile to guarantee full hidden state
     const sidebarWidth = Math.ceil(
       sidebarRef.current.getBoundingClientRect().width || 0,
     );
@@ -220,7 +216,6 @@ export function CreatorAppShell({
     });
   }, [isMenuOpen, isMobileView]);
 
-  // keep isMobileView in sync with viewport changes
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
 
@@ -229,14 +224,12 @@ export function CreatorAppShell({
       setIsMobileView(Boolean(e.matches));
     };
 
-    // set initial
     setIsMobileView(Boolean(mq.matches));
 
     if (mq.addEventListener) mq.addEventListener("change", onChange);
     else mq.addListener(onChange);
 
     const onResize = () => {
-      // recalc sidebar position/width when resizing on mobile
       if (!sidebarRef.current) return;
       if (!mq.matches) return;
       const sidebarWidth = Math.ceil(

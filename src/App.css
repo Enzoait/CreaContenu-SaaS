@@ -509,7 +509,6 @@ button.active {
   }
 }
 
-/* Dark theme global overrides: improve contrast for dark mode */
 :root[data-theme="dark"] {
   --bg: #07101a;
   --surface: #0e1721;
@@ -566,7 +565,6 @@ button.active {
   color: var(--muted) !important;
 }
 
-/* Global card overrides for dark mode (force where component styles are specific) */
 :root[data-theme="dark"] .panel,
 :root[data-theme="dark"] .surface,
 :root[data-theme="dark"] .panelCard,

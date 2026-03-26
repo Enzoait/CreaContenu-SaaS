@@ -32,7 +32,6 @@
   --accent-2: #f97316;
 }
 
-/* Dark-mode: override page variables so components using them inherit correct dark colors */
 :global([data-theme="dark"]) .page {
   --ink: #e6eef8;
   --muted: #9aa3b2;
@@ -241,7 +240,6 @@
   background: var(--danger-bg);
 }
 
-/* Ensure row action buttons use theme variables too */
 .rowActions .secondaryButton,
 .rowActions .dangerButton {
   border: 1px solid var(--line);
@@ -551,7 +549,6 @@
     grid-column: 1;
   }
 
-  /* Dark-mode overrides for Mes vidéos page */
   :global([data-theme="dark"]) .page,
   :global([data-theme="dark"]) .hero,
   :global([data-theme="dark"]) .metricCard,
@@ -639,7 +636,6 @@
     color: #f3f7fb;
   }
 
-  /* Additional targeted dark overrides for leftover white elements */
   :global([data-theme="dark"]) .backLink,
   :global([data-theme="dark"]) .toggleFormButton,
   :global([data-theme="dark"]) .formGrid input,

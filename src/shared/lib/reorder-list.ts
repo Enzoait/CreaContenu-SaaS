@@ -1,4 +1,3 @@
-/** Déplace l’élément d’index `from` vers `to` dans une copie du tableau. */
 export function moveInArray<T>(items: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= items.length) {
     return [...items];
@@ -10,12 +9,6 @@ export function moveInArray<T>(items: T[], from: number, to: number): T[] {
   return next;
 }
 
-/**
- * Reconstruit l’ordre global à partir d’un réordonnancement partiel (lignes visibles).
- * `fullOrderedIds` : tous les ids dans l’ordre actuel.
- * `visibleIdsInDisplayOrder` : sous-ensemble visible, dans l’ordre d’affichage.
- * `newVisibleOrder` : même ensemble après drag, nouvel ordre.
- */
 export function mergeVisibleReorder(
   fullOrderedIds: string[],
   visibleIdsInDisplayOrder: string[],

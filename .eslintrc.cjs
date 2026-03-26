@@ -1,9 +1,3 @@
-/**
- * Typage strict : interdit `any` explicite et le mot-clé de type `unknown`.
- * Les règles « type-checked » (no-unsafe-*) ne sont pas activées : elles
- * exigent des typages générés Supabase partout et explosent le bruit sans gain
- * sur les `any` implicites des libs.
- */
 module.exports = {
   root: true,
   env: { browser: true, es2020: true },

@@ -45,7 +45,6 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const videosPublishedCount = videos.filter(
     (v) => v.stage === "published",
   ).length;
-  /** Pas d’analytics vues en base : nombre réel de contenus au statut « publié ». */
   const totalViews = planningPublishedCount + videosPublishedCount;
 
   const todosDone = todos.filter((t) => t.done).length;

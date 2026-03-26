@@ -362,7 +362,6 @@
   }
 
   .sidebarOpen {
-    /* open state is handled by JS animation; enable pointer events when open */
     pointer-events: auto;
   }
 
@@ -393,7 +392,6 @@
     z-index: 110;
   }
 
-  /* When sidebar is closed on mobile, prevent it from intercepting clicks */
   .sidebar {
     pointer-events: none;
   }
